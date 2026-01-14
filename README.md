@@ -13,7 +13,7 @@ LLM-friendly format for defining data models and APIs with multi-language code g
 
 TOON SDK enables you to define your data models, APIs, and configurations in a single, compact format that can be transformed into production-ready code for multiple languages and frameworks.
 
-```toon
+```yaml
 @toon/2.0
 name: MyAPI
 version: 1.0.0
@@ -77,7 +77,7 @@ cargo add toon-sdk
 
 **1. Create a `.toon` file:**
 
-```toon
+```yaml toon
 @toon/2.0
 name: TodoAPI
 
@@ -117,7 +117,7 @@ toon generate todo.toon -t openapi -o openapi.json
 
 ### Header & Metadata
 
-```toon
+```yaml toon
 @toon/2.0
 name: ProjectName
 version: 1.0.0
@@ -147,7 +147,7 @@ namespace: com.example
 
 ### Enums
 
-```toon
+```yaml toon
 // Simple enum
 enum Status[active,inactive,pending]
 
@@ -157,7 +157,7 @@ enum HttpCode{ok:200,not_found:404,error:500}
 
 ### Models
 
-```toon
+```yaml toon
 // Full syntax
 model User{id,email,name,role}:
   id: uuid @primary @auto
@@ -188,7 +188,7 @@ model Money{amount:float,currency:str="USD"}
 
 ### Services
 
-```toon
+```yaml toon
 service UserService @base("/api/users") @auth:
   list(page:int=1,limit:int=20) -> [User] @GET
   get(id:uuid) -> User @GET("/{id}")
@@ -203,7 +203,7 @@ service UserService @base("/api/users") @auth:
 
 ### Events
 
-```toon
+```yaml toon
 event UserCreated{user_id,email,timestamp}:
   user_id: uuid
   email: email
@@ -216,7 +216,7 @@ event OrderShipped{order_id,tracking_number}:
 
 ### Configuration
 
-```toon
+```yaml toon
 config DatabaseConfig:
   url: str @env("DATABASE_URL") @required
   pool_size: int = 10 @env("DB_POOL_SIZE")
@@ -400,7 +400,7 @@ toon export schema.toon -o schema.json
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+Apache 2 License - see [LICENSE](LICENSE) for details.
 
 ## Links
 
