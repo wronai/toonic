@@ -1,0 +1,312 @@
+// TOON SDK Example: E-commerce API
+// Full-featured example demonstrating all TOON capabilities
+
+@toon/2.0
+name: EcommerceAPI
+version: 2.0.0
+author: Softreck
+license: MIT
+description: Complete e-commerce backend API definition
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole[admin,manager,customer,guest]
+enum OrderStatus[pending,confirmed,processing,shipped,delivered,cancelled,refunded]
+enum PaymentMethod[credit_card,debit_card,paypal,bank_transfer,crypto]
+enum ProductCategory[electronics,clothing,books,food,home,sports,other]
+
+enum HttpStatus{ok:200,created:201,bad_request:400,unauthorized:401,forbidden:403,not_found:404,server_error:500}
+
+// ============================================
+// BASE MODELS
+// ============================================
+
+// Timestamps mixin - reusable across models
+model Timestamps{created_at,updated_at}:
+  created_at: datetime @auto
+  updated_at: datetime @auto @on_update
+
+// Address model - used in User and Order
+model Address{id,street,city,state,postal_code,country}:
+  id: uuid @primary @auto
+  street: str @min(5) @max(200)
+  city: str @min(2) @max(100)
+  state: str? @max(100)
+  postal_code: str @pattern("^[0-9A-Z-]{3,10}$")
+  country: str @min(2) @max(2) // ISO country code
+
+// Inline compact models
+model Money{amount:float,currency:str="USD"}
+model GeoPoint{lat:float,lng:float}
+model DateRange{start:date,end:date}
+
+// ============================================
+// USER DOMAIN
+// ============================================
+
+model User{id,email,password_hash,name,role,addresses,phone,avatar_url,is_active,email_verified}:
+  id: uuid @primary @auto
+  email: email @unique @index
+  password_hash: str @min(60) @max(60) // bcrypt hash
+  name: str @min(2) @max(100)
+  role: UserRole = "customer"
+  addresses: [Address] = []
+  phone: str? @pattern("^\\+?[0-9]{10,15}$")
+  avatar_url: url?
+  is_active: bool = true
+  email_verified: bool = false
+
+model UserSession{id,user_id,token,device_info,ip_address,expires_at}:
+  id: uuid @primary @auto
+  user_id: uuid @foreign(User.id) @index
+  token: str @unique
+  device_info: {str:str} = {}
+  ip_address: str @pattern("^[0-9.]+$")
+  expires_at: datetime
+
+// ============================================
+// PRODUCT DOMAIN
+// ============================================
+
+model Product{id,sku,name,description,category,price,compare_price,images,stock,weight,dimensions,tags,is_active}:
+  id: uuid @primary @auto
+  sku: str @unique @index @pattern("^[A-Z0-9-]{6,20}$")
+  name: str @min(3) @max(200) @index
+  description: str @max(5000)
+  category: ProductCategory
+  price: Money
+  compare_price: Money? // Original price for discounts
+  images: [url] @min(1) @max(10)
+  stock: int @min(0) = 0
+  weight: float? @min(0) // kg
+  dimensions: ProductDimensions?
+  tags: [str] = [] @max(20)
+  is_active: bool = true
+
+model ProductDimensions{length:float,width:float,height:float,unit:str="cm"}
+
+model ProductReview{id,product_id,user_id,rating,title,content,verified_purchase}:
+  id: uuid @primary @auto
+  product_id: uuid @foreign(Product.id) @index
+  user_id: uuid @foreign(User.id)
+  rating: int @min(1) @max(5)
+  title: str @min(3) @max(100)
+  content: str @max(2000)
+  verified_purchase: bool = false
+
+// ============================================
+// ORDER DOMAIN
+// ============================================
+
+model Order{id,order_number,user_id,items,shipping_address,billing_address,status,payment_method,subtotal,tax,shipping_cost,total,notes}:
+  id: uuid @primary @auto
+  order_number: str @unique @index @pattern("^ORD-[0-9]{10}$")
+  user_id: uuid @foreign(User.id) @index
+  items: [OrderItem] @min(1)
+  shipping_address: Address
+  billing_address: Address?
+  status: OrderStatus = "pending" @index
+  payment_method: PaymentMethod
+  subtotal: Money
+  tax: Money
+  shipping_cost: Money
+  total: Money
+  notes: str? @max(500)
+
+model OrderItem{id,order_id,product_id,product_snapshot,quantity,unit_price,total_price}:
+  id: uuid @primary @auto
+  order_id: uuid @foreign(Order.id)
+  product_id: uuid @foreign(Product.id)
+  product_snapshot: json // Frozen product data at order time
+  quantity: int @min(1) @max(100)
+  unit_price: Money
+  total_price: Money
+
+model Payment{id,order_id,amount,method,status,transaction_id,gateway_response}:
+  id: uuid @primary @auto
+  order_id: uuid @foreign(Order.id) @unique
+  amount: Money
+  method: PaymentMethod
+  status: str @pattern("^(pending|completed|failed|refunded)$")
+  transaction_id: str? @unique
+  gateway_response: json?
+
+// ============================================
+// CART DOMAIN
+// ============================================
+
+model Cart{id,user_id,session_id,items,coupon_code,expires_at}:
+  id: uuid @primary @auto
+  user_id: uuid? @foreign(User.id) @index
+  session_id: str? @index // For guest carts
+  items: [CartItem] = []
+  coupon_code: str?
+  expires_at: datetime
+
+model CartItem{product_id,quantity,added_at}:
+  product_id: uuid @foreign(Product.id)
+  quantity: int @min(1) @max(100)
+  added_at: datetime @auto
+
+// ============================================
+// DTOs (Data Transfer Objects)
+// ============================================
+
+model CreateUser{email:email,password:str@min(8)@max(100),name:str@min(2)@max(100)}
+model UpdateUser{name:str?@max(100),phone:str?,avatar_url:url?}
+model LoginRequest{email:email,password:str}
+model LoginResponse{token:str,user:User,expires_at:datetime}
+
+model CreateProduct{sku:str,name:str,description:str,category:ProductCategory,price:Money,images:[url]}
+model UpdateProduct{name:str?,description:str?,price:Money?,stock:int?,is_active:bool?}
+
+model CreateOrder{items:[CreateOrderItem],shipping_address:Address,payment_method:PaymentMethod,notes:str?}
+model CreateOrderItem{product_id:uuid,quantity:int@min(1)}
+
+model AddToCart{product_id:uuid,quantity:int@min(1)=1}
+model UpdateCartItem{quantity:int@min(0)}
+
+// ============================================
+// SERVICES
+// ============================================
+
+service AuthService @base("/api/auth"):
+  register(data:CreateUser) -> User @POST("/register")
+  login(data:LoginRequest) -> LoginResponse @POST("/login")
+  logout() -> bool @POST("/logout") @auth
+  refresh() -> LoginResponse @POST("/refresh") @auth
+  verify_email(token:str) -> bool @GET("/verify/{token}")
+  forgot_password(email:email) -> bool @POST("/forgot-password")
+  reset_password(token:str,password:str) -> bool @POST("/reset-password")
+
+service UserService @base("/api/users") @auth:
+  me() -> User @GET("/me")
+  update_me(data:UpdateUser) -> User @PUT("/me")
+  delete_me() -> bool @DELETE("/me")
+  list(page:int=1,limit:int=20,role:UserRole?) -> [User] @GET @role(admin)
+  get(id:uuid) -> User @GET("/{id}") @role(admin)
+  update(id:uuid,data:UpdateUser) -> User @PUT("/{id}") @role(admin)
+  delete(id:uuid) -> bool @DELETE("/{id}") @role(admin)
+  add_address(address:Address) -> User @POST("/me/addresses")
+  remove_address(address_id:uuid) -> User @DELETE("/me/addresses/{address_id}")
+
+service ProductService @base("/api/products"):
+  list(page:int=1,limit:int=20,category:ProductCategory?,search:str?,min_price:float?,max_price:float?) -> [Product] @GET
+  get(id:uuid) -> Product @GET("/{id}")
+  get_by_sku(sku:str) -> Product @GET("/sku/{sku}")
+  create(data:CreateProduct) -> Product @POST @auth @role(admin)
+  update(id:uuid,data:UpdateProduct) -> Product @PUT("/{id}") @auth @role(admin)
+  delete(id:uuid) -> bool @DELETE("/{id}") @auth @role(admin)
+  reviews(id:uuid,page:int=1) -> [ProductReview] @GET("/{id}/reviews")
+  add_review(id:uuid,rating:int,title:str,content:str) -> ProductReview @POST("/{id}/reviews") @auth
+
+service OrderService @base("/api/orders") @auth:
+  list(page:int=1,limit:int=20,status:OrderStatus?) -> [Order] @GET
+  get(id:uuid) -> Order @GET("/{id}")
+  get_by_number(order_number:str) -> Order @GET("/number/{order_number}")
+  create(data:CreateOrder) -> Order @POST
+  cancel(id:uuid) -> Order @POST("/{id}/cancel")
+  // Admin endpoints
+  all_orders(page:int=1,status:OrderStatus?,user_id:uuid?) -> [Order] @GET("/admin/all") @role(admin)
+  update_status(id:uuid,status:OrderStatus) -> Order @PUT("/{id}/status") @role(admin)
+
+service CartService @base("/api/cart"):
+  get() -> Cart @GET @auth
+  get_guest(session_id:str) -> Cart @GET("/guest/{session_id}")
+  add_item(data:AddToCart) -> Cart @POST("/items") @auth
+  update_item(product_id:uuid,data:UpdateCartItem) -> Cart @PUT("/items/{product_id}") @auth
+  remove_item(product_id:uuid) -> Cart @DELETE("/items/{product_id}") @auth
+  clear() -> Cart @DELETE("/items") @auth
+  apply_coupon(code:str) -> Cart @POST("/coupon") @auth
+  checkout() -> Order @POST("/checkout") @auth
+
+// ============================================
+// EVENTS (for message queues / pub-sub)
+// ============================================
+
+event UserRegistered{user_id,email,registered_at}:
+  user_id: uuid
+  email: email
+  registered_at: datetime @auto
+
+event OrderCreated{order_id,order_number,user_id,total,items_count}:
+  order_id: uuid
+  order_number: str
+  user_id: uuid
+  total: Money
+  items_count: int
+
+event OrderStatusChanged{order_id,old_status,new_status,changed_at,changed_by}:
+  order_id: uuid
+  old_status: OrderStatus
+  new_status: OrderStatus
+  changed_at: datetime @auto
+  changed_by: uuid?
+
+event PaymentReceived{order_id,payment_id,amount,method,transaction_id}:
+  order_id: uuid
+  payment_id: uuid
+  amount: Money
+  method: PaymentMethod
+  transaction_id: str
+
+event ProductStockLow{product_id,sku,current_stock,threshold}:
+  product_id: uuid
+  sku: str
+  current_stock: int
+  threshold: int = 10
+
+// ============================================
+// CONFIGURATION
+// ============================================
+
+config AppConfig:
+  app_name: str = "EcommerceAPI"
+  debug: bool = false @env("DEBUG")
+  environment: str = "production" @env("ENV")
+
+config DatabaseConfig:
+  url: str @env("DATABASE_URL") @required
+  pool_size: int = 10 @env("DB_POOL_SIZE")
+  timeout: int = 30
+
+config RedisConfig:
+  url: str @env("REDIS_URL") @required
+  prefix: str = "ecommerce:"
+
+config JWTConfig:
+  secret: str @env("JWT_SECRET") @required
+  algorithm: str = "HS256"
+  access_token_expire: int = 3600 // 1 hour
+  refresh_token_expire: int = 604800 // 7 days
+
+config EmailConfig:
+  smtp_host: str @env("SMTP_HOST")
+  smtp_port: int = 587 @env("SMTP_PORT")
+  smtp_user: str @env("SMTP_USER")
+  smtp_pass: str @env("SMTP_PASS")
+  from_email: email @env("FROM_EMAIL")
+  from_name: str = "E-commerce Store"
+
+config PaymentConfig:
+  stripe_key: str @env("STRIPE_SECRET_KEY")
+  stripe_webhook_secret: str @env("STRIPE_WEBHOOK_SECRET")
+  currency: str = "USD"
+
+// ============================================
+// CUSTOM VALIDATORS
+// ============================================
+
+validator strong_password(value:str):
+  check: len(value) >= 8 and any(c.isupper() for c in value) and any(c.isdigit() for c in value)
+  message: "Password must be at least 8 characters with uppercase and digit"
+
+validator valid_sku(value:str):
+  check: re.match(r'^[A-Z0-9-]{6,20}$', value)
+  message: "SKU must be 6-20 characters, uppercase letters, numbers, and hyphens only"
+
+validator positive_money(value:Money):
+  check: value.amount >= 0
+  message: "Amount must be non-negative"
