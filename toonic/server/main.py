@@ -17,6 +17,8 @@ from typing import Any, Callable, Dict, List, Optional, Set
 from toonic.server.config import ServerConfig, SourceConfig
 from toonic.server.models import ActionResponse, ContextChunk, ServerEvent, SourceCategory
 from toonic.server.core.accumulator import ContextAccumulator
+from toonic.server.core.history import ConversationHistory
+from toonic.server.core.query import QueryAdapter
 from toonic.server.core.router import LLMRequest, LLMRouter
 from toonic.server.watchers.base import BaseWatcher, WatcherRegistry
 
@@ -37,7 +39,14 @@ class ToonicServer:
             max_tokens=config.max_context_tokens,
             allocation=config.token_allocation,
         )
-        self.router = LLMRouter(config)
+        # History + Query
+        self.history = None
+        self.query_adapter = None
+        if config.history_enabled:
+            self.history = ConversationHistory(config.history_db_path)
+            self.query_adapter = QueryAdapter(self.history)
+        # Router (with history for logging)
+        self.router = LLMRouter(config, history=self.history)
         self._watchers: Dict[str, BaseWatcher] = {}
         self._watcher_tasks: Dict[str, asyncio.Task] = {}
         self._event_listeners: Set[Callable] = set()
@@ -46,6 +55,7 @@ class ToonicServer:
         self._start_time = 0.0
         self._total_chunks = 0
         self._actions: List[ActionResponse] = []
+        self._recent_images: List[str] = []  # base64 JPEG keyframes for multimodal
 
     # ── Lifecycle ────────────────────────────────────────────────
 
@@ -139,6 +149,13 @@ class ToonicServer:
                     break
                 self.accumulator.update(chunk)
                 self._total_chunks += 1
+                # Collect base64 images for multimodal analysis
+                if chunk.raw_data and chunk.raw_encoding == "base64_jpeg":
+                    import base64
+                    b64 = base64.b64encode(chunk.raw_data).decode()
+                    self._recent_images.append(b64)
+                    if len(self._recent_images) > 10:
+                        self._recent_images = self._recent_images[-10:]
                 await self._emit_event("context", chunk.to_dict())
         except asyncio.CancelledError:
             pass
@@ -171,14 +188,14 @@ class ToonicServer:
         if not context.strip():
             return
 
-        # Collect images from video chunks
-        images = []
         stats = self.accumulator.get_stats()
 
-        # Determine category for routing
+        # Determine category and collect images for multimodal
         category = "text"
+        images = []
         if stats["per_category"].get("video", {}).get("sources", 0) > 0:
             category = "multimodal"
+            images = list(self._recent_images[-5:])  # last 5 keyframes
 
         request = LLMRequest(
             context=context,
@@ -255,3 +272,32 @@ class ToonicServer:
     def get_actions(self, limit: int = 20) -> List[Dict]:
         """Get recent actions."""
         return [a.to_dict() for a in self._actions[-limit:]]
+
+    # ── History + Query ───────────────────────────────────────────────
+
+    def get_history(self, limit: int = 20, **filters) -> List[Dict]:
+        """Get conversation history."""
+        if not self.history:
+            return []
+        records = self.history.recent(limit=limit, **filters)
+        return [r.to_dict() for r in records]
+
+    def get_history_stats(self) -> Dict[str, Any]:
+        """Get history statistics."""
+        if not self.history:
+            return {"enabled": False}
+        stats = self.history.stats()
+        stats["enabled"] = True
+        return stats
+
+    async def nlp_query(self, question: str) -> Dict[str, Any]:
+        """Execute NLP query on conversation history."""
+        if not self.query_adapter:
+            return {"error": "History not enabled"}
+        return await self.query_adapter.nlp_query(question)
+
+    def sql_query(self, sql: str) -> Dict[str, Any]:
+        """Execute SQL query on conversation history."""
+        if not self.query_adapter:
+            return {"error": "History not enabled"}
+        return self.query_adapter.sql_query(sql)

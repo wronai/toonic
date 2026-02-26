@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 from toonic.server.config import ModelConfig, ServerConfig
 from toonic.server.models import ActionResponse, SourceCategory
+from toonic.server.core.history import ConversationHistory, ExchangeRecord
 
 logger = logging.getLogger("toonic.router")
 
@@ -35,8 +36,9 @@ class LLMRequest:
 class LLMRouter:
     """Routes LLM requests to appropriate models based on content category."""
 
-    def __init__(self, config: ServerConfig):
+    def __init__(self, config: ServerConfig, history: Optional['ConversationHistory'] = None):
         self.config = config
+        self.history = history
         self._clients: Dict[str, Any] = {}
         self._total_tokens = 0
         self._total_requests = 0
@@ -74,16 +76,20 @@ class LLMRouter:
             action.model_used = model_cfg.model
             action.duration_s = duration
             action.action_id = f"action-{self._total_requests}"
+
+            self._record_exchange(request, action, model_cfg, duration, "ok")
             return action
 
         except Exception as e:
             logger.error(f"LLM error ({model_cfg.model}): {e}")
-            return ActionResponse(
+            action = ActionResponse(
                 action_type="error",
                 content=f"LLM error: {e}",
                 model_used=model_cfg.model,
                 duration_s=time.time() - start,
             )
+            self._record_exchange(request, action, model_cfg, time.time() - start, "error", str(e))
+            return action
 
     async def _call_llm(self, model_cfg: ModelConfig, request: LLMRequest) -> str:
         """Call LLM via litellm or direct HTTP."""
@@ -107,13 +113,16 @@ class LLMRouter:
             else:
                 messages.append({"role": "user", "content": request.context})
 
-            api_key = os.environ.get(model_cfg.api_key_env, os.environ.get("OPENROUTER_API_KEY", ""))
+            api_key = os.environ.get("LLM_API_KEY",
+                      os.environ.get(model_cfg.api_key_env,
+                      os.environ.get("OPENROUTER_API_KEY", "")))
+            base_url = model_cfg.base_url or os.environ.get("LLM_BASE_URL", "")
             response = await litellm.acompletion(
                 model=model_cfg.model,
                 messages=messages,
                 max_tokens=model_cfg.max_tokens,
                 api_key=api_key or None,
-                base_url=model_cfg.base_url or None,
+                base_url=base_url or None,
             )
 
             text = response.choices[0].message.content
@@ -173,6 +182,34 @@ class LLMRouter:
             content=text,
             confidence=0.5,
         )
+
+    def _record_exchange(self, request: LLMRequest, action: ActionResponse,
+                          model_cfg: ModelConfig, duration: float,
+                          status: str = "ok", error: str = "") -> None:
+        """Log exchange to ConversationHistory."""
+        if not self.history:
+            return
+        try:
+            self.history.record(ExchangeRecord(
+                goal=request.goal,
+                category=request.category,
+                model=model_cfg.model,
+                context_tokens=len(request.context.split()) * 4 // 3,
+                context_preview=request.context[:2000],
+                sources=json.dumps([]),
+                images_count=len(request.images) if request.images else 0,
+                action_type=action.action_type,
+                content=action.content[:5000],
+                confidence=action.confidence,
+                target_path=action.target_path,
+                affected_files=json.dumps(action.affected_files),
+                tokens_used=action.tokens_used,
+                duration_s=duration,
+                status=status,
+                error_message=error,
+            ))
+        except Exception as e:
+            logger.warning(f"Failed to record exchange: {e}")
 
     def get_stats(self) -> Dict[str, Any]:
         return {

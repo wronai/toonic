@@ -11,14 +11,40 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 
+def _load_dotenv() -> None:
+    """Load .env file if present (without python-dotenv dependency)."""
+    for env_path in [".env", "../.env"]:
+        p = Path(env_path)
+        if p.exists():
+            for line in p.read_text().splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    key, _, val = line.partition("=")
+                    key = key.strip()
+                    val = val.strip().strip('"').strip("'")
+                    # Resolve ${VAR} references
+                    if "${" in val:
+                        import re
+                        for m in re.finditer(r'\$\{(\w+)\}', val):
+                            val = val.replace(m.group(0), os.environ.get(m.group(1), ""))
+                    if key and key not in os.environ:
+                        os.environ[key] = val
+            break
+
+
+_load_dotenv()
+
+
 @dataclass
 class ModelConfig:
     """LLM model configuration."""
     provider: str = "openrouter"
-    model: str = "google/gemini-2.5-flash-preview:thinking"
+    model: str = "google/gemini-3-flash-preview"
     max_tokens: int = 8192
     supports: List[str] = field(default_factory=lambda: ["text"])
-    api_key_env: str = "OPENROUTER_API_KEY"
+    api_key_env: str = "LLM_API_KEY"
     base_url: str = ""
 
 
@@ -59,16 +85,20 @@ class ServerConfig:
     
     # Models
     models: Dict[str, ModelConfig] = field(default_factory=lambda: {
-        "text": ModelConfig(model="google/gemini-2.5-flash-preview:thinking"),
-        "code": ModelConfig(model="google/gemini-2.5-flash-preview:thinking"),
+        "text": ModelConfig(model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview")),
+        "code": ModelConfig(model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview")),
         "multimodal": ModelConfig(
-            model="google/gemini-2.5-flash-preview:thinking",
+            model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview"),
             supports=["text", "image", "audio"],
         ),
     })
     
     # Sources
     sources: List[SourceConfig] = field(default_factory=list)
+    
+    # History
+    history_enabled: bool = True
+    history_db_path: str = "./toonic_history.db"
     
     # Logging
     log_level: str = "INFO"
@@ -110,6 +140,10 @@ class ServerConfig:
         if model:
             for m in cfg.models.values():
                 m.model = model
+        
+        # History
+        cfg.history_enabled = os.environ.get("TOONIC_HISTORY_ENABLED", "true").lower() == "true"
+        cfg.history_db_path = os.environ.get("TOONIC_DB_PATH", cfg.history_db_path)
         
         return cfg
     
