@@ -26,3 +26,5 @@ Last updated: 2026-02-26
 
 
 testowanie różnych użyć, kontekstow
+możłiwość wysłania jednym plikiem wszystkich inncyh plikow w folderze
+wszystko razem w jednym razem z base64 jako cały kontekts
