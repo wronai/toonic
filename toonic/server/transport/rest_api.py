@@ -14,6 +14,158 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("toonic.transport.rest")
 
+
+EVENTS_VIEWER_HTML = """<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"UTF-8\">
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+  <title>Toonic Events Viewer</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; background: #0f1117; color: #e5e7eb; }
+    header { position: sticky; top: 0; z-index: 10; background: #111827; border-bottom: 1px solid #1f2937; padding: 10px 14px; display: flex; gap: 10px; align-items: center; }
+    header .title { font-weight: 700; color: #60a5fa; }
+    header .hint { color: #9ca3af; font-size: 12px; }
+    header input, header select, header button { background: #0b1220; color: #e5e7eb; border: 1px solid #374151; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+    header button { cursor: pointer; background: #2563eb; border-color: #2563eb; }
+    header button:hover { background: #1d4ed8; }
+    main { padding: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .card { border: 1px solid #1f2937; background: #0b1220; border-radius: 12px; overflow: hidden; }
+    .card-hdr { padding: 10px 12px; border-bottom: 1px solid #1f2937; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+    .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #111827; color: #9ca3af; border: 1px solid #1f2937; }
+    .tag.type { color: #93c5fd; border-color: #1e3a8a; background: #0b1530; }
+    .tag.ts { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+    .body { display: grid; grid-template-columns: 360px 1fr; gap: 0; }
+    .img { border-right: 1px solid #1f2937; background: #050812; display: flex; align-items: center; justify-content: center; min-height: 220px; }
+    .img img { width: 100%; height: auto; display: block; object-fit: contain; max-height: 520px; }
+    .noimg { padding: 20px; color: #6b7280; font-size: 13px; }
+    .meta { padding: 10px 12px; overflow: auto; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; color: #cbd5e1; }
+    .footer { padding: 16px 0; color: #6b7280; text-align: center; font-size: 12px; }
+    @media (max-width: 900px) { .body { grid-template-columns: 1fr; } .img { border-right: none; border-bottom: 1px solid #1f2937; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class=\"title\">Toonic Events Viewer</div>
+    <div class=\"hint\">events.jsonl (scroll to load more)</div>
+    <select id=\"type\">
+      <option value=\"\">all</option>
+      <option value=\"context\">context</option>
+      <option value=\"trigger\">trigger</option>
+      <option value=\"action\">action</option>
+      <option value=\"status\">status</option>
+      <option value=\"error\">error</option>
+    </select>
+    <input id=\"q\" placeholder=\"search in JSON...\" />
+    <button onclick=\"reloadAll()\">Reload</button>
+    <div class=\"hint\" id=\"stat\" style=\"margin-left:auto\"></div>
+  </header>
+  <main>
+    <div class=\"grid\" id=\"list\"></div>
+    <div class=\"footer\" id=\"footer\">Ready.</div>
+  </main>
+
+<script>
+  let start = 0;
+  const limit = 25;
+  let loading = false;
+  let hasMore = true;
+
+  function fmtTs(ts) {
+    try {
+      const d = new Date(ts * 1000);
+      return d.toISOString();
+    } catch { return String(ts); }
+  }
+
+  function findImage(eventObj) {
+    const data = (eventObj && eventObj.data) ? eventObj.data : {};
+    const enc = data.raw_encoding || "";
+    const b64 = data.raw_data || "";
+    if (!b64) return null;
+    if (enc === "base64_jpeg" || enc === "jpeg_base64") return b64;
+    if (enc.startsWith("base64")) return b64;
+    return b64;
+  }
+
+  function cardHtml(evt) {
+    const imgB64 = findImage(evt);
+    const type = evt.event || "unknown";
+    const ts = evt.timestamp || 0;
+    const json = JSON.stringify(evt, null, 2);
+    let imgPart = `<div class=\"noimg\">No image in event</div>`;
+    if (imgB64) {
+      imgPart = `<img loading=\"lazy\" src=\"data:image/jpeg;base64,${imgB64}\" alt=\"event image\"/>`;
+    }
+    return `
+      <div class=\"card\">
+        <div class=\"card-hdr\">
+          <span class=\"tag type\">${type}</span>
+          <span class=\"tag ts\">${fmtTs(ts)}</span>
+        </div>
+        <div class=\"body\">
+          <div class=\"img\">${imgPart}</div>
+          <div class=\"meta\"><pre>${escapeHtml(json)}</pre></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  }
+
+  async function loadMore() {
+    if (loading || !hasMore) return;
+    loading = true;
+    document.getElementById('footer').textContent = 'Loading...';
+    const type = document.getElementById('type').value;
+    const q = document.getElementById('q').value;
+    const url = `/api/events-file?start=${start}&limit=${limit}&event_type=${encodeURIComponent(type)}&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      document.getElementById('footer').textContent = `Error: ${res.status}`;
+      loading = false;
+      return;
+    }
+    const payload = await res.json();
+    const items = payload.items || [];
+    hasMore = Boolean(payload.has_more);
+    start = payload.next_start || (start + items.length);
+    const list = document.getElementById('list');
+    for (const evt of items) {
+      const div = document.createElement('div');
+      div.innerHTML = cardHtml(evt);
+      list.appendChild(div.firstElementChild);
+    }
+    document.getElementById('stat').textContent = `loaded: ${list.children.length}`;
+    document.getElementById('footer').textContent = hasMore ? 'Scroll to load more...' : 'End of file.';
+    loading = false;
+  }
+
+  function reloadAll() {
+    start = 0;
+    hasMore = true;
+    document.getElementById('list').innerHTML = '';
+    loadMore();
+  }
+
+  window.addEventListener('scroll', () => {
+    const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 900);
+    if (nearBottom) loadMore();
+  });
+  document.getElementById('type').addEventListener('change', reloadAll);
+  document.getElementById('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') reloadAll(); });
+
+  reloadAll();
+</script>
+</body>
+</html>
+"""
+
 # HTML template for web UI
 WEB_UI_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -411,6 +563,10 @@ def create_app(server) -> Any:
     async def web_ui():
         return WEB_UI_HTML
 
+    @app.get("/events-view", response_class=HTMLResponse)
+    async def events_viewer_ui():
+        return EVENTS_VIEWER_HTML
+
     # ── WebSocket ────────────────────────────────────────────
 
     @app.websocket("/ws")
@@ -496,6 +652,88 @@ def create_app(server) -> Any:
     async def get_events(limit: int = 100, event_type: str = ""):
         """Get recent event log entries."""
         return server.get_event_log(limit=limit, event_type=event_type)
+
+    @app.get("/api/events-file")
+    async def get_events_file(
+        start: int = 0,
+        limit: int = 50,
+        event_type: str = "",
+        q: str = "",
+        max_bytes: int = 2_000_000,
+    ):
+        """Read persisted events.jsonl with basic pagination.
+
+        Args:
+            start: 0-based line offset
+            limit: max number of events to return
+            event_type: filter by top-level event field
+            q: substring filter (applied to raw JSON line)
+            max_bytes: safety limit for how much data we read per request
+        """
+        path = Path(getattr(server, "_events_log_path", server.data_dir / "events.jsonl"))
+        if limit < 1:
+            limit = 1
+        if limit > 200:
+            limit = 200
+        if start < 0:
+            start = 0
+        if max_bytes < 50_000:
+            max_bytes = 50_000
+        if max_bytes > 10_000_000:
+            max_bytes = 10_000_000
+
+        if not path.exists():
+            return {"items": [], "has_more": False, "next_start": start, "path": str(path)}
+
+        items: List[Dict[str, Any]] = []
+        bytes_read = 0
+        line_no = 0
+        next_start = start
+
+        try:
+            with open(path, "r", encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    bytes_read += len(line.encode("utf-8", errors="ignore"))
+                    if bytes_read > max_bytes:
+                        break
+
+                    if line_no < start:
+                        line_no += 1
+                        continue
+
+                    raw = line.strip()
+                    line_no += 1
+                    next_start = line_no
+                    if not raw:
+                        continue
+                    if q and q.lower() not in raw.lower():
+                        continue
+                    try:
+                        obj = json.loads(raw)
+                    except Exception:
+                        continue
+                    if event_type and obj.get("event") != event_type:
+                        continue
+                    items.append(obj)
+                    if len(items) >= limit:
+                        break
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"error": str(e)})
+
+        has_more = False
+        if len(items) >= limit:
+            has_more = True
+        elif bytes_read <= max_bytes:
+            has_more = False
+        else:
+            has_more = True
+
+        return {
+            "items": items,
+            "has_more": has_more,
+            "next_start": next_start,
+            "path": str(path),
+        }
 
     @app.get("/api/triggers")
     async def get_triggers():

@@ -1,3 +1,14 @@
+## [1.0.13] - 2026-02-26
+
+### Summary
+
+feat(toonic): CLI interface with 2 supporting modules
+
+### Other
+
+- update toonic/server/transport/rest_api.py
+
+
 ## [1.0.12] - 2026-02-26
 
 ### Summary
