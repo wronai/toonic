@@ -1,3 +1,23 @@
+## [1.0.2] - 2026-02-26
+
+### Summary
+
+feat(docs): configuration management system
+
+### Docs
+
+- docs: update 08-toonic-multimodal-video.md
+- docs: update 09-toonic-audio-vad.md
+- docs: update 10-evidence-graph.md
+- docs: update 11-videochat-logic.md
+
+### Other
+
+- update TODO/stage_5_video_handler.py
+- update TODO/stage_6_audio_handler.py
+- update TODO/stage_7_evidence_graph.py
+
+
 ## [1.0.1] - 2026-02-26
 
 ### Summary
