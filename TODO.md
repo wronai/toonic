@@ -22,3 +22,7 @@
 - Use `goal doctor --todo` to diagnose and track issues
 
 Last updated: 2026-02-26
+
+
+
+testowanie różnych użyć, kontekstow

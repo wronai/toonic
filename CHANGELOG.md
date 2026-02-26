@@ -1,3 +1,21 @@
+## [1.0.14] - 2026-02-26
+
+### Summary
+
+feat(docs): deep code analysis engine with 7 supporting modules
+
+### Docs
+
+- docs: update TODO.md
+
+### Other
+
+- update project.toon
+- update toonic/server/__main__.py
+- update toonic/server/transport/rest_api.py
+- update unified_toon.py
+
+
 ## [1.0.13] - 2026-02-26
 
 ### Summary

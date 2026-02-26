@@ -73,12 +73,34 @@ EVENTS_VIEWER_HTML = """<!DOCTYPE html>
   const limit = 25;
   let loading = false;
   let hasMore = true;
+  let exchangesMap = new Map(); // timestamp -> content
 
   function fmtTs(ts) {
     try {
       const d = new Date(ts * 1000);
       return d.toLocaleString();
     } catch { return String(ts); }
+  }
+
+  // Load exchanges to build timestamp->content map
+  async function loadExchanges() {
+    try {
+      const res = await fetch('/api/exchanges?limit=200');
+      const data = await res.json();
+      const items = data.items || [];
+      
+      // Build map of timestamp -> content for quick lookup
+      exchangesMap.clear();
+      items.forEach(item => {
+        if (item.event === 'action' && item.data && item.data.content) {
+          exchangesMap.set(item.timestamp, item.data.content);
+        }
+      });
+      
+      console.log(`Loaded ${exchangesMap.size} exchanges`);
+    } catch (e) {
+      console.error('Failed to load exchanges:', e);
+    }
   }
 
   function findImage(eventObj) {
@@ -95,24 +117,35 @@ EVENTS_VIEWER_HTML = """<!DOCTYPE html>
     if (!obj || typeof obj !== 'object') return obj;
     const copy = JSON.parse(JSON.stringify(obj));
     
-    // Handle both root-level raw_data and nested data.raw_data
-    const checkAndTruncate = (path) => {
-      if (copy[path] && typeof copy[path] === 'string' && copy[path].length > 20) {
-        const sizeKB = (copy[path].length * 0.75 / 1024).toFixed(1);
-        copy[path] = copy[path].substring(0, 10) + '...' + copy[path].substring(copy[path].length - 10) + ` (${sizeKB}KB)`;
-      }
-    };
+    // Handle root-level raw_data
+    if (copy.raw_data && typeof copy.raw_data === 'string' && copy.raw_data.length > 20) {
+      const sizeKB = (copy.raw_data.length * 0.75 / 1024).toFixed(1);
+      copy.raw_data = copy.raw_data.substring(0, 10) + '...' + copy.raw_data.substring(copy.raw_data.length - 10) + ` (${sizeKB}KB)`;
+    }
     
-    checkAndTruncate('raw_data');
-    if (copy.data && typeof copy.data === 'object') {
-      checkAndTruncate('data.raw_data');
+    // Handle nested data.raw_data
+    if (copy.data && typeof copy.data === 'object' && copy.data.raw_data && typeof copy.data.raw_data === 'string' && copy.data.raw_data.length > 20) {
+      const sizeKB = (copy.data.raw_data.length * 0.75 / 1024).toFixed(1);
+      copy.data.raw_data = copy.data.raw_data.substring(0, 10) + '...' + copy.data.raw_data.substring(copy.data.raw_data.length - 10) + ` (${sizeKB}KB)`;
     }
     
     return copy;
   }
 
+  function findImageTruncated(eventObj) {
+    const data = (eventObj && eventObj.data) ? eventObj.data : {};
+    const enc = data.raw_encoding || "";
+    // For image display, we need the FULL raw_data from original event, not truncated
+    // So we access it directly from the original event object
+    const b64 = (eventObj && eventObj.data && eventObj.data.raw_data) ? eventObj.data.raw_data : "";
+    if (!b64) return null;
+    if (enc === "base64_jpeg" || enc === "jpeg_base64") return b64;
+    if (enc.startsWith("base64")) return b64;
+    return b64;
+  }
+
   function cardHtml(evt) {
-    const imgB64 = findImage(evt);
+    const imgB64 = findImageTruncated(evt);
     const type = evt.event || "unknown";
     const ts = evt.timestamp || 0;
     const truncatedEvt = truncateRawData(evt);
@@ -120,6 +153,21 @@ EVENTS_VIEWER_HTML = """<!DOCTYPE html>
     let imgPart = `<div class=\"noimg\">No image in event</div>`;
     if (imgB64) {
       imgPart = `<img loading=\"lazy\" src=\"data:image/jpeg;base64,${imgB64}\" alt=\"event image\"/>`;
+      // Find LLM description for this event (look for closest exchange timestamp)
+      if (exchangesMap.size > 0) {
+        const exchangeTimestamps = Array.from(exchangesMap.keys()).sort((a, b) => Math.abs(a - ts) - Math.abs(b - ts));
+        if (exchangeTimestamps.length > 0) {
+          const closestTs = exchangeTimestamps[0];
+          const timeDiff = Math.abs(closestTs - ts);
+          // Only show description if timestamp is within 30 seconds
+          if (timeDiff < 30) {
+            const description = exchangesMap.get(closestTs);
+            imgPart += `<div class=\"description\" style=\"margin-top: 8px; padding: 8px; background: #1a1d27; border-radius: 6px; font-size: 12px; color: #e5e7eb; border-left: 3px solid #60a5fa;\">
+              <strong>🤖 LLM Analysis:</strong><br>${description.replace(/\n/g, '<br>')}
+            </div>`;
+          }
+        }
+      }
     }
     return `
       <div class=\"card\">
@@ -182,7 +230,10 @@ EVENTS_VIEWER_HTML = """<!DOCTYPE html>
   document.getElementById('type').addEventListener('change', reloadAll);
   document.getElementById('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') reloadAll(); });
 
-  reloadAll();
+  // Load exchanges first, then load events
+  loadExchanges().then(() => {
+    reloadAll();
+  });
 </script>
 </body>
 </html>
@@ -466,17 +517,16 @@ function truncateRawData(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const copy = JSON.parse(JSON.stringify(obj));
   
-  // Handle both root-level raw_data and nested data.raw_data
-  const checkAndTruncate = (path) => {
-    if (copy[path] && typeof copy[path] === 'string' && copy[path].length > 20) {
-      const sizeKB = (copy[path].length * 0.75 / 1024).toFixed(1);
-      copy[path] = copy[path].substring(0, 10) + '...' + copy[path].substring(copy[path].length - 10) + ` (${sizeKB}KB)`;
-    }
-  };
+  // Handle root-level raw_data
+  if (copy.raw_data && typeof copy.raw_data === 'string' && copy.raw_data.length > 20) {
+    const sizeKB = (copy.raw_data.length * 0.75 / 1024).toFixed(1);
+    copy.raw_data = copy.raw_data.substring(0, 10) + '...' + copy.raw_data.substring(copy.raw_data.length - 10) + ` (${sizeKB}KB)`;
+  }
   
-  checkAndTruncate('raw_data');
-  if (copy.data && typeof copy.data === 'object') {
-    checkAndTruncate('data.raw_data');
+  // Handle nested data.raw_data
+  if (copy.data && typeof copy.data === 'object' && copy.data.raw_data && typeof copy.data.raw_data === 'string' && copy.data.raw_data.length > 20) {
+    const sizeKB = (copy.data.raw_data.length * 0.75 / 1024).toFixed(1);
+    copy.data.raw_data = copy.data.raw_data.substring(0, 10) + '...' + copy.data.raw_data.substring(copy.data.raw_data.length - 10) + ` (${sizeKB}KB)`;
   }
   
   return copy;
@@ -796,6 +846,77 @@ def create_app(server) -> Any:
                 except Exception:
                     continue
                 if event_type and obj.get("event") != event_type:
+                    continue
+                items.append(obj)
+                if len(items) >= limit:
+                    break
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"error": str(e)})
+
+        has_more = False
+        if len(items) >= limit:
+            has_more = True
+        elif bytes_read <= max_bytes:
+            has_more = False
+        else:
+            has_more = True
+
+        return {
+            "items": items,
+            "has_more": has_more,
+            "next_start": next_start,
+            "path": str(path),
+        }
+
+    @app.get("/api/exchanges")
+    async def get_exchanges(
+        start: int = 0,
+        limit: int = 50,
+        max_bytes: int = 2_000_000,
+    ):
+        """Read persisted exchanges.jsonl with basic pagination."""
+        path = Path(getattr(server, "_exchanges_log_path", server.data_dir / "exchanges.jsonl"))
+        if limit < 1:
+            limit = 1
+        if limit > 200:
+            limit = 200
+        if start < 0:
+            start = 0
+        if max_bytes < 50_000:
+            max_bytes = 50_000
+        if max_bytes > 10_000_000:
+            max_bytes = 10_000_000
+
+        if not path.exists():
+            return {"items": [], "has_more": False, "next_start": start, "path": str(path)}
+
+        items: List[Dict[str, Any]] = []
+        bytes_read = 0
+        next_start = start
+
+        try:
+            # Read all lines first, then process from end (newest first)
+            with open(path, "r", encoding="utf-8", errors="replace") as f:
+                all_lines = f.readlines()
+            
+            # Reverse to get newest first
+            all_lines.reverse()
+            
+            for i, line in enumerate(all_lines):
+                bytes_read += len(line.encode("utf-8", errors="ignore"))
+                if bytes_read > max_bytes:
+                    break
+
+                if i < start:
+                    continue
+
+                raw = line.strip()
+                next_start = i + 1
+                if not raw:
+                    continue
+                try:
+                    obj = json.loads(raw)
+                except Exception:
                     continue
                 items.append(obj)
                 if len(items) >= limit:

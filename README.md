@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Tests](https://img.shields.io/badge/tests-227%20passed-brightgreen.svg)](#testing)
-[![Version](https://img.shields.io/badge/version-1.0.13-orange.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-1.0.14-orange.svg)](VERSION)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED.svg)](#docker)
 [![OpenRouter](https://img.shields.io/badge/LLM-OpenRouter-purple.svg)](https://openrouter.ai)
 

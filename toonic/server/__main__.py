@@ -13,8 +13,70 @@ import argparse
 import asyncio
 import logging
 import signal
+import socket
+import subprocess
 import sys
 from pathlib import Path
+
+
+def check_port_occupied(host: str, port: int) -> bool:
+    """Check if port is occupied."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(1)
+            result = s.connect_ex((host, port))
+            return result == 0
+    except Exception:
+        return False
+
+
+def stop_process_using_port(host: str, port: int) -> bool:
+    """Stop process using the specified port."""
+    try:
+        # Find process ID using the port
+        result = subprocess.run(
+            ["lsof", "-ti", f"{host}:{port}"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            pids = result.stdout.strip().split()
+            for pid in pids:
+                try:
+                    subprocess.run(["kill", "-9", pid], timeout=5)
+                    print(f"Stopped process {pid} using port {port}")
+                except subprocess.TimeoutExpired:
+                    print(f"Failed to stop process {pid}")
+            return True
+        else:
+            print(f"No process found using port {port}")
+            return False
+    except subprocess.TimeoutExpired:
+        print("Timeout while checking port usage")
+        return False
+    except FileNotFoundError:
+        print("lsof command not available (not on Unix-like system)")
+        return False
+    except Exception as e:
+        print(f"Error stopping process: {e}")
+        return False
+
+
+def ensure_port_available(host: str, port: int) -> None:
+    """Ensure port is available, stop conflicting process if needed."""
+    if check_port_occupied(host, port):
+        print(f"Port {port} is occupied, attempting to stop conflicting process...")
+        if stop_process_using_port(host, port):
+            # Wait a moment for the process to fully stop
+            import time
+            time.sleep(1)
+            if check_port_occupied(host, port):
+                print(f"Warning: Port {port} still occupied after stopping process")
+            else:
+                print(f"Port {port} is now available")
+        else:
+            print(f"Could not stop process using port {port}")
 
 
 def parse_args():
@@ -157,6 +219,9 @@ async def run_server(args):
             print("ERROR: pip install fastapi uvicorn")
             print("  Or run with --no-web flag")
             sys.exit(1)
+
+        # Ensure port is available before starting web UI
+        ensure_port_available(config.host, config.port)
 
         app = create_app(server)
 
