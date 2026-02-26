@@ -1,3 +1,22 @@
+## [1.0.7] - 2026-02-26
+
+### Summary
+
+refactor(config): deep code analysis engine with 6 supporting modules
+
+### Build
+
+- update pyproject.toml
+
+### Other
+
+- update .gitignore
+- update project.toon
+- update toonic/server/__main__.py
+- update toonic/server/main.py
+- update toonic/server/transport/rest_api.py
+
+
 ## [1.0.6] - 2026-02-26
 
 ### Summary

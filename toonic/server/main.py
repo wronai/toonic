@@ -9,9 +9,11 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import signal
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from toonic.server.config import ServerConfig, SourceConfig
@@ -37,15 +39,24 @@ class ToonicServer:
 
     def __init__(self, config: ServerConfig, trigger_config: TriggerConfig | None = None):
         self.config = config
+        self.trigger_config = trigger_config
         self.accumulator = ContextAccumulator(
             max_tokens=config.max_context_tokens,
             allocation=config.token_allocation,
         )
+        # Data directory for logs, exchanges, etc.
+        self.data_dir = Path(os.environ.get("TOONIC_DATA_DIR", "./toonic_data"))
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        (self.data_dir / "exchanges").mkdir(exist_ok=True)
+        (self.data_dir / "sources").mkdir(exist_ok=True)
         # History + Query
         self.history = None
         self.query_adapter = None
         if config.history_enabled:
-            self.history = ConversationHistory(config.history_db_path)
+            db_path = config.history_db_path
+            if db_path == "./toonic_history.db":
+                db_path = str(self.data_dir / "history.db")
+            self.history = ConversationHistory(db_path)
             self.query_adapter = QueryAdapter(self.history)
         # Router (with history for logging)
         self.router = LLMRouter(config, history=self.history)
@@ -67,6 +78,10 @@ class ToonicServer:
         self._total_chunks = 0
         self._actions: List[ActionResponse] = []
         self._recent_images: List[str] = []  # base64 JPEG keyframes for multimodal
+        self._event_log: List[Dict] = []     # in-memory event log for Web UI
+        # Open persistent log files
+        self._events_log_path = self.data_dir / "events.jsonl"
+        self._exchanges_log_path = self.data_dir / "exchanges.jsonl"
 
     # ── Lifecycle ────────────────────────────────────────────────
 
@@ -272,8 +287,26 @@ class ToonicServer:
         self._event_listeners.discard(callback)
 
     async def _emit_event(self, event_type: str, data: Dict[str, Any]) -> None:
-        """Emit event to all listeners."""
+        """Emit event to all listeners + persist to log files."""
         event = ServerEvent(event_type=event_type, data=data)
+        # Keep in-memory log (last 500 events)
+        entry = event.to_dict()
+        self._event_log.append(entry)
+        if len(self._event_log) > 500:
+            self._event_log = self._event_log[-500:]
+        # Persist to events.jsonl
+        try:
+            with open(self._events_log_path, "a") as f:
+                f.write(json.dumps(entry, default=str) + "\n")
+        except Exception:
+            pass
+        # Persist LLM exchanges to exchanges.jsonl
+        if event_type == "action":
+            try:
+                with open(self._exchanges_log_path, "a") as f:
+                    f.write(json.dumps(entry, default=str) + "\n")
+            except Exception:
+                pass
         for listener in list(self._event_listeners):
             try:
                 await listener(event)
@@ -291,9 +324,19 @@ class ToonicServer:
             "sources": {sid: type(w).__name__ for sid, w in self._watchers.items()},
             "total_chunks": self._total_chunks,
             "total_actions": len(self._actions),
+            "total_events": len(self._event_log),
+            "data_dir": str(self.data_dir.resolve()),
+            "trigger_stats": self.trigger_scheduler.get_stats(),
             "accumulator": self.accumulator.get_stats(),
             "router": self.router.get_stats(),
         }
+
+    def get_event_log(self, limit: int = 100, event_type: str = "") -> List[Dict]:
+        """Get recent event log entries."""
+        events = self._event_log
+        if event_type:
+            events = [e for e in events if e.get("event") == event_type]
+        return events[-limit:]
 
     def get_actions(self, limit: int = 20) -> List[Dict]:
         """Get recent actions."""

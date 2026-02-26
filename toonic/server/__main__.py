@@ -126,7 +126,12 @@ async def run_server(args):
         print(f"  Generating triggers from: {args.when}")
         trigger_config = await nlp.generate(args.when, source=source_hint, goal=args.goal)
         from toonic.server.triggers.dsl import dump_triggers
-        print(f"  Generated YAML:\n{dump_triggers(trigger_config)}")
+        yaml_out = dump_triggers(trigger_config)
+        print(f"  Generated YAML:\n{yaml_out}")
+        # Save to CWD so user can inspect/edit
+        triggers_path = Path("triggers.yaml")
+        triggers_path.write_text(yaml_out)
+        print(f"  Saved to: {triggers_path.resolve()}")
 
     # Create server
     server = ToonicServer(config, trigger_config=trigger_config)
@@ -167,6 +172,11 @@ async def run_server(args):
         print(f"  Sources:  {len(config.sources)}")
         print(f"  Interval: {config.interval}s")
         print(f"  Model:    {args.model or 'default'}")
+        print(f"  Data:     {server.data_dir.resolve()}/")
+        print(f"  History:  {server.data_dir.resolve()}/history.db")
+        print(f"  Logs:     {server.data_dir.resolve()}/events.jsonl")
+        if trigger_config:
+            print(f"  Triggers: {len(trigger_config.triggers)} rule(s)")
         print()
 
         uvi_config = uvicorn.Config(
@@ -185,10 +195,20 @@ async def run_server(args):
 
 def main():
     args = parse_args()
+    import os
+    data_dir = Path(os.environ.get("TOONIC_DATA_DIR", "./toonic_data"))
+    data_dir.mkdir(parents=True, exist_ok=True)
+    log_file = data_dir / "server.log"
+    # Console + file logging
+    handlers = [
+        logging.StreamHandler(),
+        logging.FileHandler(str(log_file), encoding="utf-8"),
+    ]
     logging.basicConfig(
         level=getattr(logging, args.log_level),
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
         datefmt="%H:%M:%S",
+        handlers=handlers,
     )
     try:
         asyncio.run(run_server(args))

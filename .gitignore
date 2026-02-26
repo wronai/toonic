@@ -66,6 +66,10 @@ logs/
 *.sqlite3
 data/
 
+# Toonic runtime data
+toonic_data/
+triggers.yaml
+
 # Node.js
 node_modules/
 npm-debug.log*
