@@ -205,7 +205,12 @@ class TriggerConfig:
 
 def load_triggers(yaml_str: str) -> TriggerConfig:
     """Parse YAML string into TriggerConfig."""
-    import yaml
+    try:
+        import yaml
+    except ModuleNotFoundError as e:
+        raise ImportError(
+            "PyYAML is required for triggers. Install with: pip install 'toonic[server]' or pip install pyyaml"
+        ) from e
     data = yaml.safe_load(yaml_str)
     if not data:
         return TriggerConfig()
@@ -214,5 +219,10 @@ def load_triggers(yaml_str: str) -> TriggerConfig:
 
 def dump_triggers(config: TriggerConfig) -> str:
     """Serialize TriggerConfig to YAML string."""
-    import yaml
+    try:
+        import yaml
+    except ModuleNotFoundError as e:
+        raise ImportError(
+            "PyYAML is required for triggers. Install with: pip install 'toonic[server]' or pip install pyyaml"
+        ) from e
     return yaml.dump(config.to_dict(), default_flow_style=False, sort_keys=False, allow_unicode=True)

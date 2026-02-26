@@ -19,16 +19,17 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries",
 ]
 
 [project.optional-dependencies]
 video = ["opencv-python>=4.8"]
 audio = ["numpy>=1.24", "webrtcvad>=2.0"]
-server = ["fastapi>=0.110", "uvicorn>=0.27", "pyyaml>=6.0", "httpx>=0.27"]
+server = ["fastapi>=0.110", "uvicorn>=0.27", "pyyaml>=6.0", "httpx>=0.27", "websockets>=12.0"]
 llm = ["litellm>=1.30"]
-all = ["opencv-python>=4.8", "numpy>=1.24", "webrtcvad>=2.0", "fastapi>=0.110", "uvicorn>=0.27", "pyyaml>=6.0", "httpx>=0.27", "litellm>=1.30"]
-dev = ["pytest>=7.0", "pytest-asyncio>=0.23", "pytest-cov>=4.0", "pyyaml>=6.0", "numpy>=1.24", "fastapi>=0.110", "uvicorn>=0.27", "httpx>=0.27"]
+all = ["opencv-python>=4.8", "numpy>=1.24", "webrtcvad>=2.0", "fastapi>=0.110", "uvicorn>=0.27", "pyyaml>=6.0", "httpx>=0.27", "websockets>=12.0", "litellm>=1.30"]
+dev = ["pytest>=7.0", "pytest-asyncio>=0.23", "pytest-cov>=4.0", "pyyaml>=6.0", "numpy>=1.24", "fastapi>=0.110", "uvicorn>=0.27", "httpx>=0.27", "websockets>=12.0"]
 
 [project.scripts]
 toonic = "toonic.cli:cli_main"

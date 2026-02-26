@@ -2,8 +2,8 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)](#testing)
-[![Version](https://img.shields.io/badge/version-1.0.7-orange.svg)](VERSION)
+[![Tests](https://img.shields.io/badge/tests-160%20passed-brightgreen.svg)](#testing)
+[![Version](https://img.shields.io/badge/version-1.0.9-orange.svg)](VERSION)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED.svg)](#docker)
 [![OpenRouter](https://img.shields.io/badge/LLM-OpenRouter-purple.svg)](https://openrouter.ai)
 
@@ -17,6 +17,8 @@ Toonic Server dodaje **dwukierunkowe strumieniowanie** danych między źródłam
 - [Quick Start](#-quick-start)
 - [Architektura](#-architektura)
 - [Toonic Server](#-toonic-server)
+- [Trigger System](#-trigger-system--event-driven-llm-dispatch)
+- [Data Directory](#-data-directory--persistent-logging)
 - [CLI Shell](#-cli-shell)
 - [Web UI](#-web-ui)
 - [Docker](#-docker)
@@ -59,10 +61,13 @@ make server-camera
 
 ```
 Sources (watchers)  →  TOON Pipeline  →  Context Accumulator  →  LLM Router  →  Actions
-     ↑                                     (token budget)            ↓
-     └────────── feedback ←──── History DB ←──── ActionResponse ←── LLM
+     ↑                        ↓                (token budget)            ↓
+     │                  Trigger Scheduler                               ↓
+     │                  (event detectors)                               ↓
+     └────────── feedback ←──── History DB ←──── ActionResponse ←────── LLM
                                     ↓
-                              NLP/SQL Query ← User
+                         NLP/SQL Query ← User
+                         Data Directory (JSONL logs)
 ```
 
 | Komponent | Opis |
@@ -70,9 +75,12 @@ Sources (watchers)  →  TOON Pipeline  →  Context Accumulator  →  LLM Route
 | **FileWatcher** | Monitoruje katalogi, konwertuje pliki do TOON |
 | **LogWatcher** | Tail log files, kategoryzacja ERR/WARN/INFO |
 | **StreamWatcher** | RTSP video, scene detection, keyframe extraction |
+| **TriggerScheduler** | Event-driven dispatch: periodic/on_event/hybrid modes |
+| **Event Detectors** | Motion, scene_change, object, pattern, speech, anomaly |
 | **Accumulator** | Token budget management per kategoria |
 | **LLM Router** | Routing do odpowiedniego modelu (text/code/multimodal) |
 | **History DB** | SQLite log wszystkich wymian z LLM |
+| **Data Directory** | JSONL logs: events, exchanges, server logs |
 | **NLP/SQL Adapter** | Przeszukiwanie historii przez zapytania naturalne |
 
 → Pełna dokumentacja: [docs/architecture.md](docs/architecture.md)
@@ -129,7 +137,51 @@ Wspierane event types:
 
 Tryby: **periodic** (co N s), **on_event** (na zdarzenie), **hybrid** (zdarzenie + fallback periodic)
 
+**Generated `triggers.yaml`** zapisywany automatycznie w CWD:
+```yaml
+triggers:
+  - name: object-person-hybrid
+    mode: hybrid
+    interval_s: 60.0
+    source: video
+    events:
+      - type: object
+        threshold: 0.3
+        min_duration_s: 1.0
+        label: person
+    fallback:
+      periodic_s: 60.0
+    cooldown_s: 1.0
+    goal: describe what you see in each video frame
+```
+
 → Dokumentacja: [docs/triggers.md](docs/triggers.md)
+
+## 📁 Data Directory — Persistent Logging
+
+Wszystkie dane serwera zapisywane w `toonic_data/` (lub `$TOONIC_DATA_DIR`):
+
+```bash
+toonic_data/
+├── events.jsonl          # Wszystkie eventy (context, trigger, action, status)
+├── exchanges.jsonl       # LLM exchanges (subset of events)
+├── history.db            # SQLite z pełną historią wymian
+├── server.log            # Server logs (duplikat konsoli)
+└── sources/              # Cached source data
+```
+
+**Przykład `events.jsonl`:**
+```json
+{"event":"context","data":{"source_id":"video:rtsp://...","category":"video","toon_spec":"..."},"timestamp":1772108742.92}
+{"event":"trigger","data":{"rule":"object-person-hybrid","reason":"periodic","detections":[]},"timestamp":1772108742.92}
+{"event":"action","data":{"action_type":"report","content":"The frame shows...","model_used":"google/gemini-3-flash-preview"},"timestamp":1772108749.22}
+```
+
+**Browsing via API:**
+```bash
+curl http://localhost:8900/api/events?limit=50
+curl http://localhost:8900/api/data-dir
+```
 
 ## 💻 CLI Shell
 
@@ -151,14 +203,23 @@ toonic> model google/gemini-3-flash-preview  # zmiana modelu
 
 Start: `make server` → otwórz http://localhost:8900
 
-| Panel | Funkcja |
-|-------|---------|
-| **Live Events** | Real-time stream eventów z watcherów |
-| **LLM Actions** | Odpowiedzi LLM z akcjami |
-| **Sources** | Dynamiczne dodawanie/usuwanie źródeł |
-| **Stats** | Tokeny, chunks, uptime, LLM calls |
-| **History** | Przeglądanie historii wymian z LLM |
-| **Query** | NLP/SQL wyszukiwanie w metadanych |
+**Nowy tabbed layout z 6 zakładkami:**
+
+| Tab | Funkcja |
+|-----|---------|
+| **Events** | Live event stream (context, trigger, action, error) z filtrowaniem |
+| **LLM Actions** | Przeglądarka wymian z LLM (expandable, metadata) |
+| **History** | SQLite conversation history + NLP query interface |
+| **Triggers** | Trigger rules config + runtime stats |
+| **Sources** | Active sources + dynamiczne dodawanie/usuwanie |
+| **Overview** | Server stats: chunks, actions, events, tokens, uptime |
+
+**Features:**
+- WebSocket live updates
+- Event filtering (all/context/trigger/action/status/error)
+- Click to expand events/exchanges
+- NLP query: `"errors from last hour"` → SQL → results
+- Trigger stats: event_count, periodic_count, last_triggered
 
 → Dokumentacja: [docs/web-ui.md](docs/web-ui.md)
 
@@ -289,27 +350,39 @@ models:
 
 | Endpoint | Method | Opis |
 |----------|--------|------|
-| `/` | GET | Web UI |
+| `/` | GET | Web UI (tabbed layout) |
 | `/ws` | WS | WebSocket — live events |
-| `/api/status` | GET | Server status |
+| `/api/status` | GET | Server status + trigger stats |
+| `/api/events` | GET | Event log (limit, event_type filter) |
+| `/api/triggers` | GET | Trigger config + runtime stats |
+| `/api/data-dir` | GET | List files in data directory |
 | `/api/actions` | GET | Recent LLM actions |
 | `/api/analyze` | POST | Trigger analysis |
 | `/api/sources` | POST | Add data source |
 | `/api/sources/{id}` | DELETE | Remove source |
 | `/api/convert` | POST | Convert file to TOON |
 | `/api/formats` | GET | List supported formats |
-| `/api/history` | GET | Conversation history |
-| `/api/query` | POST | NLP/SQL query on history |
+| `/api/history` | GET | Conversation history (filters: category, model, action_type) |
+| `/api/history/stats` | GET | History statistics |
+| `/api/query` | POST | NLP query on history |
+| `/api/sql` | POST | Direct SQL query on history |
 
 → Pełna dokumentacja: [docs/api.md](docs/api.md)
 
 ## 🧪 Testing
 
 ```bash
-make test            # All tests (160+)
+make test            # All tests (160 passed)
 make test-server     # Server tests only
+make test-triggers   # Trigger system tests
 make test-cov        # With coverage report
 ```
+
+**Test coverage:**
+- Core pipeline: 14 file handlers
+- Server: watchers, accumulator, router, history
+- Triggers: DSL, detectors (7 types), scheduler (3 modes), NLP2YAML
+- Web UI: REST API, WebSocket, event broadcasting
 
 ## 📖 Dokumentacja
 

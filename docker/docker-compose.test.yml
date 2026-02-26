@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  toonic-test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.test
+    container_name: toonic-test
+    volumes:
+      - ../toonic:/app/toonic:ro
+      - ../tests:/app/tests:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: pytest -v --tb=short --cov=toonic --cov-report=term-missing
+
+  toonic-server-test:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: toonic-server-test
+    ports:
+      - "8900:8900"
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=google/gemini-3-flash-preview
+      - TOONIC_PORT=8900
+    command: >
+      --source file:./examples/code-analysis/sample-project/
+      --goal "analyze code quality"
+      --interval 60
+      --no-web
+    healthcheck:
+      test: ["CMD", "python", "-c", "import toonic; print('OK')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

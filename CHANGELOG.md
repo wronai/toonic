@@ -1,3 +1,93 @@
+## [1.0.9] - 2026-02-26
+
+### Summary
+
+feat(docs): deep code analysis engine with 7 supporting modules
+
+### Docs
+
+- docs: update README
+- docs: update server.md
+- docs: update web-ui.md
+- docs: update README
+
+### Build
+
+- update pyproject.toml
+
+### Other
+
+- docker: update Dockerfile
+- update docker/Dockerfile.minimal
+- update docker/Dockerfile.test
+- config: update docker-compose.test.yml
+- update toonic/server/triggers/dsl.py
+
+
+## [1.0.8] - 2026-02-26
+
+### Summary
+
+feat(triggers): Complete event-driven trigger system with NLP2YAML, 7 detectors, new Web UI, persistent logging
+
+### Added
+
+**Trigger System:**
+- Event-driven LLM dispatch: periodic, on_event, hybrid modes
+- 7 event detectors: motion, scene_change, object, audio_level, speech, pattern, anomaly
+- YAML DSL for declarative trigger rules
+- NLP2YAML: natural language → YAML trigger config (local parser + LLM fallback)
+- TriggerScheduler with cooldown, fallback, and source filtering
+- CLI flags: `--when` (NLP), `--triggers` (YAML file)
+- Auto-save generated triggers.yaml to CWD
+
+**Data Directory & Logging:**
+- Persistent data directory: `toonic_data/` (configurable via `$TOONIC_DATA_DIR`)
+- JSONL logs: `events.jsonl` (all events), `exchanges.jsonl` (LLM actions)
+- File logging: `server.log` (console + file)
+- SQLite history moved to data directory: `history.db`
+- Startup info displays data paths
+
+**Web UI Redesign:**
+- New tabbed layout with 6 tabs: Events, LLM Actions, History, Triggers, Sources, Overview
+- Live event stream with filtering (all/context/trigger/action/status/error)
+- Expandable events and exchanges (click to show full content)
+- History browser with NLP query interface
+- Trigger rules display with runtime stats (event_count, periodic_count, last_triggered)
+- Dark theme with color-coded events
+
+**REST API:**
+- `/api/events` — browsable event log with filters
+- `/api/triggers` — trigger config + runtime stats
+- `/api/data-dir` — list files in data directory
+- `/api/history/stats` — history statistics
+- `/api/sql` — direct SQL query on history
+
+### Changed
+
+- Updated README.md with trigger system, data directory, new Web UI sections
+- Updated docs/server.md with --when, --triggers, data directory, file logging
+- Updated docs/web-ui.md with tabbed layout, new endpoints, JavaScript API
+- Updated docs/triggers.md (already comprehensive)
+- Updated examples/log-monitoring with trigger usage
+- Badge: 160 tests passed (was 105)
+- Version: 1.0.8
+
+### Files Modified
+
+- `toonic/server/__main__.py` — triggers.yaml saving, file logging setup
+- `toonic/server/main.py` — data_dir, event log, JSONL persistence
+- `toonic/server/transport/rest_api.py` — complete Web UI rewrite, new endpoints
+- `toonic/server/triggers/` — new module: dsl.py, detectors.py, scheduler.py, nlp2yaml.py
+- `.gitignore` — added toonic_data/, triggers.yaml
+- `README.md`, `docs/server.md`, `docs/web-ui.md` — comprehensive updates
+
+### Tests
+
+- 160 tests passing (was 105)
+- New test coverage: triggers DSL, detectors, scheduler, NLP2YAML
+- Verified with real RTSP camera + OpenRouter
+
 ## [1.0.7] - 2026-02-26
 
 ### Summary

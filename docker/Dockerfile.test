@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# System deps for OpenCV
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 libglib2.0-0 ffmpeg git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy project files
+COPY pyproject.toml VERSION README.md ./
+COPY toonic/ toonic/
+COPY tests/ tests/
+
+# Install package with all dependencies + dev tools
+RUN pip install --no-cache-dir -e ".[all,dev]"
+
+# Run tests by default
+CMD ["pytest", "-v", "--tb=short", "--cov=toonic", "--cov-report=term-missing"]
