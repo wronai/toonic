@@ -77,7 +77,7 @@ EVENTS_VIEWER_HTML = """<!DOCTYPE html>
   function fmtTs(ts) {
     try {
       const d = new Date(ts * 1000);
-      return d.toISOString();
+      return d.toLocaleString();
     } catch { return String(ts); }
   }
 
@@ -91,11 +91,32 @@ EVENTS_VIEWER_HTML = """<!DOCTYPE html>
     return b64;
   }
 
+  function truncateRawData(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    const copy = JSON.parse(JSON.stringify(obj));
+    
+    // Handle both root-level raw_data and nested data.raw_data
+    const checkAndTruncate = (path) => {
+      if (copy[path] && typeof copy[path] === 'string' && copy[path].length > 20) {
+        const sizeKB = (copy[path].length * 0.75 / 1024).toFixed(1);
+        copy[path] = copy[path].substring(0, 10) + '...' + copy[path].substring(copy[path].length - 10) + ` (${sizeKB}KB)`;
+      }
+    };
+    
+    checkAndTruncate('raw_data');
+    if (copy.data && typeof copy.data === 'object') {
+      checkAndTruncate('data.raw_data');
+    }
+    
+    return copy;
+  }
+
   function cardHtml(evt) {
     const imgB64 = findImage(evt);
     const type = evt.event || "unknown";
     const ts = evt.timestamp || 0;
-    const json = JSON.stringify(evt, null, 2);
+    const truncatedEvt = truncateRawData(evt);
+    const json = JSON.stringify(truncatedEvt, null, 2);
     let imgPart = `<div class=\"noimg\">No image in event</div>`;
     if (imgB64) {
       imgPart = `<img loading=\"lazy\" src=\"data:image/jpeg;base64,${imgB64}\" alt=\"event image\"/>`;
@@ -135,6 +156,7 @@ EVENTS_VIEWER_HTML = """<!DOCTYPE html>
     const items = payload.items || [];
     hasMore = Boolean(payload.has_more);
     start = payload.next_start || (start + items.length);
+    // Items are already newest first from API, so append normally
     const list = document.getElementById('list');
     for (const evt of items) {
       const div = document.createElement('div');
@@ -252,6 +274,7 @@ WEB_UI_HTML = """<!DOCTYPE html>
   <div class="tab" data-tab="history">History</div>
   <div class="tab" data-tab="triggers">Triggers</div>
   <div class="tab" data-tab="sources">Sources</div>
+  <div class="tab" data-tab="events-file">Events File</div>
   <div class="tab" data-tab="overview">Overview</div>
 </div>
 <div class="main">
@@ -307,6 +330,15 @@ WEB_UI_HTML = """<!DOCTYPE html>
       <button onclick="addSource()">Add Source</button>
     </div>
   </div>
+  <!-- Events File tab -->
+  <div class="tab-content" id="tc-events-file">
+    <div class="panel-hdr">Events File Viewer <span class="cnt" id="events-file-total">0</span>
+      <button class="sm" onclick="openEventsViewer()" style="margin-left:auto">Open in New Tab</button>
+    </div>
+    <div class="panel-body" id="events-file-list">
+      <div class="empty">Click "Open in New Tab" to view the full events file viewer</div>
+    </div>
+  </div>
   <!-- Overview tab -->
   <div class="tab-content" id="tc-overview">
     <div class="panel-hdr">Server Overview</div>
@@ -328,7 +360,34 @@ document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
   $('tc-'+t.dataset.tab).classList.add('active');
   if(t.dataset.tab==='triggers') loadTriggers();
   if(t.dataset.tab==='overview') refreshStats();
+  if(t.dataset.tab==='events-file') loadEventsFilePreview();
 });
+
+function openEventsViewer() {
+  window.open('/events-view', '_blank');
+}
+
+function loadEventsFilePreview() {
+  const el = $('events-file-list');
+  el.innerHTML = '<div class="empty">Loading events file preview...</div>';
+  fetch('/api/events?limit=10')
+    .then(r => r.json())
+    .then(events => {
+      el.innerHTML = '';
+      if (!events.length) {
+        el.innerHTML = '<div class="empty">No events found</div>';
+        return;
+      }
+      events.reverse().forEach(evt => {
+        handleEventReplay(evt);
+      });
+      $('events-file-total').textContent = events.length;
+      el.innerHTML += '<div style="padding:10px;text-align:center"><button onclick="openEventsViewer()">View Full Events File</button></div>';
+    })
+    .catch(() => {
+      el.innerHTML = '<div class="empty">Error loading events</div>';
+    });
+}
 
 function connect() {
   const proto = location.protocol==='https:'?'wss:':'ws:';
@@ -403,6 +462,26 @@ function filterEvents(){
     if(!currentFilter||m.event===currentFilter) handleEventReplay(m);
   });
 }
+function truncateRawData(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const copy = JSON.parse(JSON.stringify(obj));
+  
+  // Handle both root-level raw_data and nested data.raw_data
+  const checkAndTruncate = (path) => {
+    if (copy[path] && typeof copy[path] === 'string' && copy[path].length > 20) {
+      const sizeKB = (copy[path].length * 0.75 / 1024).toFixed(1);
+      copy[path] = copy[path].substring(0, 10) + '...' + copy[path].substring(copy[path].length - 10) + ` (${sizeKB}KB)`;
+    }
+  };
+  
+  checkAndTruncate('raw_data');
+  if (copy.data && typeof copy.data === 'object') {
+    checkAndTruncate('data.raw_data');
+  }
+  
+  return copy;
+}
+
 function handleEventReplay(msg){
   const evType=msg.event||'unknown';
   const cls={context:'ctx',action:'act',trigger:'trg',error:'err'}[evType]||'sts';
@@ -412,7 +491,7 @@ function handleEventReplay(msg){
   if(evType==='context'){title=`[${d.category}] ${(d.source_id||'').substring(0,50)}`;body=(d.toon_spec||'').substring(0,200);}
   else if(evType==='action'){title=`[${d.action_type}] ${d.model_used||''}`;body=(d.content||'').substring(0,400);}
   else if(evType==='trigger'){title=`[${d.rule}] ${d.reason}`;body=d.goal||'';}
-  else{title=evType;body=JSON.stringify(d).substring(0,200);}
+  else{title=evType;body=JSON.stringify(truncateRawData(d)).substring(0,200);}
   addEv($('events-list'),cls,ts,title,body);
 }
 
@@ -691,32 +770,36 @@ def create_app(server) -> Any:
         next_start = start
 
         try:
+            # Read all lines first, then process from end (newest first)
             with open(path, "r", encoding="utf-8", errors="replace") as f:
-                for line in f:
-                    bytes_read += len(line.encode("utf-8", errors="ignore"))
-                    if bytes_read > max_bytes:
-                        break
+                all_lines = f.readlines()
+            
+            # Reverse to get newest first
+            all_lines.reverse()
+            
+            for i, line in enumerate(all_lines):
+                bytes_read += len(line.encode("utf-8", errors="ignore"))
+                if bytes_read > max_bytes:
+                    break
 
-                    if line_no < start:
-                        line_no += 1
-                        continue
+                if i < start:
+                    continue
 
-                    raw = line.strip()
-                    line_no += 1
-                    next_start = line_no
-                    if not raw:
-                        continue
-                    if q and q.lower() not in raw.lower():
-                        continue
-                    try:
-                        obj = json.loads(raw)
-                    except Exception:
-                        continue
-                    if event_type and obj.get("event") != event_type:
-                        continue
-                    items.append(obj)
-                    if len(items) >= limit:
-                        break
+                raw = line.strip()
+                next_start = i + 1
+                if not raw:
+                    continue
+                if q and q.lower() not in raw.lower():
+                    continue
+                try:
+                    obj = json.loads(raw)
+                except Exception:
+                    continue
+                if event_type and obj.get("event") != event_type:
+                    continue
+                items.append(obj)
+                if len(items) >= limit:
+                    break
         except Exception as e:
             return JSONResponse(status_code=500, content={"error": str(e)})
 
