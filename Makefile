@@ -3,7 +3,7 @@
 PYTHON  := .venv/bin/python
 PIP     := .venv/bin/pip
 PYTEST  := .venv/bin/pytest
-PORT    := 8900
+PORT    ?= 8900
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -46,18 +46,21 @@ server: ## Start Toonic Server (web UI on :8900)
 server-code: ## Analyze code example
 	$(PYTHON) -m toonic.server \
 		--source file:./examples/code-analysis/sample-project/ \
+		--port $(PORT) \
 		--goal "find bugs, security issues, suggest improvements" \
 		--interval 0
 
 server-logs: ## Monitor log example
 	$(PYTHON) -m toonic.server \
 		--source log:./docker/test-data/sample.logfile \
+		--port $(PORT) \
 		--goal "monitor logs, detect errors" \
 		--interval 10
 
 server-camera: ## Connect real RTSP camera
 	$(PYTHON) -m toonic.server \
 		--source "rtsp://admin:123456@192.168.188.146:554/h264Preview_01_main" \
+		--port $(PORT) \
 		--goal "monitor video stream, detect changes" \
 		--interval 15
 
@@ -66,6 +69,7 @@ server-multi: ## Multi-source (code + logs + camera)
 		--source file:./examples/code-analysis/sample-project/ \
 		--source log:./docker/test-data/sample.logfile \
 		--source "rtsp://admin:123456@192.168.188.146:554/h264Preview_01_main" \
+		--port $(PORT) \
 		--goal "comprehensive analysis: code + logs + video" \
 		--interval 30
 

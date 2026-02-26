@@ -18,7 +18,7 @@ Usage:
     info = Pipeline.formats()
 """
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 from toonic.core import (
     FileLogic,

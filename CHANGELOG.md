@@ -1,3 +1,38 @@
+## [1.0.5] - 2026-02-26
+
+### Summary
+
+feat(docs): CLI interface improvements
+
+### Docs
+
+- docs: update api.md
+- docs: update architecture.md
+- docs: update cli.md
+- docs: update docker.md
+- docs: update history.md
+- docs: update plugins.md
+- docs: update query.md
+- docs: update server.md
+- docs: update web-ui.md
+- docs: update README
+- ... and 1 more
+
+### Test
+
+- update tests/test_server.py
+
+### Other
+
+- build: update Makefile
+- docker: update docker-compose.yml
+- update toonic/server/client.py
+- update toonic/server/config.py
+- update toonic/server/core/query.py
+- update toonic/server/core/router.py
+- update toonic/server/transport/rest_api.py
+
+
 ## [1.0.4] - 2026-02-26
 
 ### Summary

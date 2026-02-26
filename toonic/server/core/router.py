@@ -65,7 +65,14 @@ class LLMRouter:
         start = time.time()
         model_cfg = self._get_model_for_category(request.category)
         if request.model_override:
-            model_cfg = ModelConfig(model=request.model_override)
+            model_cfg = ModelConfig(
+                provider=model_cfg.provider,
+                model=request.model_override,
+                max_tokens=model_cfg.max_tokens,
+                supports=model_cfg.supports,
+                api_key_env=model_cfg.api_key_env,
+                base_url=model_cfg.base_url,
+            )
 
         try:
             response_text = await self._call_llm(model_cfg, request)
@@ -73,7 +80,7 @@ class LLMRouter:
             duration = time.time() - start
 
             action = self._parse_response(response_text)
-            action.model_used = model_cfg.model
+            action.model_used = self._litellm_model_id(model_cfg)
             action.duration_s = duration
             action.action_id = f"action-{self._total_requests}"
 
@@ -81,15 +88,40 @@ class LLMRouter:
             return action
 
         except Exception as e:
-            logger.error(f"LLM error ({model_cfg.model}): {e}")
+            logger.error(f"LLM error ({self._litellm_model_id(model_cfg)}): {e}")
+            msg = str(e)
+            if "LLM Provider NOT provided" in msg:
+                msg = (
+                    f"{msg}\n\n"
+                    "To fix: set LLM_PROVIDER (e.g. 'openrouter') or pass a provider-qualified model. "
+                    "Examples: 'openrouter/google/gemini-2.5-flash-preview' or set LLM_PROVIDER=openrouter "
+                    "with LLM_MODEL='google/gemini-2.5-flash-preview'."
+                )
             action = ActionResponse(
                 action_type="error",
-                content=f"LLM error: {e}",
-                model_used=model_cfg.model,
+                content=f"LLM error: {msg}",
+                model_used=self._litellm_model_id(model_cfg),
                 duration_s=time.time() - start,
             )
-            self._record_exchange(request, action, model_cfg, time.time() - start, "error", str(e))
+            self._record_exchange(request, action, model_cfg, time.time() - start, "error", msg)
             return action
+
+    def _litellm_model_id(self, model_cfg: ModelConfig) -> str:
+        """Return provider-qualified LiteLLM model id.
+
+        LiteLLM typically expects '<provider>/<model>'. In our config, `model_cfg.model`
+        may be just a provider-native id (e.g. 'google/gemini-...'), so we prefix
+        `model_cfg.provider` unless the model already starts with '<provider>/'.
+        """
+        model = (model_cfg.model or "").strip()
+        provider = (model_cfg.provider or "").strip()
+        if not model:
+            return model
+        if provider and model.startswith(provider + "/"):
+            return model
+        if provider:
+            return f"{provider}/{model}"
+        return model
 
     async def _call_llm(self, model_cfg: ModelConfig, request: LLMRequest) -> str:
         """Call LLM via litellm or direct HTTP."""
@@ -117,8 +149,10 @@ class LLMRouter:
                       os.environ.get(model_cfg.api_key_env,
                       os.environ.get("OPENROUTER_API_KEY", "")))
             base_url = model_cfg.base_url or os.environ.get("LLM_BASE_URL", "")
+
+            model_id = self._litellm_model_id(model_cfg)
             response = await litellm.acompletion(
-                model=model_cfg.model,
+                model=model_id,
                 messages=messages,
                 max_tokens=model_cfg.max_tokens,
                 api_key=api_key or None,

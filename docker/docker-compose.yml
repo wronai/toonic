@@ -1,4 +1,5 @@
 version: "3.8"
+# Load .env from parent directory: cp ../.env.example ../.env
 
 services:
   # ── RTSP Test Stream Server ─────────────────────────────────
@@ -75,7 +76,25 @@ services:
     command: >
       --port 8900
       --source file:/app/examples/code-analysis/sample-project/
-      --source log:/app/test-data/app.log
+      --source log:/app/test-data/sample.logfile
       --source rtsp://rtsp-server:8554/test-cam1
       --goal "analyze the sample project code, monitor logs for errors, watch video streams for changes"
       --interval 30
+
+  # ── Real Camera (optional, uncomment to use) ────────────
+  # toonic-real-camera:
+  #   build:
+  #     context: ..
+  #     dockerfile: docker/Dockerfile
+  #   container_name: toonic-real-camera
+  #   ports:
+  #     - "8901:8900"
+  #   environment:
+  #     - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+  #     - LLM_API_KEY=${LLM_API_KEY:-}
+  #     - LLM_MODEL=${LLM_MODEL:-google/gemini-3-flash-preview}
+  #   command: >
+  #     --port 8900
+  #     --source "rtsp://admin:123456@192.168.188.146:554/h264Preview_01_main"
+  #     --goal "security monitoring: detect movement, describe scenes"
+  #     --interval 15

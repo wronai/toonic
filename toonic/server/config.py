@@ -85,9 +85,16 @@ class ServerConfig:
     
     # Models
     models: Dict[str, ModelConfig] = field(default_factory=lambda: {
-        "text": ModelConfig(model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview")),
-        "code": ModelConfig(model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview")),
+        "text": ModelConfig(
+            provider=os.environ.get("LLM_PROVIDER", "openrouter"),
+            model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview"),
+        ),
+        "code": ModelConfig(
+            provider=os.environ.get("LLM_PROVIDER", "openrouter"),
+            model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview"),
+        ),
         "multimodal": ModelConfig(
+            provider=os.environ.get("LLM_PROVIDER", "openrouter"),
             model=os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview"),
             supports=["text", "image", "audio"],
         ),

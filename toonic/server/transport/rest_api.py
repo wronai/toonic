@@ -295,5 +295,33 @@ def create_app(server) -> Any:
         from toonic.pipeline import Pipeline
         return Pipeline.formats()
 
+    # ── History + Query ──────────────────────────────────────
+
+    @app.get("/api/history")
+    async def get_history(limit: int = 20, category: str = "",
+                          model: str = "", action_type: str = ""):
+        return server.get_history(limit=limit, category=category,
+                                  model=model, action_type=action_type)
+
+    @app.get("/api/history/stats")
+    async def get_history_stats():
+        return server.get_history_stats()
+
+    @app.post("/api/query")
+    async def nlp_query(body: dict = {}):
+        """NLP query on conversation history."""
+        question = body.get("question", body.get("query", ""))
+        if not question:
+            return JSONResponse(status_code=400, content={"error": "question required"})
+        return await server.nlp_query(question)
+
+    @app.post("/api/sql")
+    async def sql_query(body: dict = {}):
+        """Raw SQL query on conversation history."""
+        sql = body.get("sql", "")
+        if not sql:
+            return JSONResponse(status_code=400, content={"error": "sql required"})
+        return server.sql_query(sql)
+
     import time  # needed for websocket event timestamp
     return app

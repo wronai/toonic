@@ -57,6 +57,20 @@ class ToonicClient:
     def convert(self, path: str, fmt: str = "toon") -> dict:
         return self._post("/api/convert", {"path": path, "format": fmt})
 
+    def get_history(self, limit: int = 20, **filters) -> list:
+        params = "&".join(f"{k}={v}" for k, v in filters.items() if v)
+        qs = f"?limit={limit}" + (f"&{params}" if params else "")
+        return self._get(f"/api/history{qs}")
+
+    def get_history_stats(self) -> dict:
+        return self._get("/api/history/stats")
+
+    def nlp_query(self, question: str) -> dict:
+        return self._post("/api/query", {"question": question})
+
+    def sql_query(self, sql: str) -> dict:
+        return self._post("/api/sql", {"sql": sql})
+
     def _get(self, path: str) -> dict:
         url = self.base_url + path
         if HAS_HTTPX:
@@ -89,12 +103,16 @@ def run_shell(base_url: str = "http://localhost:8900"):
     commands = {
         "help": "Show this help",
         "status": "Show server status",
-        "actions": "Show recent LLM actions",
+        "actions [N]": "Show recent LLM actions",
         "formats": "List supported formats",
         "analyze [goal]": "Trigger analysis with optional goal",
         "add <path> [category]": "Add data source",
         "convert <path> [format]": "Convert file to TOON/YAML/JSON",
         "model <name>": "Override model for next analyze",
+        "history [N]": "Show last N conversation exchanges",
+        "history-stats": "Show conversation history statistics",
+        "query <question>": "NLP query on conversation history",
+        "sql <SELECT ...>": "Raw SQL query on history database",
         "quit": "Exit shell",
     }
 
@@ -195,6 +213,66 @@ def run_shell(base_url: str = "http://localhost:8900"):
                     print(f"  Model set to: {current_model}")
                 else:
                     print(f"  Current model: {current_model or 'default'}")
+
+            elif cmd == "history":
+                limit = int(parts[1]) if len(parts) > 1 else 10
+                records = client.get_history(limit=limit)
+                if not records:
+                    print("  No history yet")
+                for r in records:
+                    import datetime
+                    ts = datetime.datetime.fromtimestamp(r.get("timestamp", 0)).strftime("%H:%M:%S")
+                    print(f"  [{ts}] {r.get('model', '?'):40s} [{r.get('action_type', '?')}] "
+                          f"conf={r.get('confidence', 0):.0%} {r.get('duration_s', 0):.1f}s")
+                    content = r.get("content", "")[:150]
+                    if content:
+                        print(f"         {content}")
+                print()
+
+            elif cmd == "history-stats":
+                data = client.get_history_stats()
+                print(f"\n  Enabled:    {data.get('enabled', False)}")
+                print(f"  Exchanges:  {data.get('total_exchanges', 0)}")
+                print(f"  Tokens:     {data.get('total_tokens', 0)}")
+                print(f"  Avg time:   {data.get('avg_duration_s', 0)}s")
+                print(f"  Session:    {data.get('session_id', '')}")
+                by_cat = data.get("by_category", {})
+                if by_cat:
+                    print(f"  Categories: {json.dumps(by_cat)}")
+                by_model = data.get("by_model", {})
+                if by_model:
+                    print(f"  Models:     {json.dumps(by_model)}")
+                print()
+
+            elif cmd == "query":
+                question = " ".join(parts[1:]) if len(parts) > 1 else ""
+                if not question:
+                    print("  Usage: query <natural language question>")
+                    continue
+                print(f"  Querying: {question}")
+                data = client.nlp_query(question)
+                if "error" in data:
+                    print(f"  Error: {data['error']}")
+                else:
+                    print(f"  SQL: {data.get('sql', '')}")
+                    print(f"  Results: {data.get('count', 0)} rows ({data.get('duration_s', 0)}s)")
+                    for row in data.get("results", [])[:20]:
+                        print(f"    {json.dumps(row, default=str)[:200]}")
+                print()
+
+            elif cmd == "sql":
+                sql_str = line[4:].strip() if len(line) > 4 else ""
+                if not sql_str:
+                    print("  Usage: sql SELECT * FROM exchanges LIMIT 10")
+                    continue
+                data = client.sql_query(sql_str)
+                if "error" in data:
+                    print(f"  Error: {data['error']}")
+                else:
+                    print(f"  Results: {data.get('count', 0)} rows")
+                    for row in data.get("results", [])[:20]:
+                        print(f"    {json.dumps(row, default=str)[:200]}")
+                print()
 
             else:
                 print(f"  Unknown command: {cmd}. Type 'help' for commands.")

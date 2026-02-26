@@ -193,7 +193,10 @@ class QueryAdapter:
             import litellm
 
             api_key = os.environ.get("LLM_API_KEY", os.environ.get("OPENROUTER_API_KEY", ""))
-            llm_model = model or os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview")
+            provider = (os.environ.get("LLM_PROVIDER", "openrouter") or "").strip()
+            llm_model = (model or os.environ.get("LLM_MODEL", "google/gemini-3-flash-preview")).strip()
+            if provider and llm_model and not llm_model.startswith(provider + "/"):
+                llm_model = f"{provider}/{llm_model}"
 
             response = await litellm.acompletion(
                 model=llm_model,
