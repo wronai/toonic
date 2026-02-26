@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toonic"
+dynamic = ["version"]
+description = "Toonic — Universal TOON Format Platform for LLM-optimized file representations"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [
+    {name = "Tom Sapletta", email = "tom@sapletta.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.optional-dependencies]
+video = ["opencv-python>=4.8"]
+audio = ["numpy>=1.24", "webrtcvad>=2.0"]
+all = ["opencv-python>=4.8", "numpy>=1.24", "webrtcvad>=2.0"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "numpy>=1.24"]
+
+[project.scripts]
+toonic = "toonic.cli:cli_main"
+
+[project.urls]
+Homepage = "https://github.com/wronai/toonic"
+Repository = "https://github.com/wronai/toonic"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
+
+[tool.setuptools.packages.find]
+include = ["toonic*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

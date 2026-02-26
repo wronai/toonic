@@ -1,3 +1,42 @@
+## [1.0.3] - 2026-02-26
+
+### Summary
+
+feat(tests): CLI interface improvements
+
+### Test
+
+- update tests/__init__.py
+- update tests/conftest.py
+- update tests/test_cli.py
+- update tests/test_core.py
+- update tests/test_evidence_graph.py
+- update tests/test_handlers.py
+- update tests/test_pipeline.py
+
+### Build
+
+- update pyproject.toml
+
+### Config
+
+- config: update goal.yaml
+
+### Other
+
+- update project.toon
+- update toonic/__init__.py
+- update toonic/__main__.py
+- update toonic/cli.py
+- update toonic/core/__init__.py
+- update toonic/core/base.py
+- update toonic/core/detector.py
+- update toonic/core/models.py
+- update toonic/core/protocols.py
+- update toonic/core/registry.py
+- ... and 11 more
+
+
 ## [1.0.2] - 2026-02-26
 
 ### Summary
