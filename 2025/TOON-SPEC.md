@@ -21,7 +21,7 @@ TOON is a compact, LLM-friendly notation format for defining:
 ## Basic Syntax
 
 ### Header Block
-```toon
+```yaml toon
 @toon/2.0
 name: MyProject
 version: 1.0.0
@@ -32,7 +32,7 @@ license: MIT
 ### Type Definitions
 
 #### Primitive Types
-```toon
+```yaml toon
 types:
   # Built-in primitives
   str, int, float, bool, date, datetime, uuid, email, url, json
@@ -48,7 +48,7 @@ types:
 ```
 
 #### Custom Types (Models)
-```toon
+```yaml toon
 model User{id,name,email,role}:
   id: uuid @primary @auto
   name: str @min(2) @max(100)
@@ -81,7 +81,7 @@ model Color{r:int,g:int,b:int,a:float=1.0}
 
 ## Enums and Constants
 
-```toon
+```yaml toon
 enum Role[admin,moderator,user,guest]
 enum Status[pending,active,suspended,deleted]
 
@@ -99,7 +99,7 @@ const RATE_LIMITS: {str:int} = {free:100,pro:1000,enterprise:10000}
 ## Services Definition
 
 ### Basic Service
-```toon
+```yaml toon
 service UserService @base("/api/users"):
   # Methods with signatures
   list(page:int=1,limit:int=20) -> [User] @GET @cache(60)
@@ -114,7 +114,7 @@ service UserService @base("/api/users"):
 ```
 
 ### Service with Middleware
-```toon
+```yaml toon
 service ProductService @base("/api/products") @middleware(auth,logging,ratelimit):
   list(category:str?,page:int=1) -> PaginatedProducts @GET @cache(300)
   get(id:uuid) -> Product @GET("/{id}")
@@ -130,7 +130,7 @@ service ProductService @base("/api/products") @middleware(auth,logging,ratelimit
 ## API Contracts
 
 ### Request/Response Models
-```toon
+```yaml toon
 # Input models (for creation/updates)
 input CreateUser{name,email,password}:
   name: str @min(2) @max(100)
@@ -159,7 +159,7 @@ output PaginatedUsers{items,total,page,pages}:
 ```
 
 ### Error Definitions
-```toon
+```yaml toon
 error ValidationError{field,message,code}:
   field: str
   message: str
@@ -181,7 +181,7 @@ errors UserService:
 ## Validators and Decorators
 
 ### Built-in Validators
-```toon
+```yaml toon
 @required          # Field is required
 @optional          # Field is optional (same as ?)
 @min(n)            # Minimum value/length
@@ -200,7 +200,7 @@ errors UserService:
 ```
 
 ### Custom Validators
-```toon
+```yaml toon
 validator PositiveNumber:
   check: value > 0
   message: "Must be positive"
@@ -216,7 +216,7 @@ model Company{nip:str @ValidNIP}
 
 ## Events and Messaging
 
-```toon
+```yaml toon
 event UserCreated{user_id,email,timestamp}:
   user_id: uuid
   email: email
@@ -242,7 +242,7 @@ channel analytics @broker(kafka):
 
 ## Database Mappings
 
-```toon
+```yaml toon
 database postgres @connection("DATABASE_URL"):
   table users -> User:
     id @primary @uuid_generate_v4
@@ -263,7 +263,7 @@ database postgres @connection("DATABASE_URL"):
 
 ## Configuration Blocks
 
-```toon
+```yaml toon
 config development:
   database: postgres://localhost/dev
   cache: redis://localhost:6379
@@ -285,7 +285,7 @@ config testing @extends(development):
 
 ## Imports and Modules
 
-```toon
+```yaml toon
 # Import from other TOON files
 import "./auth.toon" as auth
 import "./common/pagination.toon" use {Paginated, PageInfo}
@@ -299,7 +299,7 @@ model Post{author:auth.User,content,pagination:Paginated}
 
 ## Full Example
 
-```toon
+```yaml toon
 @toon/2.0
 name: EcommerceAPI
 version: 2.1.0
