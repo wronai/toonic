@@ -265,7 +265,7 @@ class TestProcessWatcher:
         assert "DOWN" in toon
         assert "went_down" in toon
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_check_pid_current_process(self):
         """Check monitoring current process PID."""
         pid = os.getpid()
@@ -274,7 +274,7 @@ class TestProcessWatcher:
         await w._check_pid(result)
         assert result["alive"] is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_check_pid_nonexistent(self):
         """Check monitoring non-existent PID."""
         w = ProcessWatcher("test:pid", "pid:999999999")
@@ -304,7 +304,7 @@ class TestDirectoryWatcher:
         assert "KB" in DirectoryWatcher._human_size(2048)
         assert "MB" in DirectoryWatcher._human_size(5 * 1024 * 1024)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_take_snapshot(self, tmp_path):
         (tmp_path / "file1.txt").write_text("hello")
         (tmp_path / "file2.py").write_text("x = 1")
@@ -317,7 +317,7 @@ class TestDirectoryWatcher:
         assert any("file1.txt" in k for k in snapshot)
         assert any("file3.txt" in k for k in snapshot)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_initial_scan_emits_tree(self, tmp_path):
         (tmp_path / "a.py").write_text("code")
         (tmp_path / "b.txt").write_text("doc")
@@ -333,7 +333,7 @@ class TestDirectoryWatcher:
         assert "dir-structure" in chunks[0].toon_spec
         assert chunks[0].is_delta is False
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_file_creation(self, tmp_path):
         (tmp_path / "original.txt").write_text("data")
 
@@ -358,7 +358,7 @@ class TestDirectoryWatcher:
         assert "CREATED" in chunks[0].toon_spec
         assert chunks[0].is_delta is True
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_detect_file_deletion(self, tmp_path):
         f = tmp_path / "to_delete.txt"
         f.write_text("temp")
@@ -379,7 +379,7 @@ class TestDirectoryWatcher:
         assert len(chunks) == 1
         assert "DELETED" in chunks[0].toon_spec
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_ignore_patterns(self, tmp_path):
         (tmp_path / ".git").mkdir()
         (tmp_path / ".git" / "config").write_text("gitconfig")
@@ -487,7 +487,7 @@ class TestDatabaseWatcher:
         w = DatabaseWatcher("t", "test.db")
         assert w._detect_db_type() == "sqlite"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_check_sqlite(self, tmp_path):
         db_path = tmp_path / "test.db"
         conn = sqlite3.connect(str(db_path))
@@ -507,7 +507,7 @@ class TestDatabaseWatcher:
         assert result["row_counts"]["users"] == 2
         assert result["schema_hash"] != ""
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_check_sqlite_custom_queries(self, tmp_path):
         db_path = tmp_path / "test_q.db"
         conn = sqlite3.connect(str(db_path))
@@ -526,7 +526,7 @@ class TestDatabaseWatcher:
         assert "event_count" in result["query_results"]
         assert result["query_results"]["event_count"]["rows"] == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_check_sqlite_nonexistent(self, tmp_path):
         w = DatabaseWatcher("test:db", f"db:{tmp_path}/nonexistent.db")
         result: dict = {"dsn": f"{tmp_path}/nonexistent.db", "db_type": "sqlite"}
@@ -566,7 +566,7 @@ class TestDatabaseWatcher:
         assert "users" in toon
         assert "100 rows" in toon
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_full_check_cycle(self, tmp_path):
         """Full check cycle: create DB, run check, add data, detect changes."""
         db_path = tmp_path / "cycle.db"
@@ -678,7 +678,7 @@ class TestNetworkWatcher:
         assert "1/1 reachable" in toon
         assert "UP" in toon
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_resolve_dns_localhost(self):
         w = NetworkWatcher("test:net", "net:localhost")
         result = await w._resolve_dns("localhost")

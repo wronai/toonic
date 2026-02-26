@@ -2,13 +2,12 @@
 Tests for toonic.server — Server core, watchers, accumulator, router.
 """
 
+import pytest
+import anyio
 import asyncio
-import json
 import tempfile
 import time
 from pathlib import Path
-
-import pytest
 
 from toonic.server.config import ServerConfig, SourceConfig, ModelConfig
 from toonic.server.models import ContextChunk, ActionResponse, ServerEvent, SourceCategory
@@ -192,7 +191,7 @@ class TestRouter:
         assert action.action_type == "report"
         assert "plain text" in action.content
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_mock_query(self):
         cfg = ServerConfig(history_enabled=False)
         router = LLMRouter(cfg)
@@ -208,7 +207,7 @@ class TestRouter:
         assert "total_requests" in stats
         assert "models" in stats
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_router_with_history(self, tmp_path):
         db_path = str(tmp_path / "test_router_hist.db")
         history = ConversationHistory(db_path)
@@ -258,7 +257,7 @@ class TestWatcherRegistry:
 
 
 class TestFileWatcher:
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_full_scan(self, tmp_path):
         # Create test files
         (tmp_path / "main.py").write_text("def hello():\n    return 'world'\n")
@@ -266,7 +265,7 @@ class TestFileWatcher:
 
         watcher = FileWatcher("test:code", str(tmp_path))
         await watcher.start()
-        await asyncio.sleep(0.5)
+        await anyio.sleep(0.5)
 
         # Should have emitted at least one chunk
         chunks = []
@@ -280,7 +279,7 @@ class TestFileWatcher:
 
 
 class TestLogWatcher:
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_initial_tail(self, tmp_path):
         log_file = tmp_path / "test.log"
         log_file.write_text(
@@ -291,7 +290,7 @@ class TestLogWatcher:
 
         watcher = LogWatcher("test:log", str(log_file))
         await watcher.start()
-        await asyncio.sleep(0.5)
+        await anyio.sleep(0.5)
 
         chunks = []
         while not watcher._queue.empty():
@@ -474,7 +473,7 @@ class TestQueryAdapter:
         result = adapter.sql_query("DELETE FROM exchanges")
         assert "error" in result
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_nlp_query_with_data(self, tmp_path):
         db = str(tmp_path / "test_qa7.db")
         history = ConversationHistory(db)
@@ -492,7 +491,7 @@ class TestQueryAdapter:
 # =============================================================================
 
 class TestToonicServer:
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_server_lifecycle(self, tmp_path):
         (tmp_path / "hello.py").write_text("def hi(): pass\n")
 
@@ -510,7 +509,7 @@ class TestToonicServer:
         server.on_event(collect_event)
 
         await server.start()
-        await asyncio.sleep(2.0)
+        await anyio.sleep(2.0)
 
         status = server.get_status()
         assert status["running"] is True
@@ -520,7 +519,7 @@ class TestToonicServer:
         await server.stop()
         assert len(events) > 0
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_add_remove_source(self):
         cfg = ServerConfig(interval=0)
         server = ToonicServer(cfg)

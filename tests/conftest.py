@@ -21,6 +21,11 @@ def reset_registry():
 
 
 @pytest.fixture
+def anyio_backend():
+    return "asyncio"
+
+
+@pytest.fixture
 def tmp_md(tmp_path):
     """Create a temp Markdown file."""
     p = tmp_path / "test.md"

@@ -1,3 +1,26 @@
+## [1.0.12] - 2026-02-26
+
+### Summary
+
+feat(tests): configuration management system
+
+### Test
+
+- update tests/conftest.py
+- update tests/test_server.py
+- update tests/test_triggers.py
+- update tests/test_watchers.py
+
+### Build
+
+- update pyproject.toml
+
+### Other
+
+- update project.toon
+- update toonic/server/transport/broxeen_bridge.py
+
+
 ## [1.0.11] - 2026-02-26
 
 ### Summary

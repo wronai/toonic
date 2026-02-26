@@ -356,7 +356,7 @@ class TestScheduler:
         sched = TriggerScheduler.default_periodic(interval_s=5.0, goal="test")
         assert sched.get_stats()["total_rules"] == 1
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_evaluate_async_with_callback(self):
         cfg = TriggerConfig(triggers=[
             TriggerRule(name="cb-test", mode="on_event",
@@ -464,7 +464,7 @@ class TestNLP2YAML:
         assert yaml_str != ""
         assert "triggers:" in yaml_str
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_generate_fallback(self):
         nlp = NLP2YAML()
         config = await nlp.generate("something completely unparseable xyz123", goal="test")

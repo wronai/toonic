@@ -1,4 +1,4 @@
-# toonic | 70f 17788L | python:70
+# toonic | 70f 17833L | python:70
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
 M[70]:
   TODO/stage_1_document_handlers.py,422
@@ -11,7 +11,7 @@ M[70]:
   TODO/stage_2_data_config_handlers.py,527
   tests/test_handlers.py,181
   tests/test_server.py,418
-  tests/conftest.py,74
+  tests/conftest.py,77
   tests/test_core.py,144
   tests/__init__.py,0
   tests/test_triggers.py,378
@@ -45,7 +45,7 @@ M[70]:
   toonic/server/__main__.py,175
   toonic/server/models.py,96
   toonic/server/main.py,299
-  toonic/server/transport/broxeen_bridge.py,222
+  toonic/server/transport/broxeen_bridge.py,257
   toonic/server/transport/rest_api.py,509
   toonic/server/transport/__init__.py,1
   toonic/server/core/query.py,180
@@ -149,7 +149,7 @@ D:
     TestJsonDataHandler: test_resolve(1),test_parse(1),test_to_toon(1),test_negative_sniff_package_json(0)
     TestEnvHandler: test_resolve(1),test_parse(1),test_to_toon_masks_sensitive(1),test_reproduce(1)
   tests/test_server.py:
-    i: asyncio,json,tempfile,time,pytest,pathlib.Path,toonic.server.config.{ModelConfig,ServerConfig,SourceConfig},toonic.server.models.ContextChunk
+    i: pytest,anyio,asyncio,tempfile,time,pathlib.Path,toonic.server.config.{ModelConfig,ServerConfig,SourceConfig},toonic.server.models.ContextChunk
     e: TestServerConfig,TestModels,TestAccumulator,TestRouter,TestWatcherRegistry,TestFileWatcher,TestLogWatcher,TestConversationHistory
     TestServerConfig: test_default_config(0),test_from_dict(0),test_to_dict(0)
     TestModels: test_context_chunk(0),test_context_chunk_with_raw_data(0),test_action_response(0),test_server_event(0)
@@ -158,8 +158,9 @@ D:
     TestWatcherRegistry: test_file_watcher_supports(0),test_log_watcher_supports(0),test_stream_watcher_supports(0),test_registry_resolve(0),test_registry_create(0)
   tests/conftest.py:
     i: pytest,tempfile,os,pathlib.Path,toonic.core.registry.FormatRegistry,toonic.formats.initialize_all_handlers
-    e: reset_registry,tmp_md,tmp_csv,tmp_env,tmp_sql,tmp_json,tmp_txt
+    e: reset_registry,anyio_backend,tmp_md,tmp_csv,tmp_env,tmp_sql,tmp_json,tmp_txt
     reset_registry()
+    anyio_backend()
     tmp_md(tmp_path)
     tmp_csv(tmp_path)
     tmp_env(tmp_path)

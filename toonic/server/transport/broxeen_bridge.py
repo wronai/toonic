@@ -53,6 +53,8 @@ def register_broxeen_routes(app, server) -> None:
             category: str     — video|web|code|logs|process|container (auto-detected if empty)
             interval_s: float — poll interval (default: 10 for video, 30 for web)
             options: dict     — extra watcher options (scene_threshold, keywords, etc.)
+            goal: str         — what the LLM should analyze (like CLI --goal)
+            when: str         — trigger condition in natural language (like CLI --when)
         """
         url = body.get("url", "")
         if not url:
@@ -61,6 +63,8 @@ def register_broxeen_routes(app, server) -> None:
         category = body.get("category", "")
         interval = body.get("interval_s", 0)
         options = body.get("options", {})
+        goal = body.get("goal", "")
+        when_condition = body.get("when", "")
 
         # Auto-detect category
         if not category:
@@ -83,6 +87,38 @@ def register_broxeen_routes(app, server) -> None:
             defaults = {"video": 5, "web": 30, "logs": 5, "code": 60, "container": 15, "process": 10}
             interval = defaults.get(category, 30)
 
+        # Update server goal if provided
+        if goal:
+            server.config.goal = goal
+            logger.info(f"Updated server goal: {goal}")
+
+        # Generate trigger config from natural language --when
+        trigger_info = {}
+        if when_condition:
+            try:
+                from toonic.server.triggers.nlp2yaml import NLP2YAML
+                nlp = NLP2YAML()
+                source_hint = "video" if category == "video" else ""
+                trigger_config = await nlp.generate(when_condition, source=source_hint, goal=goal)
+                if trigger_config and trigger_config.triggers:
+                    # Add trigger rules to the server's scheduler
+                    if hasattr(server, 'trigger_scheduler') and server.trigger_scheduler:
+                        for rule in trigger_config.triggers:
+                            server.trigger_scheduler.add_rule(rule)
+                    else:
+                        # Initialize trigger scheduler if not present
+                        from toonic.server.triggers.scheduler import TriggerScheduler
+                        server.trigger_scheduler = TriggerScheduler(trigger_config)
+                        server.trigger_config = trigger_config
+                    trigger_info = {
+                        "trigger_rules": len(trigger_config.triggers),
+                        "trigger_condition": when_condition,
+                    }
+                    logger.info(f"Generated {len(trigger_config.triggers)} trigger rule(s) from: {when_condition}")
+            except Exception as e:
+                logger.warning(f"Failed to generate triggers from '{when_condition}': {e}")
+                trigger_info = {"trigger_error": str(e)}
+
         from toonic.server.config import SourceConfig
         src = SourceConfig(
             path_or_url=url,
@@ -95,12 +131,17 @@ def register_broxeen_routes(app, server) -> None:
         if not sid:
             raise HTTPException(500, f"Failed to create watcher for: {url}")
 
-        return {
+        result = {
             "source_id": sid,
             "category": category,
             "interval_s": interval,
             "watcher_type": type(server._watchers.get(sid, object)).__name__,
         }
+        if goal:
+            result["goal"] = goal
+        if trigger_info:
+            result.update(trigger_info)
+        return result
 
     @app.delete("/api/broxeen/watch/{source_id:path}")
     async def broxeen_unwatch(source_id: str):
