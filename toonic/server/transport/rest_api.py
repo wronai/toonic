@@ -8,6 +8,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -110,6 +111,9 @@ function connect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}/ws`);
   ws.onopen = () => { statusEl.textContent = 'Connected'; statusEl.className = 'status ok'; };
+  ws.onerror = () => { statusEl.textContent = 'WebSocket error'; statusEl.className = 'status'; };
+  statusEl.textContent = 'Connecting...';
+  statusEl.className = 'status';
   ws.onclose = () => { statusEl.textContent = 'Disconnected'; statusEl.className = 'status'; setTimeout(connect, 2000); };
   ws.onmessage = (e) => {
     const msg = JSON.parse(e.data);
@@ -191,10 +195,21 @@ def create_app(server) -> Any:
     try:
         from fastapi import FastAPI, WebSocket, WebSocketDisconnect
         from fastapi.responses import HTMLResponse, JSONResponse
+        from fastapi.middleware.cors import CORSMiddleware
     except ImportError:
         raise ImportError("pip install fastapi uvicorn")
 
     app = FastAPI(title="Toonic Server", version="1.0.0")
+    
+    # Add CORS middleware for WebSocket support
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
     ws_clients: set = set()
 
     # ── Event broadcaster ────────────────────────────────────
@@ -222,6 +237,7 @@ def create_app(server) -> Any:
 
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
+        logger.info("WebSocket connect: /ws")
         await websocket.accept()
         ws_clients.add(websocket)
         try:
@@ -238,6 +254,7 @@ def create_app(server) -> Any:
                         "event": "action", "data": action.to_dict(), "timestamp": time.time()
                     }))
         except WebSocketDisconnect:
+            logger.info("WebSocket disconnect: /ws")
             pass
         except Exception as e:
             logger.error(f"WebSocket error: {e}")
@@ -323,5 +340,4 @@ def create_app(server) -> Any:
             return JSONResponse(status_code=400, content={"error": "sql required"})
         return server.sql_query(sql)
 
-    import time  # needed for websocket event timestamp
     return app

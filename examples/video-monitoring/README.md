@@ -28,10 +28,7 @@ python -m toonic.server \
   --goal "security monitoring: detect movement and unusual activity" \
   --interval 10
 ```
-python -m toonic.server \
-  --source rtsp://admin:123456@192.168.188.146:554/h264Preview_01_main \
-  --goal "security monitoring: detect movement and unusual activity" \
-  --interval 10
+
 
 
 ## How It Works

@@ -30,8 +30,13 @@ def parse_args():
     parser.add_argument("--model", "-m", default="", help="LLM model override")
     parser.add_argument("--interval", "-i", type=float, default=30.0,
                         help="Analysis interval seconds (0=one-shot)")
-    parser.add_argument("--host", default="0.0.0.0", help="Server host")
-    parser.add_argument("--port", "-p", type=int, default=8900, help="HTTP/WS port")
+    parser.add_argument("--when", "-w", default="",
+                        help='Trigger condition in natural language, e.g. '
+                             '"person detected for 1s, otherwise every 60s"')
+    parser.add_argument("--triggers", "-t", default="",
+                        help="YAML file with trigger rules")
+    parser.add_argument("--host", default=None, help="Server host")
+    parser.add_argument("--port", "-p", type=int, default=None, help="HTTP/WS port")
     parser.add_argument("--no-web", action="store_true", help="Disable web UI")
     parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     return parser.parse_args()
@@ -69,6 +74,7 @@ def parse_source_string(source_str: str):
 async def run_server(args):
     from toonic.server.config import ServerConfig, ModelConfig
     from toonic.server.main import ToonicServer
+    from toonic.server.triggers.dsl import TriggerConfig, load_triggers
 
     # Build config
     if args.config and Path(args.config).exists():
@@ -79,8 +85,10 @@ async def run_server(args):
     else:
         config = ServerConfig.from_env()
 
-    config.host = args.host
-    config.port = args.port
+    if args.host is not None:
+        config.host = args.host
+    if args.port is not None:
+        config.port = args.port
     config.goal = args.goal
     config.interval = args.interval
     config.log_level = args.log_level
@@ -93,8 +101,35 @@ async def run_server(args):
     for src_str in args.source:
         config.sources.append(parse_source_string(src_str))
 
+    # Build trigger config
+    trigger_config = None
+
+    if args.triggers and Path(args.triggers).exists():
+        # Load from YAML file
+        yaml_str = Path(args.triggers).read_text()
+        trigger_config = load_triggers(yaml_str)
+        print(f"  Triggers: loaded {len(trigger_config.triggers)} rule(s) from {args.triggers}")
+
+    elif args.when:
+        # Generate from natural language via NLP2YAML
+        from toonic.server.triggers.nlp2yaml import NLP2YAML
+        nlp = NLP2YAML(model=args.model)
+        # Detect source type from --source args
+        source_hint = ""
+        for src in args.source:
+            if "rtsp://" in src or src.endswith((".mp4", ".avi")):
+                source_hint = "video"
+                break
+            elif "log" in src.lower():
+                source_hint = "logs"
+                break
+        print(f"  Generating triggers from: {args.when}")
+        trigger_config = await nlp.generate(args.when, source=source_hint, goal=args.goal)
+        from toonic.server.triggers.dsl import dump_triggers
+        print(f"  Generated YAML:\n{dump_triggers(trigger_config)}")
+
     # Create server
-    server = ToonicServer(config)
+    server = ToonicServer(config, trigger_config=trigger_config)
 
     if args.no_web:
         # Run server without web UI

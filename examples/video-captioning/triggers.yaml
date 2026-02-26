@@ -1,0 +1,47 @@
+# Video Captioning Triggers
+# Usage: python -m toonic.server --triggers examples/video-captioning/triggers.yaml ...
+
+triggers:
+  - name: person-detected
+    source: video
+    mode: on_event
+    events:
+      - type: object
+        label: person
+        threshold: 0.3
+        min_duration_s: 1.0
+    fallback:
+      periodic_s: 60
+    goal: "describe the people visible in the frame, their activity and position"
+    cooldown_s: 5.0
+    priority: 8
+
+  - name: scene-change
+    source: video
+    mode: on_event
+    events:
+      - type: scene_change
+        threshold: 0.4
+    fallback:
+      periodic_s: 120
+    goal: "the scene has changed significantly, describe what you see now"
+    cooldown_s: 3.0
+    priority: 6
+
+  - name: motion-alert
+    source: video
+    mode: on_event
+    events:
+      - type: motion
+        threshold: 0.15
+        min_duration_s: 2.0
+    goal: "motion detected — describe the movement and what caused it"
+    cooldown_s: 10.0
+    priority: 7
+
+  - name: periodic-summary
+    source: video
+    mode: periodic
+    interval_s: 300
+    goal: "provide a summary of what has happened in the last 5 minutes"
+    priority: 3

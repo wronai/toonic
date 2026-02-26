@@ -1,3 +1,35 @@
+## [1.0.6] - 2026-02-26
+
+### Summary
+
+feat(docs): configuration management system
+
+### Docs
+
+- docs: update README
+- docs: update triggers.md
+- docs: update README
+
+### Test
+
+- update tests/test_server.py
+- update tests/test_triggers.py
+
+### Other
+
+- build: update Makefile
+- config: update triggers.yaml
+- update project.toon
+- update toonic/server/__main__.py
+- update toonic/server/main.py
+- update toonic/server/transport/rest_api.py
+- update toonic/server/triggers/__init__.py
+- update toonic/server/triggers/detectors.py
+- update toonic/server/triggers/dsl.py
+- update toonic/server/triggers/nlp2yaml.py
+- ... and 1 more
+
+
 ## [1.0.5] - 2026-02-26
 
 ### Summary

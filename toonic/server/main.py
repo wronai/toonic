@@ -20,6 +20,8 @@ from toonic.server.core.accumulator import ContextAccumulator
 from toonic.server.core.history import ConversationHistory
 from toonic.server.core.query import QueryAdapter
 from toonic.server.core.router import LLMRequest, LLMRouter
+from toonic.server.triggers.dsl import TriggerConfig, TriggerRule
+from toonic.server.triggers.scheduler import TriggerScheduler, TriggerEvent
 from toonic.server.watchers.base import BaseWatcher, WatcherRegistry
 
 # Ensure watchers are registered
@@ -33,7 +35,7 @@ logger = logging.getLogger("toonic.server")
 class ToonicServer:
     """Main server — connects watchers → accumulator → LLM router → actions."""
 
-    def __init__(self, config: ServerConfig):
+    def __init__(self, config: ServerConfig, trigger_config: TriggerConfig | None = None):
         self.config = config
         self.accumulator = ContextAccumulator(
             max_tokens=config.max_context_tokens,
@@ -47,6 +49,15 @@ class ToonicServer:
             self.query_adapter = QueryAdapter(self.history)
         # Router (with history for logging)
         self.router = LLMRouter(config, history=self.history)
+        # Trigger scheduler
+        if trigger_config and trigger_config.triggers:
+            self.trigger_scheduler = TriggerScheduler(trigger_config)
+        else:
+            self.trigger_scheduler = TriggerScheduler.default_periodic(
+                interval_s=config.interval if config.interval > 0 else 30.0,
+                goal=config.goal,
+            )
+        self.trigger_scheduler.on_trigger(self._on_trigger_fired)
         self._watchers: Dict[str, BaseWatcher] = {}
         self._watcher_tasks: Dict[str, asyncio.Task] = {}
         self._event_listeners: Set[Callable] = set()
@@ -142,7 +153,7 @@ class ToonicServer:
     # ── Internal loops ───────────────────────────────────────────
 
     async def _consume_watcher(self, sid: str, watcher: BaseWatcher) -> None:
-        """Consume chunks from a watcher and update accumulator."""
+        """Consume chunks from a watcher and update accumulator + trigger evaluation."""
         try:
             async for chunk in watcher.get_chunks():
                 if not self._running:
@@ -157,32 +168,47 @@ class ToonicServer:
                     if len(self._recent_images) > 10:
                         self._recent_images = self._recent_images[-10:]
                 await self._emit_event("context", chunk.to_dict())
+                # Evaluate triggers against this chunk's metadata
+                trigger_data = dict(chunk.metadata)
+                trigger_data["toon_spec"] = chunk.toon_spec
+                cat = chunk.category.value if isinstance(chunk.category, SourceCategory) else chunk.category
+                await self.trigger_scheduler.evaluate_async(trigger_data, cat)
         except asyncio.CancelledError:
             pass
         except Exception as e:
             logger.error(f"[{sid}] Consumer error: {e}")
 
-    async def _analysis_loop(self) -> None:
-        """Periodic analysis loop — sends context to LLM."""
-        # Wait for initial data
-        await asyncio.sleep(min(5.0, self.config.interval))
+    async def _on_trigger_fired(self, event: TriggerEvent) -> None:
+        """Called by TriggerScheduler when a rule fires — runs LLM analysis."""
+        goal = event.goal or self.config.goal
+        await self._emit_event("trigger", event.to_dict())
+        logger.info(f"Trigger '{event.rule_name}' fired ({event.reason}) — analyzing")
+        await self._run_analysis(goal_override=goal)
 
+    async def _analysis_loop(self) -> None:
+        """Periodic analysis loop — fallback for trigger-driven mode."""
+        # With trigger scheduler, the analysis is driven by trigger events.
+        # This loop is kept as a safety net / initial analysis.
+        await asyncio.sleep(min(5.0, self.config.interval))
+        # Run one initial analysis
+        try:
+            await self._run_analysis()
+        except Exception as e:
+            logger.error(f"Initial analysis error: {e}")
+        # Then let the trigger scheduler handle subsequent analyses
         while self._running:
-            try:
-                await self._run_analysis()
-            except Exception as e:
-                logger.error(f"Analysis error: {e}")
-            await asyncio.sleep(self.config.interval)
+            await asyncio.sleep(1.0)
 
     async def _one_shot(self) -> None:
         """Single analysis after initial data collection."""
         await asyncio.sleep(5.0)  # wait for watchers
         await self._run_analysis()
 
-    async def _run_analysis(self) -> None:
+    async def _run_analysis(self, goal_override: str = "") -> None:
         """Build context and query LLM."""
+        goal = goal_override or self.config.goal
         context = self.accumulator.get_context(
-            goal=self.config.goal,
+            goal=goal,
             system_prompt="",
         )
         if not context.strip():

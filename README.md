@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Tests](https://img.shields.io/badge/tests-105%20passed-brightgreen.svg)](#testing)
-[![Version](https://img.shields.io/badge/version-1.0.5-orange.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-1.0.6-orange.svg)](VERSION)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED.svg)](#docker)
 [![OpenRouter](https://img.shields.io/badge/LLM-OpenRouter-purple.svg)](https://openrouter.ai)
 
@@ -96,6 +96,40 @@ python -m toonic.server --config toonic-server.yaml
 ```
 
 → Dokumentacja: [docs/server.md](docs/server.md)
+
+## ⚡ Trigger System — Event-Driven LLM Dispatch
+
+Zamiast wysyłać dane co N sekund, definiuj **kiedy** dane mają trafić do LLM:
+
+```bash
+# NLP: natural language → YAML triggers automatycznie
+python -m toonic.server \
+  --source "rtsp://admin:123456@192.168.188.146:554/h264Preview_01_main" \
+  --goal "describe what you see in each video frame" \
+  --when "the object person will be detected for 1 second, if not send frame min. every 1 minute"
+```
+
+```bash
+# YAML: plik z regułami triggerów
+python -m toonic.server \
+  --source "rtsp://cam1:554/stream" \
+  --triggers examples/video-captioning/triggers.yaml
+```
+
+Wspierane event types:
+
+| Event | Opis | Przykład |
+|-------|------|---------|
+| `motion` | Ruch w klatce | `--when "when motion detected"` |
+| `scene_change` | Duża zmiana sceny | `--when "on scene change"` |
+| `object` | Obiekt: osoba, samochód | `--when "person detected for 2s"` |
+| `pattern` | Regex w logach | `--when "error occurs 5 times in 60s"` |
+| `speech` | Detekcja mowy | `--when "speech detected"` |
+| `anomaly` | Odchylenie statystyczne | threshold z-score |
+
+Tryby: **periodic** (co N s), **on_event** (na zdarzenie), **hybrid** (zdarzenie + fallback periodic)
+
+→ Dokumentacja: [docs/triggers.md](docs/triggers.md)
 
 ## 💻 CLI Shell
 
@@ -272,7 +306,7 @@ models:
 ## 🧪 Testing
 
 ```bash
-make test            # All tests (105+)
+make test            # All tests (160+)
 make test-server     # Server tests only
 make test-cov        # With coverage report
 ```
@@ -287,6 +321,7 @@ make test-cov        # With coverage report
 - [docs/api.md](docs/api.md) — REST API reference
 - [docs/history.md](docs/history.md) — Conversation History
 - [docs/query.md](docs/query.md) — NLP/SQL Query
+- [docs/triggers.md](docs/triggers.md) — Trigger System (event-driven dispatch)
 - [docs/plugins.md](docs/plugins.md) — Plugin system (watchers)
 - [TODO/12-toonic-server-architecture.md](TODO/12-toonic-server-architecture.md) — Architecture proposal
 
@@ -300,6 +335,8 @@ make test-cov        # With coverage report
 - [x] Docker — RTSP test streams
 - [x] Conversation History — SQLite logging
 - [x] NLP/SQL Query — search history
+- [x] Trigger System — event-driven LLM dispatch (YAML DSL + NLP2YAML)
+- [x] Event Detectors — motion, scene_change, object, pattern, anomaly, speech
 - [ ] gRPC transport (Phase 3)
 - [ ] MCP Streamable HTTP bridge
 - [ ] Rust port (tonic + prost)
@@ -310,6 +347,8 @@ make test-cov        # With coverage report
 ## 📄 License
 
 Apache-2.0 — see [LICENSE](LICENSE)
+
+Created by **Tom Sapletta** — [tom@sapletta.com](mailto:tom@sapletta.com)
 
 ## License
 

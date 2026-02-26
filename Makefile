@@ -3,7 +3,7 @@
 PYTHON  := .venv/bin/python
 PIP     := .venv/bin/pip
 PYTEST  := .venv/bin/pytest
-PORT    ?= 8900
+PORT    ?= $(if $(TOONIC_PORT),$(TOONIC_PORT),8900)
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
