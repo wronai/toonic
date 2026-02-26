@@ -186,8 +186,12 @@ class ToonicServer:
                     import base64
                     b64 = base64.b64encode(chunk.raw_data).decode()
                     self._recent_images.append(b64)
-                    if len(self._recent_images) > 10:
-                        self._recent_images = self._recent_images[-10:]
+                    # Also collect extra images from detection events
+                    # (ROI crops, diff overlays, multi-frame sequences)
+                    extra = chunk.metadata.get("extra_images_b64", [])
+                    self._recent_images.extend(extra)
+                    if len(self._recent_images) > 20:
+                        self._recent_images = self._recent_images[-20:]
                 await self._emit_event("context", chunk.to_dict())
                 # Evaluate triggers against this chunk's metadata
                 trigger_data = dict(chunk.metadata)
@@ -242,7 +246,8 @@ class ToonicServer:
         images = []
         if stats["per_category"].get("video", {}).get("sources", 0) > 0:
             category = "multimodal"
-            images = list(self._recent_images[-5:])  # last 5 keyframes
+            # Send up to 8 recent images (event frames + ROI crops + diffs)
+            images = list(self._recent_images[-8:])
 
         request = LLMRequest(
             context=context,

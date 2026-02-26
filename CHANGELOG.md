@@ -1,3 +1,26 @@
+## [1.0.11] - 2026-02-26
+
+### Summary
+
+feat(docs): deep code analysis engine with 7 supporting modules
+
+### Docs
+
+- docs: update cctv-monitoring.md
+- docs: update README
+
+### Build
+
+- update pyproject.toml
+
+### Other
+
+- update project.toon
+- update toonic/server/core/router.py
+- update toonic/server/main.py
+- update toonic/server/watchers/stream_watcher.py
+
+
 ## [1.0.10] - 2026-02-26
 
 ### Summary

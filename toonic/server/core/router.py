@@ -138,7 +138,7 @@ class LLMRouter:
             # Build user message
             if request.images:
                 content = [{"type": "text", "text": request.context}]
-                for img_b64 in request.images[:5]:  # max 5 images
+                for img_b64 in request.images[:8]:  # max 8 images (frames + ROI + diff)
                     content.append({
                         "type": "image_url",
                         "image_url": {"url": f"data:image/jpeg;base64,{img_b64}"},
@@ -185,11 +185,29 @@ class LLMRouter:
         })
 
     def _system_prompt(self, goal: str) -> str:
-        return (
+        base = (
             "You are Toonic, an AI assistant that analyzes projects and data streams.\n"
             "You receive context in TOON format (Token-Oriented Object Notation) — "
             "a compact representation of code, documents, configs, logs, and multimedia.\n\n"
             f"Current goal: {goal}\n\n"
+        )
+        # Event-focused instructions for video/CCTV analysis
+        video_instructions = (
+            "VIDEO/CCTV ANALYSIS INSTRUCTIONS:\n"
+            "- You may receive multiple images: sequential event frames, ROI crops of detected objects, "
+            "and a motion-diff overlay (last image, red areas = changed pixels).\n"
+            "- Focus on EVENTS and ACTIONS: describe what is happening, not static scene appearance.\n"
+            "- Compare frames: note movement direction, speed, appearing/disappearing objects.\n"
+            "- For detected objects (person, car, etc.): describe their actions, trajectory, "
+            "interactions — not just their presence.\n"
+            "- ROI crops show close-ups of detected objects — use them for detail (clothing, "
+            "vehicle type, behavior).\n"
+            "- If diff overlay is present: focus analysis on red-highlighted areas (motion regions).\n"
+            "- Classify events: normal_activity, suspicious, intrusion, vehicle_entry, "
+            "package_delivery, animal, weather_change, equipment_fault.\n"
+            "- Include temporal context: 'person entered from left', 'car stopped at gate'.\n\n"
+        )
+        response_format = (
             "Respond with a JSON object:\n"
             '{"action": "report|code_fix|alert|none", '
             '"content": "your analysis or fix", '
@@ -197,6 +215,14 @@ class LLMRouter:
             '"confidence": 0.0-1.0, '
             '"affected_files": ["list", "of", "files"]}'
         )
+        # Include video instructions when goal hints at monitoring/video
+        goal_lower = goal.lower()
+        if any(kw in goal_lower for kw in (
+            "video", "monitor", "cctv", "security", "surveillance", "camera",
+            "detect", "watch", "frame", "stream", "rtsp",
+        )):
+            return base + video_instructions + response_format
+        return base + response_format
 
     def _parse_response(self, text: str) -> ActionResponse:
         """Parse LLM response into ActionResponse."""
