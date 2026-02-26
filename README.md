@@ -2,8 +2,8 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Tests](https://img.shields.io/badge/tests-160%20passed-brightgreen.svg)](#testing)
-[![Version](https://img.shields.io/badge/version-1.0.9-orange.svg)](VERSION)
+[![Tests](https://img.shields.io/badge/tests-227%20passed-brightgreen.svg)](#testing)
+[![Version](https://img.shields.io/badge/version-1.0.10-orange.svg)](VERSION)
 [![Docker](https://img.shields.io/badge/docker-compose-2496ED.svg)](#docker)
 [![OpenRouter](https://img.shields.io/badge/LLM-OpenRouter-purple.svg)](https://openrouter.ai)
 
@@ -75,6 +75,12 @@ Sources (watchers)  →  TOON Pipeline  →  Context Accumulator  →  LLM Route
 | **FileWatcher** | Monitoruje katalogi, konwertuje pliki do TOON |
 | **LogWatcher** | Tail log files, kategoryzacja ERR/WARN/INFO |
 | **StreamWatcher** | RTSP video, scene detection, keyframe extraction |
+| **HttpWatcher** | Monitoring stron WWW, API, health endpoints, SSL, content changes |
+| **ProcessWatcher** | Monitoring procesów, portów TCP, usług systemowych |
+| **DirectoryWatcher** | Detekcja zmian struktury katalogów (nowe/usunięte/przeniesione pliki) |
+| **DockerWatcher** | Monitoring kontenerów Docker (status, zasoby, logi) |
+| **DatabaseWatcher** | Monitoring baz danych — schema changes, row counts, custom SQL queries |
+| **NetworkWatcher** | Monitoring sieci — ping, DNS, TCP ports, latency |
 | **TriggerScheduler** | Event-driven dispatch: periodic/on_event/hybrid modes |
 | **Event Detectors** | Motion, scene_change, object, pattern, speech, anomaly |
 | **Accumulator** | Token budget management per kategoria |
@@ -99,6 +105,36 @@ python -m toonic.server \
   --goal "code quality + log anomalies + video monitoring" \
   --interval 30
 
+# Monitoring WWW + API
+python -m toonic.server \
+  --source http://example.com \
+  --source http://api.example.com/health \
+  --goal "monitor website availability and content changes"
+
+# Monitoring procesów i usług
+python -m toonic.server \
+  --source proc:nginx \
+  --source port:5432 \
+  --source service:postgresql \
+  --goal "monitor service health"
+
+# Monitoring Docker + baza danych
+python -m toonic.server \
+  --source docker:* \
+  --source db:production.db \
+  --goal "monitor containers and database changes"
+
+# Monitoring sieci
+python -m toonic.server \
+  --source net:8.8.8.8,1.1.1.1 \
+  --source tcp:db-server:5432 \
+  --goal "network connectivity monitoring"
+
+# Monitoring struktury katalogów
+python -m toonic.server \
+  --source dir:/var/data/uploads \
+  --goal "detect new files and structural changes"
+
 # Z konfiguracją YAML
 python -m toonic.server --config toonic-server.yaml
 ```
@@ -114,7 +150,7 @@ Zamiast wysyłać dane co N sekund, definiuj **kiedy** dane mają trafić do LLM
 python -m toonic.server \
   --source "rtsp://admin:123456@192.168.188.146:554/h264Preview_01_main" \
   --goal "describe what you see in each video frame" \
-  --when "the object person will be detected for 1 second, if not send frame min. every 1 minute"
+  --when "the object person will be detected if exist min for 1 second, if not send frame min. every 1 minute"
 ```
 
 ```bash
@@ -372,15 +408,17 @@ models:
 ## 🧪 Testing
 
 ```bash
-make test            # All tests (160 passed)
+make test            # All tests (227 passed)
 make test-server     # Server tests only
 make test-triggers   # Trigger system tests
+make test-watchers   # Watcher tests (9 types)
 make test-cov        # With coverage report
 ```
 
 **Test coverage:**
 - Core pipeline: 14 file handlers
-- Server: watchers, accumulator, router, history
+- Server: watchers (9 types), accumulator, router, history
+- Watchers: File, Log, Stream, HTTP, Process, Directory, Docker, Database, Network
 - Triggers: DSL, detectors (7 types), scheduler (3 modes), NLP2YAML
 - Web UI: REST API, WebSocket, event broadcasting
 
@@ -410,6 +448,12 @@ make test-cov        # With coverage report
 - [x] NLP/SQL Query — search history
 - [x] Trigger System — event-driven LLM dispatch (YAML DSL + NLP2YAML)
 - [x] Event Detectors — motion, scene_change, object, pattern, anomaly, speech
+- [x] HttpWatcher — website/API monitoring (status, content, SSL, keywords)
+- [x] ProcessWatcher — process/port/service monitoring
+- [x] DirectoryWatcher — directory structure change detection
+- [x] DockerWatcher — container monitoring (status, stats, logs)
+- [x] DatabaseWatcher — database monitoring (SQLite, PostgreSQL)
+- [x] NetworkWatcher — network monitoring (ping, DNS, TCP ports)
 - [ ] gRPC transport (Phase 3)
 - [ ] MCP Streamable HTTP bridge
 - [ ] Rust port (tonic + prost)

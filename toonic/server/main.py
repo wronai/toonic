@@ -30,6 +30,12 @@ from toonic.server.watchers.base import BaseWatcher, WatcherRegistry
 import toonic.server.watchers.file_watcher
 import toonic.server.watchers.log_watcher
 import toonic.server.watchers.stream_watcher
+import toonic.server.watchers.http_watcher
+import toonic.server.watchers.directory_watcher
+import toonic.server.watchers.docker_watcher
+import toonic.server.watchers.process_watcher
+import toonic.server.watchers.network_watcher
+import toonic.server.watchers.database_watcher
 
 logger = logging.getLogger("toonic.server")
 
@@ -240,7 +246,7 @@ class ToonicServer:
 
         request = LLMRequest(
             context=context,
-            goal=self.config.goal,
+            goal=goal,
             category=category,
             images=images,
         )

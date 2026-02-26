@@ -25,13 +25,15 @@ class StreamWatcher(BaseWatcher):
     def __init__(self, source_id: str, path_or_url: str, **options):
         super().__init__(source_id, path_or_url, **options)
         self.poll_interval = float(options.get("poll_interval", 5.0))
-        self.scene_threshold = float(options.get("scene_threshold", 0.4))
+        self.scene_threshold = float(options.get("scene_threshold", 0.01))
         self.frame_width = int(options.get("frame_width", 160))
         self.frame_height = int(options.get("frame_height", 120))
         self.jpeg_quality = int(options.get("jpeg_quality", 10))
+        self.max_silent_s = float(options.get("max_silent_s", 30.0))
         self._task: asyncio.Task | None = None
         self._frame_count = 0
         self._keyframe_count = 0
+        self._last_emit_time: float = 0.0
 
     async def start(self) -> None:
         await super().start()
@@ -102,16 +104,25 @@ class StreamWatcher(BaseWatcher):
                 is_keyframe = True
                 score = 1.0
 
-            if is_keyframe:
+            # Emit on keyframe OR periodic heartbeat (max_silent_s)
+            now = time.time()
+            silent_elapsed = now - self._last_emit_time if self._last_emit_time else 0
+            is_heartbeat = (not is_keyframe and self._last_emit_time > 0
+                            and silent_elapsed >= self.max_silent_s)
+
+            if is_keyframe or is_heartbeat:
                 prev_gray = gray
                 self._keyframe_count += 1
+                self._last_emit_time = now
 
                 _, buf = cv2.imencode(".jpg", small, [cv2.IMWRITE_JPEG_QUALITY, self.jpeg_quality])
                 b64 = base64.b64encode(buf.tobytes()).decode()
 
+                reason = "keyframe" if is_keyframe else "heartbeat"
                 toon = (
                     f"# {self.source_id} | video-frame | "
                     f"kf:{self._keyframe_count} | scene:{score:.2f} | "
+                    f"{reason} | "
                     f"{self.frame_width}x{self.frame_height} Q={self.jpeg_quality}"
                 )
 
@@ -126,10 +137,13 @@ class StreamWatcher(BaseWatcher):
                         "frame": self._frame_count,
                         "keyframe": self._keyframe_count,
                         "scene_score": round(score, 3),
+                        "reason": reason,
                         "b64_preview": b64[:100],
                         "size_bytes": len(buf),
                     },
                 ))
+            elif self._last_emit_time == 0:
+                self._last_emit_time = now
 
             await asyncio.sleep(0.01)
 

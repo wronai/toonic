@@ -12,6 +12,6 @@ RUN pip install --no-cache-dir -e ".[server,llm]"
 # Verify installation
 RUN python -c "import toonic; print(f'Toonic {toonic.__version__} installed')" && \
     python -c "from toonic.server.triggers import TriggerScheduler; print('Triggers OK')" && \
-    python -c "import fastapi, uvicorn, pyyaml, httpx; print('Server deps OK')"
+    python -c "import fastapi, uvicorn, yaml, httpx; print('Server deps OK')"
 
 CMD ["python", "-m", "toonic.server", "--help"]

@@ -52,7 +52,7 @@ class ModelConfig:
 class SourceConfig:
     """Data source configuration."""
     source_id: str = ""
-    category: str = "code"           # code|config|data|logs|video|audio|document
+    category: str = "code"           # code|config|data|logs|video|audio|document|database|api|web|network|container|process|infra
     path_or_url: str = ""
     watch: bool = True
     poll_interval: float = 2.0

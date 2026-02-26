@@ -1,15 +1,16 @@
-## [1.0.9] - 2026-02-26
+## [1.0.10] - 2026-02-26
 
 ### Summary
 
-feat(docs): deep code analysis engine with 7 supporting modules
+feat(docs): configuration management system
 
 ### Docs
 
 - docs: update README
-- docs: update server.md
-- docs: update web-ui.md
-- docs: update README
+
+### Test
+
+- update tests/test_watchers.py
 
 ### Build
 
@@ -17,11 +18,69 @@ feat(docs): deep code analysis engine with 7 supporting modules
 
 ### Other
 
-- docker: update Dockerfile
 - update docker/Dockerfile.minimal
-- update docker/Dockerfile.test
-- config: update docker-compose.test.yml
-- update toonic/server/triggers/dsl.py
+- update toonic/server/config.py
+- update toonic/server/core/router.py
+- update toonic/server/main.py
+- update toonic/server/models.py
+- update toonic/server/transport/broxeen_bridge.py
+- update toonic/server/transport/rest_api.py
+- update toonic/server/watchers/__init__.py
+- update toonic/server/watchers/base.py
+- update toonic/server/watchers/database_watcher.py
+- ... and 6 more
+
+
+## [1.0.9] - 2026-02-26
+
+### Summary
+
+feat(watchers): 6 new data source watchers — HTTP, Process, Directory, Docker, Database, Network monitoring
+
+### Added
+
+**New Watchers (6 types):**
+- **HttpWatcher** — monitor websites, APIs, health endpoints: status codes, response times, content changes (hash-based), SSL certificate expiry, keyword detection, redirect chains
+- **ProcessWatcher** — monitor system processes (`proc:nginx`), PIDs (`pid:1234`), TCP ports (`port:8080`), TCP endpoints (`tcp:host:5432`), systemd services (`service:postgresql`), with health check URLs
+- **DirectoryWatcher** — monitor directory structure changes: new/deleted/moved files, size changes, permission changes, file rename detection, recursive tree scanning with depth limit and ignore patterns
+- **DockerWatcher** — monitor Docker containers (`docker:myapp` or `docker:*`): container status, resource usage (CPU/mem), restart detection, image changes, recent error logs
+- **DatabaseWatcher** — monitor databases: SQLite natively, PostgreSQL via asyncpg; schema change detection, row count tracking, custom SQL query result diffs, connection health
+- **NetworkWatcher** — monitor network connectivity (`net:8.8.8.8,1.1.1.1`): ping latency, DNS resolution changes, TCP port scanning, latency spike detection, packet loss
+
+**New Source Categories:**
+- `WEB`, `NETWORK`, `CONTAINER`, `PROCESS` added to SourceCategory enum (14 total)
+
+**Source URL Prefixes:**
+- `http://`, `https://` → HttpWatcher
+- `proc:`, `pid:`, `port:`, `tcp:`, `service:` → ProcessWatcher
+- `dir:` → DirectoryWatcher
+- `docker:` → DockerWatcher
+- `db:`, `sqlite:`, `database:`, `postgresql://` → DatabaseWatcher
+- `net:`, `ping:`, `dns:` → NetworkWatcher
+
+**Tests:**
+- 67 new tests for all 6 watchers (227 total, all passing)
+- Registry resolution, URL routing, change detection, TOON format output
+- Integration tests: SQLite full check cycle, PID monitoring, directory change detection
+
+### Changed
+
+- WatcherRegistry fallback routing updated for all new categories
+- SourceConfig category comment updated with new types
+- pyproject.toml: added `monitoring` optional dependency group
+- Updated README with new watchers in architecture table, CLI examples, roadmap
+- Test badge updated: 160 → 227 passed
+
+### Docs
+
+- docs: update README with 6 new watchers, CLI examples, architecture table
+- docs: update server.md
+- docs: update web-ui.md
+
+### Build
+
+- update pyproject.toml (monitoring extras, Python 3.13 classifier)
+- docker: fix libgl1-mesa-glx → libgl1 in Dockerfile and Dockerfile.test
 
 
 ## [1.0.8] - 2026-02-26

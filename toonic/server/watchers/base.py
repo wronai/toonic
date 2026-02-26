@@ -93,11 +93,29 @@ class WatcherRegistry:
         from toonic.server.watchers.file_watcher import FileWatcher
         from toonic.server.watchers.log_watcher import LogWatcher
         from toonic.server.watchers.stream_watcher import StreamWatcher
+        from toonic.server.watchers.http_watcher import HttpWatcher
+        from toonic.server.watchers.process_watcher import ProcessWatcher
+        from toonic.server.watchers.directory_watcher import DirectoryWatcher
+        from toonic.server.watchers.docker_watcher import DockerWatcher
+        from toonic.server.watchers.database_watcher import DatabaseWatcher
+        from toonic.server.watchers.network_watcher import NetworkWatcher
 
         if category in ("logs",):
             return LogWatcher(source_id, path_or_url, **options)
         elif category in ("video", "audio"):
             return StreamWatcher(source_id, path_or_url, **options)
+        elif category in ("web", "api"):
+            return HttpWatcher(source_id, path_or_url, **options)
+        elif category in ("process",):
+            return ProcessWatcher(source_id, path_or_url, **options)
+        elif category in ("container",):
+            return DockerWatcher(source_id, path_or_url, **options)
+        elif category in ("database",):
+            return DatabaseWatcher(source_id, path_or_url, **options)
+        elif category in ("network",):
+            return NetworkWatcher(source_id, path_or_url, **options)
+        elif category in ("infra",):
+            return DirectoryWatcher(source_id, path_or_url, **options)
         else:
             return FileWatcher(source_id, path_or_url, **options)
 

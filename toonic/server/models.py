@@ -21,6 +21,10 @@ class SourceCategory(str, Enum):
     DATABASE = "database"
     API = "api"
     INFRA = "infra"
+    WEB = "web"
+    NETWORK = "network"
+    CONTAINER = "container"
+    PROCESS = "process"
 
 
 @dataclass

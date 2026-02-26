@@ -75,12 +75,13 @@ class LLMRouter:
             )
 
         try:
-            response_text = await self._call_llm(model_cfg, request)
+            response_text, tokens_used = await self._call_llm(model_cfg, request)
             self._total_requests += 1
             duration = time.time() - start
 
             action = self._parse_response(response_text)
             action.model_used = self._litellm_model_id(model_cfg)
+            action.tokens_used = int(tokens_used or 0)
             action.duration_s = duration
             action.action_id = f"action-{self._total_requests}"
 
@@ -101,6 +102,7 @@ class LLMRouter:
                 action_type="error",
                 content=f"LLM error: {msg}",
                 model_used=self._litellm_model_id(model_cfg),
+                tokens_used=0,
                 duration_s=time.time() - start,
             )
             self._record_exchange(request, action, model_cfg, time.time() - start, "error", msg)
@@ -123,7 +125,7 @@ class LLMRouter:
             return f"{provider}/{model}"
         return model
 
-    async def _call_llm(self, model_cfg: ModelConfig, request: LLMRequest) -> str:
+    async def _call_llm(self, model_cfg: ModelConfig, request: LLMRequest) -> tuple[str, int]:
         """Call LLM via litellm or direct HTTP."""
         try:
             import litellm
@@ -160,12 +162,15 @@ class LLMRouter:
             )
 
             text = response.choices[0].message.content
-            self._total_tokens += response.usage.total_tokens if response.usage else 0
-            return text
+            tokens = int(getattr(getattr(response, "usage", None), "total_tokens", 0) or 0)
+            self._total_tokens += tokens
+            return text, tokens
 
         except ImportError:
             logger.warning("litellm not installed — using mock response")
-            return self._mock_response(request)
+            text = self._mock_response(request)
+            tokens = len(text.split()) * 4 // 3
+            return text, tokens
 
     def _mock_response(self, request: LLMRequest) -> str:
         """Mock response when litellm is not available."""

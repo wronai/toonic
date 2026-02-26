@@ -552,4 +552,11 @@ def create_app(server) -> Any:
             return JSONResponse(status_code=400, content={"error": "sql required"})
         return server.sql_query(sql)
 
+    # ── Broxeen Bridge ─────────────────────────────────────
+    try:
+        from toonic.server.transport.broxeen_bridge import register_broxeen_routes
+        register_broxeen_routes(app, server)
+    except Exception as e:
+        logger.warning(f"Broxeen bridge not loaded: {e}")
+
     return app
