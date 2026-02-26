@@ -1,0 +1,46 @@
+# Toonic Server Configuration
+# Usage: python -m toonic.server --config toonic-server.yaml
+
+host: "0.0.0.0"
+port: 8900
+goal: "analyze project structure, find issues, suggest improvements"
+goal_type: "analyze"
+interval: 30.0
+max_context_tokens: 100000
+log_level: "INFO"
+
+token_allocation:
+  code: 0.40
+  config: 0.05
+  logs: 0.15
+  video: 0.15
+  audio: 0.10
+  document: 0.05
+  system: 0.10
+
+models:
+  text:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 8192
+    api_key_env: OPENROUTER_API_KEY
+  code:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 16384
+    api_key_env: OPENROUTER_API_KEY
+  multimodal:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 8192
+    supports: ["text", "image", "audio"]
+    api_key_env: OPENROUTER_API_KEY
+
+# Sources are added via CLI flags or API
+# sources:
+#   - path_or_url: "./src/"
+#     category: "code"
+#   - path_or_url: "./logs/app.log"
+#     category: "logs"
+#   - path_or_url: "rtsp://localhost:8554/test"
+#     category: "video"

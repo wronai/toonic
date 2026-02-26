@@ -1,3 +1,41 @@
+## [1.0.4] - 2026-02-26
+
+### Summary
+
+feat(docs): CLI interface improvements
+
+### Docs
+
+- docs: update TODO.md
+- docs: update 12-toonic-server-architecture.md
+- docs: update README
+- docs: update README
+- docs: update README
+- docs: update README
+
+### Test
+
+- update tests/test_server.py
+
+### Build
+
+- update pyproject.toml
+
+### Other
+
+- update TICKET
+- docker: update Dockerfile
+- docker: update docker-compose.yml
+- update docker/test-data/sample.logfile
+- update examples/code-analysis/sample-project/config.py
+- update examples/code-analysis/sample-project/main.py
+- config: update toonic-server.yaml
+- update toonic/server/__init__.py
+- update toonic/server/__main__.py
+- update toonic/server/client.py
+- ... and 13 more
+
+
 ## [1.0.3] - 2026-02-26
 
 ### Summary

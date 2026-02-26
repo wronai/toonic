@@ -1,0 +1,165 @@
+"""
+Entry point: python -m toonic.server
+
+Usage:
+    python -m toonic.server --source file:./src/ --goal "analyze code"
+    python -m toonic.server --config toonic-server.yaml
+    python -m toonic.server --source file:./src/ --source log:./app.log --source rtsp://cam1
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import logging
+import signal
+import sys
+from pathlib import Path
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog="toonic-server",
+        description="Toonic Server — bidirectional TOON streaming for LLM analysis",
+    )
+    parser.add_argument("--config", "-c", help="Config YAML file")
+    parser.add_argument("--source", "-s", action="append", default=[],
+                        help="Data source (file:path, log:path, rtsp://url)")
+    parser.add_argument("--goal", "-g", default="analyze project structure and suggest improvements",
+                        help="Analysis goal")
+    parser.add_argument("--model", "-m", default="", help="LLM model override")
+    parser.add_argument("--interval", "-i", type=float, default=30.0,
+                        help="Analysis interval seconds (0=one-shot)")
+    parser.add_argument("--host", default="0.0.0.0", help="Server host")
+    parser.add_argument("--port", "-p", type=int, default=8900, help="HTTP/WS port")
+    parser.add_argument("--no-web", action="store_true", help="Disable web UI")
+    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
+    return parser.parse_args()
+
+
+def parse_source_string(source_str: str):
+    """Parse source string like 'file:./src/' or 'rtsp://cam1'."""
+    from toonic.server.config import SourceConfig
+
+    if "://" in source_str and not source_str.startswith("file:"):
+        # Protocol URL
+        proto = source_str.split("://")[0]
+        cat_map = {"rtsp": "video", "http": "data", "https": "data",
+                    "ws": "data", "wss": "data", "mqtt": "data"}
+        return SourceConfig(
+            path_or_url=source_str,
+            category=cat_map.get(proto, "data"),
+        )
+
+    # Prefixed: file:, log:, code:, config:, etc.
+    if ":" in source_str:
+        prefix, _, path = source_str.partition(":")
+        cat_map = {"file": "code", "code": "code", "log": "logs", "logs": "logs",
+                    "config": "config", "data": "data", "doc": "document",
+                    "video": "video", "audio": "audio"}
+        return SourceConfig(
+            path_or_url=path,
+            category=cat_map.get(prefix, "code"),
+        )
+
+    # Plain path
+    return SourceConfig(path_or_url=source_str, category="code")
+
+
+async def run_server(args):
+    from toonic.server.config import ServerConfig, ModelConfig
+    from toonic.server.main import ToonicServer
+
+    # Build config
+    if args.config and Path(args.config).exists():
+        try:
+            config = ServerConfig.from_yaml_file(args.config)
+        except ImportError:
+            config = ServerConfig.from_env()
+    else:
+        config = ServerConfig.from_env()
+
+    config.host = args.host
+    config.port = args.port
+    config.goal = args.goal
+    config.interval = args.interval
+    config.log_level = args.log_level
+
+    if args.model:
+        for m in config.models.values():
+            m.model = args.model
+
+    # Parse sources
+    for src_str in args.source:
+        config.sources.append(parse_source_string(src_str))
+
+    # Create server
+    server = ToonicServer(config)
+
+    if args.no_web:
+        # Run server without web UI
+        await server.start()
+        print(f"Toonic Server running (no-web mode)")
+        print(f"  Goal: {config.goal}")
+        print(f"  Sources: {len(config.sources)}")
+        print(f"  Interval: {config.interval}s")
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            await server.stop()
+    else:
+        # Run with FastAPI web UI
+        try:
+            from toonic.server.transport.rest_api import create_app
+            import uvicorn
+        except ImportError:
+            print("ERROR: pip install fastapi uvicorn")
+            print("  Or run with --no-web flag")
+            sys.exit(1)
+
+        app = create_app(server)
+
+        # Start server in background
+        await server.start()
+
+        print(f"\n  Toonic Server")
+        print(f"  ─────────────────────────────────")
+        print(f"  Web UI:   http://{config.host}:{config.port}/")
+        print(f"  API:      http://{config.host}:{config.port}/api/status")
+        print(f"  WS:       ws://{config.host}:{config.port}/ws")
+        print(f"  Goal:     {config.goal}")
+        print(f"  Sources:  {len(config.sources)}")
+        print(f"  Interval: {config.interval}s")
+        print(f"  Model:    {args.model or 'default'}")
+        print()
+
+        uvi_config = uvicorn.Config(
+            app, host=config.host, port=config.port,
+            log_level=config.log_level.lower(),
+        )
+        uvi_server = uvicorn.Server(uvi_config)
+
+        try:
+            await uvi_server.serve()
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            pass
+        finally:
+            await server.stop()
+
+
+def main():
+    args = parse_args()
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+        datefmt="%H:%M:%S",
+    )
+    try:
+        asyncio.run(run_server(args))
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()

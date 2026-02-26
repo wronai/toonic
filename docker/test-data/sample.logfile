@@ -1,0 +1,19 @@
+2026-02-26 10:00:01 INFO  [main] Application started on port 8080
+2026-02-26 10:00:02 INFO  [db] Connected to PostgreSQL localhost:5432/myapp
+2026-02-26 10:00:03 INFO  [auth] JWT key loaded from /etc/secrets/jwt.pem
+2026-02-26 10:00:15 INFO  [api] GET /api/users 200 12ms
+2026-02-26 10:00:16 INFO  [api] GET /api/users/42 200 8ms
+2026-02-26 10:00:22 WARNING [auth] Token expiry approaching for user_id=42
+2026-02-26 10:00:30 INFO  [api] POST /api/orders 201 45ms
+2026-02-26 10:00:35 ERROR [db] Connection timeout after 30s — retrying (attempt 1/3)
+2026-02-26 10:00:36 INFO  [db] Reconnected to PostgreSQL
+2026-02-26 10:00:45 INFO  [api] GET /api/products 200 15ms
+2026-02-26 10:01:00 WARNING [api] Slow query detected: GET /api/reports/daily took 2300ms
+2026-02-26 10:01:15 ERROR [auth] Invalid token for request from 192.168.1.100 — possible brute force
+2026-02-26 10:01:16 ERROR [auth] Rate limit exceeded for IP 192.168.1.100 — blocked for 300s
+2026-02-26 10:01:30 INFO  [api] GET /api/health 200 1ms
+2026-02-26 10:02:00 INFO  [scheduler] Running daily cleanup job
+2026-02-26 10:02:05 INFO  [scheduler] Cleaned 142 expired sessions
+2026-02-26 10:02:10 WARNING [disk] Disk usage at 85% on /var/data — threshold is 80%
+2026-02-26 10:02:30 INFO  [api] GET /api/dashboard 200 89ms
+2026-02-26 10:03:00 CRITICAL [db] PRIMARY KEY violation on orders table — duplicate order_id=98765

@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  # ── RTSP Test Stream Server ─────────────────────────────────
+  # MediaMTX (formerly rtsp-simple-server) — lightweight RTSP/HLS server
+  rtsp-server:
+    image: bluenviron/mediamtx:latest
+    container_name: toonic-rtsp
+    ports:
+      - "8554:8554"   # RTSP
+      - "8888:8888"   # HLS
+    restart: unless-stopped
+
+  # ── Test Video Stream Generator ─────────────────────────────
+  # Generates a test video pattern and pushes to RTSP server
+  test-stream-video:
+    image: linuxserver/ffmpeg:latest
+    container_name: toonic-test-video
+    depends_on:
+      - rtsp-server
+    entrypoint: >
+      sh -c "sleep 3 && ffmpeg -re -f lavfi
+      -i testsrc=size=640x480:rate=25
+      -f lavfi -i sine=frequency=440:sample_rate=16000
+      -c:v libx264 -preset ultrafast -tune zerolatency -b:v 500k
+      -c:a aac -b:a 64k
+      -f rtsp rtsp://rtsp-server:8554/test-cam1"
+    restart: unless-stopped
+
+  # ── Second Camera (different pattern) ───────────────────────
+  test-stream-cam2:
+    image: linuxserver/ffmpeg:latest
+    container_name: toonic-test-cam2
+    depends_on:
+      - rtsp-server
+    entrypoint: >
+      sh -c "sleep 5 && ffmpeg -re -f lavfi
+      -i 'smptebars=size=320x240:rate=15'
+      -f lavfi -i 'sine=frequency=880:sample_rate=16000'
+      -c:v libx264 -preset ultrafast -tune zerolatency -b:v 300k
+      -c:a aac -b:a 32k
+      -f rtsp rtsp://rtsp-server:8554/test-cam2"
+    restart: unless-stopped
+
+  # ── Test Audio-only Stream ──────────────────────────────────
+  test-stream-audio:
+    image: linuxserver/ffmpeg:latest
+    container_name: toonic-test-audio
+    depends_on:
+      - rtsp-server
+    entrypoint: >
+      sh -c "sleep 4 && ffmpeg -re -f lavfi
+      -i 'sine=frequency=300:sample_rate=16000:duration=3600'
+      -c:a aac -b:a 32k
+      -f rtsp rtsp://rtsp-server:8554/test-audio"
+    restart: unless-stopped
+
+  # ── Toonic Server ───────────────────────────────────────────
+  toonic-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: toonic-server
+    ports:
+      - "8900:8900"
+    depends_on:
+      - rtsp-server
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-google/gemini-2.5-flash-preview:thinking}
+      - TOONIC_LOG_LEVEL=INFO
+    volumes:
+      - ../examples:/app/examples:ro
+      - ./test-data:/app/test-data:ro
+    command: >
+      --port 8900
+      --source file:/app/examples/code-analysis/sample-project/
+      --source log:/app/test-data/app.log
+      --source rtsp://rtsp-server:8554/test-cam1
+      --goal "analyze the sample project code, monitor logs for errors, watch video streams for changes"
+      --interval 30
