@@ -117,6 +117,14 @@ python -m toonic.server \
   --model google/gemini-3-flash-preview \
   --interval 0
 
+# With custom port (if 8901 is occupied)
+python -m toonic.server \
+  --source "http://obywatel.bielik.ai/" \
+  --goal "security audit: OWASP Top 10 vulnerabilities, security headers, TLS configuration, exposed endpoints, input validation" \
+  --model google/gemini-3-flash-preview \
+  --interval 0 \
+  --port 8902
+
 # Alternative: SSL/TLS focused analysis
 python -m toonic.server \
   --source "net:obywatel.bielik.ai" \
@@ -143,6 +151,8 @@ python -m toonic.server \
 
 **Note**: If you encounter SSL/TLS errors like `[SSL: TLSV1_ALERT_INTERNAL_ERROR]`, use HTTP instead of HTTPS or analyze SSL/TLS separately using network and process monitoring. The `net:` prefix provides network connectivity analysis while `port:` and `tcp:` prefixes give you port-specific security monitoring.
 
+**Port Conflicts**: If port 8901 is occupied, use `--port 8902` or another available port.
+
 ### What It Checks for obywatel.bielik.ai
 
 - **OWASP Top 10**: SQL injection, XSS, CSRF, security misconfigurations
@@ -166,6 +176,35 @@ toonic> query "TLS or SSL configuration issues"
 toonic> query "exposed endpoints or admin interfaces"
 toonic> sql SELECT target_path, content FROM exchanges WHERE action_type='alert' AND content LIKE '%security%' ORDER BY timestamp DESC
 ```
+
+### Generate Markdown Report
+
+After running the security audit, generate a comprehensive Markdown report:
+
+```bash
+# Generate report from analysis data
+cd examples/security-audit
+python3 generate_report.py \
+  --data-dir ../../toonic_data \
+  --goal "SSL/TLS security analysis of obywatel.bielik.ai" \
+  --output obywatel_security_audit.md
+
+# View the report
+cat obywatel_security_audit.md
+```
+
+**Report Features:**
+- Executive summary with confidence scores
+- Detailed security findings
+- Affected files and recommendations
+- Analysis context and conversation history
+- Next steps for remediation
+
+The report script automatically:
+- Filters for security-related findings
+- Ranks by confidence level
+- Provides actionable recommendations
+- Formats output in professional Markdown
 
 ## Priority in Security Context
 

@@ -390,3 +390,148 @@ def run(*sources: Union[str, SourceConfig, Dict], goal: str = "analyze and monit
         run("./src/", "log:./app.log", goal="find bugs")
     """
     asyncio.run(monitor(*sources, goal=goal, **kwargs))
+
+
+# ══════════════════════════════════════════════════════════════
+# Presets — pre-configured monitoring scenarios (1-liner)
+# ══════════════════════════════════════════════════════════════
+
+def security_audit(*sources: str, **overrides) -> ConfigBuilder:
+    """Pre-configured security audit preset.
+
+    Usage:
+        from toonic.server.quick import security_audit
+        security_audit("./src/").run()                    # async
+        security_audit("./src/", "log:./auth.log").run()  # multi-source
+    """
+    builder = watch(*sources) if sources else watch()
+    builder.goal(overrides.pop("goal",
+        "security audit: hardcoded secrets, SQL injection, XSS, CSRF, "
+        "auth bypass, insecure dependencies, exposed endpoints"))
+    builder.interval(overrides.pop("interval", 0))
+    for k, v in overrides.items():
+        if hasattr(builder, k):
+            getattr(builder, k)(v)
+    return builder
+
+
+def code_review(*sources: str, **overrides) -> ConfigBuilder:
+    """Pre-configured code review preset.
+
+    Usage:
+        from toonic.server.quick import code_review
+        code_review("./src/").run()
+    """
+    builder = watch(*sources) if sources else watch()
+    builder.goal(overrides.pop("goal",
+        "code review: find bugs, dead code, performance issues, "
+        "SOLID violations, suggest improvements with file/line refs"))
+    builder.interval(overrides.pop("interval", 0))
+    for k, v in overrides.items():
+        if hasattr(builder, k):
+            getattr(builder, k)(v)
+    return builder
+
+
+def log_monitor(*sources: str, **overrides) -> ConfigBuilder:
+    """Pre-configured log monitoring preset.
+
+    Usage:
+        from toonic.server.quick import log_monitor
+        log_monitor("log:./app.log").run()
+    """
+    builder = watch(*sources) if sources else watch()
+    builder.goal(overrides.pop("goal",
+        "log monitoring: detect error spikes, anomaly patterns, "
+        "correlate failures, suggest root cause and fixes"))
+    builder.interval(overrides.pop("interval", 10))
+    for k, v in overrides.items():
+        if hasattr(builder, k):
+            getattr(builder, k)(v)
+    return builder
+
+
+def infra_health(*sources: str, **overrides) -> ConfigBuilder:
+    """Pre-configured infrastructure health monitoring preset.
+
+    Usage:
+        from toonic.server.quick import infra_health
+        infra_health("docker:*", "db:./app.db", "net:8.8.8.8").run()
+    """
+    builder = watch(*sources) if sources else watch()
+    builder.goal(overrides.pop("goal",
+        "infrastructure health: container status, database integrity, "
+        "network connectivity, service availability, resource usage"))
+    builder.interval(overrides.pop("interval", 30))
+    for k, v in overrides.items():
+        if hasattr(builder, k):
+            getattr(builder, k)(v)
+    return builder
+
+
+def cctv_monitor(*sources: str, **overrides) -> ConfigBuilder:
+    """Pre-configured CCTV/video monitoring preset.
+
+    Usage:
+        from toonic.server.quick import cctv_monitor
+        cctv_monitor("rtsp://cam:554/stream").run()
+    """
+    builder = watch(*sources) if sources else watch()
+    builder.goal(overrides.pop("goal",
+        "CCTV security: detect intrusions, describe person/vehicle actions, "
+        "classify events as normal/suspicious/intrusion, note directions"))
+    builder.interval(overrides.pop("interval", 0))
+    for k, v in overrides.items():
+        if hasattr(builder, k):
+            getattr(builder, k)(v)
+    return builder
+
+
+def web_monitor(*urls: str, **overrides) -> ConfigBuilder:
+    """Pre-configured web/API endpoint monitoring preset.
+
+    Usage:
+        from toonic.server.quick import web_monitor
+        web_monitor("https://api.example.com/health").run()
+    """
+    builder = ConfigBuilder()
+    for url in urls:
+        builder.http(url)
+    builder.goal(overrides.pop("goal",
+        "web monitoring: uptime, response times, SSL expiry, "
+        "content changes, security headers, status code anomalies"))
+    builder.interval(overrides.pop("interval", 60))
+    for k, v in overrides.items():
+        if hasattr(builder, k):
+            getattr(builder, k)(v)
+    return builder
+
+
+def full_stack(*sources: str, **overrides) -> ConfigBuilder:
+    """Pre-configured full-stack monitoring preset.
+
+    Usage:
+        from toonic.server.quick import full_stack
+        full_stack("./src/", "log:./app.log", "docker:*", "db:./app.db").run()
+    """
+    builder = watch(*sources) if sources else watch()
+    builder.goal(overrides.pop("goal",
+        "full-stack monitoring: code quality, log anomalies, "
+        "container health, database integrity, network connectivity"))
+    builder.interval(overrides.pop("interval", 30))
+    for k, v in overrides.items():
+        if hasattr(builder, k):
+            getattr(builder, k)(v)
+    return builder
+
+
+# Registry of all presets (for CLI discovery)
+PRESETS: Dict[str, Any] = {
+    "security-audit": {"fn": security_audit, "desc": "Security audit: secrets, injections, OWASP Top 10"},
+    "code-review": {"fn": code_review, "desc": "Code review: bugs, SOLID, performance"},
+    "log-monitor": {"fn": log_monitor, "desc": "Log monitoring: error spikes, anomalies"},
+    "infra-health": {"fn": infra_health, "desc": "Infrastructure: Docker, DB, network, processes"},
+    "cctv-monitor": {"fn": cctv_monitor, "desc": "CCTV/video: intrusion detection, event analysis"},
+    "web-monitor": {"fn": web_monitor, "desc": "Web/API: uptime, response times, SSL, headers"},
+    "full-stack": {"fn": full_stack, "desc": "Full-stack: code + logs + infra + network"},
+}
