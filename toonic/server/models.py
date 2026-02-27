@@ -27,6 +27,19 @@ class SourceCategory(str, Enum):
     PROCESS = "process"
 
 
+class ContentType(str, Enum):
+    """Content type — allows Accumulator to make intelligent decisions."""
+    TOON_SPEC = "toon_spec"
+    LOG_ENTRIES = "log_entries"
+    VIDEO_EVENT = "video_event"
+    VIDEO_HEARTBEAT = "video_heartbeat"
+    METRIC_SNAPSHOT = "metric_snapshot"
+    SCHEMA_DIFF = "schema_diff"
+    DIRECTORY_DIFF = "directory_diff"
+    HTTP_STATUS = "http_status"
+    RAW_TEXT = "raw_text"
+
+
 @dataclass
 class ContextChunk:
     """Single chunk of context from a data source."""
@@ -39,6 +52,9 @@ class ContextChunk:
     is_delta: bool = False
     token_estimate: int = 0
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # New fields (backward compatible — have defaults)
+    content_type: ContentType = ContentType.RAW_TEXT
+    priority: float = 0.5          # 0.0–1.0, higher = more important
 
     def __post_init__(self):
         if not self.timestamp:

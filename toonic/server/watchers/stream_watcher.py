@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from toonic.server.models import ContextChunk, SourceCategory
+from toonic.server.models import ContextChunk, ContentType, SourceCategory
 from toonic.server.watchers.base import BaseWatcher, WatcherRegistry
 
 logger = logging.getLogger("toonic.watcher.stream")
@@ -274,6 +274,8 @@ class StreamWatcher(BaseWatcher):
                         f"kf:{self._keyframe_count} | scene:{scene_score:.3f} | "
                         f"{reason} | {self.send_width}x{send_h} Q={self.send_quality}"
                     )
+                    ct = ContentType.VIDEO_EVENT if is_keyframe else ContentType.VIDEO_HEARTBEAT
+                    pri = 0.7 if is_keyframe else 0.2
                     await self.emit(ContextChunk(
                         source_id=self.source_id,
                         category=SourceCategory.VIDEO,
@@ -281,6 +283,8 @@ class StreamWatcher(BaseWatcher):
                         raw_data=buf.tobytes(),
                         raw_encoding="base64_jpeg",
                         is_delta=True,
+                        content_type=ct,
+                        priority=pri,
                         metadata={
                             "frame": self._frame_count,
                             "keyframe": self._keyframe_count,
@@ -438,6 +442,8 @@ class StreamWatcher(BaseWatcher):
             raw_data=primary_raw,
             raw_encoding="base64_jpeg",
             is_delta=True,
+            content_type=ContentType.VIDEO_EVENT,
+            priority=0.9,
             metadata={
                 "frame": selected[-1].frame_idx,
                 "keyframe": self._keyframe_count,
@@ -527,6 +533,8 @@ class StreamWatcher(BaseWatcher):
             raw_data=buf.tobytes(),
             raw_encoding="base64_jpeg",
             is_delta=True,
+            content_type=ContentType.VIDEO_HEARTBEAT,
+            priority=0.2,
             metadata={
                 "frame": self._frame_count,
                 "keyframe": self._keyframe_count,

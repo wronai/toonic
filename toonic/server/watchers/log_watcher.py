@@ -11,10 +11,30 @@ import time
 from pathlib import Path
 from typing import Dict
 
-from toonic.server.models import ContextChunk, SourceCategory
+from toonic.server.models import ContextChunk, ContentType, SourceCategory
 from toonic.server.watchers.base import BaseWatcher, WatcherRegistry
 
 logger = logging.getLogger("toonic.watcher.log")
+
+SEVERITY_PRIORITY = {
+    "CRITICAL": 1.0,
+    "ERROR": 0.9,
+    "WARNING": 0.6,
+    "INFO": 0.3,
+    "DEBUG": 0.1,
+}
+
+
+def _detect_max_severity(lines: list) -> str:
+    """Detect max severity level from log lines."""
+    max_sev = "INFO"
+    for line in lines:
+        upper = line.upper()
+        for sev in ("CRITICAL", "ERROR", "WARNING"):
+            if sev in upper:
+                if SEVERITY_PRIORITY.get(sev, 0) > SEVERITY_PRIORITY.get(max_sev, 0):
+                    max_sev = sev
+    return max_sev
 
 
 class LogWatcher(BaseWatcher):
@@ -59,12 +79,15 @@ class LogWatcher(BaseWatcher):
             self._last_size = self._last_pos
 
             toon = self._to_toon(tail, path.name)
+            max_sev = _detect_max_severity(tail)
             await self.emit(ContextChunk(
                 source_id=self.source_id,
                 category=SourceCategory.LOGS,
                 toon_spec=toon,
                 is_delta=False,
-                metadata={"path": str(path), "lines": len(tail)},
+                content_type=ContentType.LOG_ENTRIES,
+                priority=SEVERITY_PRIORITY.get(max_sev, 0.3),
+                metadata={"path": str(path), "lines": len(tail), "max_severity": max_sev},
             ))
             logger.info(f"[{self.source_id}] Initial tail: {len(tail)} lines")
         except Exception as e:
@@ -104,12 +127,15 @@ class LogWatcher(BaseWatcher):
             if new_content.strip():
                 new_lines = new_content.strip().split("\n")
                 toon = self._to_toon(new_lines, path.name, delta=True)
+                max_sev = _detect_max_severity(new_lines)
                 await self.emit(ContextChunk(
                     source_id=self.source_id,
                     category=SourceCategory.LOGS,
                     toon_spec=toon,
                     is_delta=True,
-                    metadata={"path": str(path), "new_lines": len(new_lines)},
+                    content_type=ContentType.LOG_ENTRIES,
+                    priority=SEVERITY_PRIORITY.get(max_sev, 0.3),
+                    metadata={"path": str(path), "new_lines": len(new_lines), "max_severity": max_sev},
                 ))
         except Exception as e:
             logger.error(f"[{self.source_id}] Read error: {e}")

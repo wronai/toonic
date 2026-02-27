@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"UTF-8\">
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+  <title>Toonic Events Viewer</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; background: #0f1117; color: #e5e7eb; }
+    header { position: sticky; top: 0; z-index: 10; background: #111827; border-bottom: 1px solid #1f2937; padding: 10px 14px; display: flex; gap: 10px; align-items: center; }
+    header .title { font-weight: 700; color: #60a5fa; }
+    header .hint { color: #9ca3af; font-size: 12px; }
+    header input, header select, header button { background: #0b1220; color: #e5e7eb; border: 1px solid #374151; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+    header button { cursor: pointer; background: #2563eb; border-color: #2563eb; }
+    header button:hover { background: #1d4ed8; }
+    main { padding: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .card { border: 1px solid #1f2937; background: #0b1220; border-radius: 12px; overflow: hidden; }
+    .card-hdr { padding: 10px 12px; border-bottom: 1px solid #1f2937; display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+    .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #111827; color: #9ca3af; border: 1px solid #1f2937; }
+    .tag.type { color: #93c5fd; border-color: #1e3a8a; background: #0b1530; }
+    .tag.ts { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+    .body { display: grid; grid-template-columns: 360px 1fr; gap: 0; }
+    .img { border-right: 1px solid #1f2937; background: #050812; display: flex; align-items: center; justify-content: center; min-height: 220px; }
+    .img img { width: 100%; height: auto; display: block; object-fit: contain; max-height: 520px; }
+    .noimg { padding: 20px; color: #6b7280; font-size: 13px; }
+    .meta { padding: 10px 12px; overflow: auto; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: 12px; color: #cbd5e1; }
+    .footer { padding: 16px 0; color: #6b7280; text-align: center; font-size: 12px; }
+    @media (max-width: 900px) { .body { grid-template-columns: 1fr; } .img { border-right: none; border-bottom: 1px solid #1f2937; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class=\"title\">Toonic Events Viewer</div>
+    <div class=\"hint\">events.jsonl (scroll to load more)</div>
+    <select id=\"type\">
+      <option value=\"\">all</option>
+      <option value=\"context\">context</option>
+      <option value=\"trigger\">trigger</option>
+      <option value=\"action\">action</option>
+      <option value=\"status\">status</option>
+      <option value=\"error\">error</option>
+    </select>
+    <input id=\"q\" placeholder=\"search in JSON...\" />
+    <button onclick=\"reloadAll()\">Reload</button>
+    <div class=\"hint\" id=\"stat\" style=\"margin-left:auto\"></div>
+  </header>
+  <main>
+    <div class=\"grid\" id=\"list\"></div>
+    <div class=\"footer\" id=\"footer\">Ready.</div>
+  </main>
+
+<script>
+  let start = 0;
+  const limit = 25;
+  let loading = false;
+  let hasMore = true;
+  let exchangesMap = new Map(); // timestamp -> content
+
+  function fmtTs(ts) {
+    try {
+      const d = new Date(ts * 1000);
+      return d.toLocaleString();
+    } catch { return String(ts); }
+  }
+
+  // Load exchanges to build timestamp->content map
+  async function loadExchanges() {
+    try {
+      const res = await fetch('/api/exchanges?limit=200');
+      const data = await res.json();
+      const items = data.items || [];
+      
+      // Build map of timestamp -> content for quick lookup
+      exchangesMap.clear();
+      items.forEach(item => {
+        if (item.event === 'action' && item.data && item.data.content) {
+          exchangesMap.set(item.timestamp, item.data.content);
+        }
+      });
+      
+      console.log(`Loaded ${exchangesMap.size} exchanges`);
+    } catch (e) {
+      console.error('Failed to load exchanges:', e);
+    }
+  }
+
+  function findImage(eventObj) {
+    const data = (eventObj && eventObj.data) ? eventObj.data : {};
+    const enc = data.raw_encoding || "";
+    const b64 = data.raw_data || "";
+    if (!b64) return null;
+    if (enc === "base64_jpeg" || enc === "jpeg_base64") return b64;
+    if (enc.startsWith("base64")) return b64;
+    return b64;
+  }
+
+  function truncateRawData(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+    const copy = JSON.parse(JSON.stringify(obj));
+    
+    // Handle root-level raw_data
+    if (copy.raw_data && typeof copy.raw_data === 'string' && copy.raw_data.length > 20) {
+      const sizeKB = (copy.raw_data.length * 0.75 / 1024).toFixed(1);
+      copy.raw_data = copy.raw_data.substring(0, 10) + '...' + copy.raw_data.substring(copy.raw_data.length - 10) + ` (${sizeKB}KB)`;
+    }
+    
+    // Handle nested data.raw_data
+    if (copy.data && typeof copy.data === 'object' && copy.data.raw_data && typeof copy.data.raw_data === 'string' && copy.data.raw_data.length > 20) {
+      const sizeKB = (copy.data.raw_data.length * 0.75 / 1024).toFixed(1);
+      copy.data.raw_data = copy.data.raw_data.substring(0, 10) + '...' + copy.data.raw_data.substring(copy.data.raw_data.length - 10) + ` (${sizeKB}KB)`;
+    }
+    
+    return copy;
+  }
+
+  function findImageTruncated(eventObj) {
+    const data = (eventObj && eventObj.data) ? eventObj.data : {};
+    const enc = data.raw_encoding || "";
+    // For image display, we need the FULL raw_data from original event, not truncated
+    // So we access it directly from the original event object
+    const b64 = (eventObj && eventObj.data && eventObj.data.raw_data) ? eventObj.data.raw_data : "";
+    if (!b64) return null;
+    if (enc === "base64_jpeg" || enc === "jpeg_base64") return b64;
+    if (enc.startsWith("base64")) return b64;
+    return b64;
+  }
+
+  function cardHtml(evt) {
+    const imgB64 = findImageTruncated(evt);
+    const type = evt.event || "unknown";
+    const ts = evt.timestamp || 0;
+    const truncatedEvt = truncateRawData(evt);
+    const json = JSON.stringify(truncatedEvt, null, 2);
+    let imgPart = `<div class=\"noimg\">No image in event</div>`;
+    if (imgB64) {
+      imgPart = `<img loading=\"lazy\" src=\"data:image/jpeg;base64,${imgB64}\" alt=\"event image\"/>`;
+      // Find LLM description for this event (look for closest exchange timestamp)
+      if (exchangesMap.size > 0) {
+        const exchangeTimestamps = Array.from(exchangesMap.keys()).sort((a, b) => Math.abs(a - ts) - Math.abs(b - ts));
+        if (exchangeTimestamps.length > 0) {
+          const closestTs = exchangeTimestamps[0];
+          const timeDiff = Math.abs(closestTs - ts);
+          // Only show description if timestamp is within 30 seconds
+          if (timeDiff < 30) {
+            const description = exchangesMap.get(closestTs);
+            imgPart += `<div class=\"description\" style=\"margin-top: 8px; padding: 8px; background: #1a1d27; border-radius: 6px; font-size: 12px; color: #e5e7eb; border-left: 3px solid #60a5fa;\">
+              <strong>🤖 LLM Analysis:</strong><br>${description.replace(/\n/g, '<br>')}
+            </div>`;
+          }
+        }
+      }
+    }
+    return `
+      <div class=\"card\">
+        <div class=\"card-hdr\">
+          <span class=\"tag type\">${type}</span>
+          <span class=\"tag ts\">${fmtTs(ts)}</span>
+        </div>
+        <div class=\"body\">
+          <div class=\"img\">${imgPart}</div>
+          <div class=\"meta\"><pre>${escapeHtml(json)}</pre></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  }
+
+  async function loadMore() {
+    if (loading || !hasMore) return;
+    loading = true;
+    document.getElementById('footer').textContent = 'Loading...';
+    const type = document.getElementById('type').value;
+    const q = document.getElementById('q').value;
+    const url = `/api/events-file?start=${start}&limit=${limit}&event_type=${encodeURIComponent(type)}&q=${encodeURIComponent(q)}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      document.getElementById('footer').textContent = `Error: ${res.status}`;
+      loading = false;
+      return;
+    }
+    const payload = await res.json();
+    const items = payload.items || [];
+    hasMore = Boolean(payload.has_more);
+    start = payload.next_start || (start + items.length);
+    // Items are already newest first from API, so append normally
+    const list = document.getElementById('list');
+    for (const evt of items) {
+      const div = document.createElement('div');
+      div.innerHTML = cardHtml(evt);
+      list.appendChild(div.firstElementChild);
+    }
+    document.getElementById('stat').textContent = `loaded: ${list.children.length}`;
+    document.getElementById('footer').textContent = hasMore ? 'Scroll to load more...' : 'End of file.';
+    loading = false;
+  }
+
+  function reloadAll() {
+    start = 0;
+    hasMore = true;
+    document.getElementById('list').innerHTML = '';
+    loadMore();
+  }
+
+  window.addEventListener('scroll', () => {
+    const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 900);
+    if (nearBottom) loadMore();
+  });
+  document.getElementById('type').addEventListener('change', reloadAll);
+  document.getElementById('q').addEventListener('keydown', (e) => { if (e.key === 'Enter') reloadAll(); });
+
+  // Load exchanges first, then load events
+  loadExchanges().then(() => {
+    reloadAll();
+  });
+</script>
+</body>
+</html>
