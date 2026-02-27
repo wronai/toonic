@@ -20,16 +20,35 @@ ensuring ERROR and CRITICAL lines always reach the LLM.
 
 ---
 
-## Quick Start
+## Quick Start (Python — 1 line)
+
+```python
+from toonic.server.quick import run
+run("log:./app.log", goal="monitor logs, detect errors, suggest fixes", interval=10)
+```
+
+## Quick Start (fluent builder)
+
+```python
+from toonic.server.quick import watch
+
+server = (
+    watch()
+    .logs("./docker/test-data/sample.logfile")
+    .goal("monitor logs, detect errors, suggest fixes")
+    .triggers("examples/log-monitoring/example-triggers.yaml")
+    .interval(10)
+    .build()
+)
+```
+
+## Quick Start (CLI)
 
 ```bash
-# Start server monitoring a log file
 python -m toonic.server \
   --source log:./docker/test-data/sample.logfile \
   --goal "monitor logs, detect errors, and suggest fixes" \
   --interval 10
-
-# Open http://localhost:8900 for live event stream
 ```
 
 ## Simulating Log Activity

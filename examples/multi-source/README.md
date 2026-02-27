@@ -40,19 +40,44 @@ Accumulator, and multi-trigger scheduling.
 
 ---
 
-## Quick Start (with YAML config)
+## Quick Start (Python — 3 lines)
+
+```python
+from toonic.server.quick import run
+
+run("./src/", "log:./app.log", "rtsp://cam:554/stream", "docker:*", "db:./app.db",
+    goal="full-stack monitoring: code + logs + video + containers + database")
+```
+
+## Quick Start (fluent builder)
+
+```python
+from toonic.server.quick import watch
+
+server = (
+    watch()
+    .code("./examples/code-analysis/sample-project/")
+    .logs("./docker/test-data/sample.logfile")
+    .video("rtsp://localhost:8554/test-cam1")
+    .docker("*")
+    .database("db:./toonic_data/history.db")
+    .network("8.8.8.8,1.1.1.1")
+    .goal("comprehensive monitoring: code + logs + video + infra")
+    .triggers("examples/multi-source/example-triggers.yaml")
+    .interval(30)
+    .build()
+)
+```
+
+## Quick Start (YAML config)
 
 ```bash
-# Start with the included multi-source config
 python -m toonic.server --config examples/multi-source/toonic-server.yaml
-
-# Open http://localhost:8900 for full Web UI
 ```
 
 ## Quick Start (CLI flags)
 
 ```bash
-# Start server with multiple sources + triggers
 python -m toonic.server \
   --source file:./examples/code-analysis/sample-project/ \
   --source log:./docker/test-data/sample.logfile \
@@ -60,8 +85,6 @@ python -m toonic.server \
   --goal "comprehensive analysis: code quality + log anomalies + video monitoring" \
   --triggers examples/multi-source/example-triggers.yaml \
   --interval 30
-
-# Open http://localhost:8900
 ```
 
 ## Quick Start (with Docker)

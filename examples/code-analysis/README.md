@@ -4,16 +4,34 @@ Analyze a sample Python project for bugs, security issues, and quality improveme
 Uses `CodeAnalysisPrompt` — a TOON-aware prompt builder that understands the compact
 notation and produces structured findings with file/line references.
 
-## Quick Start
+## Quick Start (Python — 1 line)
+
+```python
+from toonic.server.quick import run
+run("./examples/code-analysis/sample-project/", goal="find bugs, security issues, suggest improvements", interval=0)
+```
+
+## Quick Start (fluent builder)
+
+```python
+from toonic.server.quick import watch
+
+server = (
+    watch()
+    .code("./examples/code-analysis/sample-project/")
+    .goal("find bugs, security issues, suggest improvements")
+    .interval(0)  # one-shot
+    .build()
+)
+```
+
+## Quick Start (CLI)
 
 ```bash
-# Start server analyzing the sample project
 python -m toonic.server \
   --source file:./examples/code-analysis/sample-project/ \
   --goal "find bugs, security issues, and suggest improvements" \
   --interval 0
-
-# Open http://localhost:8900 for Web UI
 ```
 
 ## Continuous Analysis (watch mode)

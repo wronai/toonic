@@ -92,11 +92,28 @@ class ActionExecutor:
 
     def _execute_code_change(self, action: Dict[str, Any]) -> ExecutionResult:
         """Extract file changes from LLM response and apply them."""
-        content = action.get("content", "")
+        content = action.get("content", action.get("description", ""))
         target_path = action.get("target_path", "")
         affected_files = action.get("affected_files", [])
 
         files_written = []
+
+        # Strategy 0: Top-level "files" array in action dict
+        if "files" in action and isinstance(action["files"], list):
+            for fentry in action["files"]:
+                if isinstance(fentry, dict):
+                    fp = fentry.get("path", fentry.get("file", ""))
+                    fc = fentry.get("content", fentry.get("code", ""))
+                    if fp and fc:
+                        written = self._write_file(fp, fc)
+                        if written:
+                            files_written.append(written)
+            if files_written:
+                return ExecutionResult(
+                    action_type="code_fix",
+                    success=True,
+                    files_written=files_written,
+                )
 
         # Strategy 1: Explicit target_path + content with code blocks
         if target_path and content:
@@ -108,16 +125,17 @@ class ActionExecutor:
 
         # Strategy 2: Parse multiple file blocks from content
         # Format: ```filename.py\n..code..\n```
-        file_blocks = self._extract_file_blocks(content)
-        for fpath, fcode in file_blocks.items():
-            written = self._write_file(fpath, fcode)
-            if written:
-                files_written.append(written)
+        if not files_written and isinstance(content, str):
+            file_blocks = self._extract_file_blocks(content)
+            for fpath, fcode in file_blocks.items():
+                written = self._write_file(fpath, fcode)
+                if written:
+                    files_written.append(written)
 
-        # Strategy 3: JSON with "files" array
-        if not files_written:
+        # Strategy 3: JSON with "files" array inside content string
+        if not files_written and isinstance(content, str):
             try:
-                data = json.loads(content) if isinstance(content, str) else content
+                data = json.loads(content)
                 if isinstance(data, dict) and "files" in data:
                     for fentry in data["files"]:
                         fp = fentry.get("path", fentry.get("file", ""))

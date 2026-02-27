@@ -4,7 +4,31 @@ Automated security analysis of code using TOON format + LLM.
 Combines `CodeAnalysisPrompt` with security-focused goals and optional
 log correlation for runtime vulnerability detection.
 
-## Quick Start — One-Shot Audit
+## Quick Start (Python — 1 line)
+
+```python
+from toonic.server.quick import run
+run("./src/", goal="security audit: hardcoded secrets, SQL injection, XSS, CSRF, auth bypass", interval=0)
+```
+
+## Quick Start (fluent builder)
+
+```python
+from toonic.server.quick import watch
+
+server = (
+    watch()
+    .code("./src/")
+    .logs("./logs/auth.log")
+    .network("api.example.com")
+    .process("port:5432")
+    .goal("security audit: code + exposed services + auth failures + network")
+    .interval(60)
+    .build()
+)
+```
+
+## Quick Start — One-Shot Audit (CLI)
 
 ```bash
 python -m toonic.server \
@@ -17,7 +41,6 @@ python -m toonic.server \
 ## Continuous Security Monitoring
 
 ```bash
-# Watch for security issues as code changes
 python -m toonic.server \
   --source file:./src/ \
   --source log:./logs/access.log \
@@ -58,6 +81,90 @@ toonic> query "findings with high confidence"
 toonic> query "critical security vulnerabilities"
 toonic> sql SELECT target_path, content FROM exchanges WHERE action_type='alert' ORDER BY confidence DESC
 toonic> sql SELECT action_type, COUNT(*) FROM exchanges GROUP BY action_type
+```
+
+## Website Security Audit - obywatel.bielik.ai
+
+### Quick Start (Python — 1 line)
+
+```python
+from toonic.server.quick import run
+run("http://obywatel.bielik.ai/", goal="security audit: web vulnerabilities, TLS issues, exposed endpoints, data leaks", interval=0)
+```
+
+### Comprehensive Website Security Audit
+
+```python
+from toonic.server.quick import watch
+
+server = (
+    watch("http://obywatel.bielik.ai/")
+    .network("obywatel.bielik.ai")
+    .http("http://obywatel.bielik.ai/")
+    .goal("complete web security audit: OWASP Top 10, TLS configuration, headers, exposed APIs, data validation")
+    .interval(30)
+    .build()
+)
+```
+
+### CLI Commands
+
+```bash
+# One-shot security audit of the website (use HTTP if SSL issues)
+python -m toonic.server \
+  --source "http://obywatel.bielik.ai/" \
+  --goal "security audit: OWASP Top 10 vulnerabilities, security headers, TLS configuration, exposed endpoints, input validation" \
+  --model google/gemini-3-flash-preview \
+  --interval 0
+
+# Alternative: SSL/TLS focused analysis
+python -m toonic.server \
+  --source "net:obywatel.bielik.ai" \
+  --source "port:443" \
+  --goal "SSL/TLS security analysis: certificate issues, cipher suites, protocol versions" \
+  --model google/gemini-3-flash-preview \
+  --interval 0
+
+# Alternative: Process-based port monitoring
+python -m toonic.server \
+  --source "port:443" \
+  --source "tcp:obywatel.bielik.ai:443" \
+  --goal "Port 443 security analysis: SSL handshake, service availability" \
+  --model google/gemini-3-flash-preview \
+  --interval 0
+
+# Continuous monitoring of the website
+python -m toonic.server \
+  --source "http://obywatel.bielik.ai/" \
+  --source "net:obywatel.bielik.ai" \
+  --goal "website security monitoring: detect new vulnerabilities, security misconfigurations, certificate issues" \
+  --interval 3600
+```
+
+**Note**: If you encounter SSL/TLS errors like `[SSL: TLSV1_ALERT_INTERNAL_ERROR]`, use HTTP instead of HTTPS or analyze SSL/TLS separately using network and process monitoring. The `net:` prefix provides network connectivity analysis while `port:` and `tcp:` prefixes give you port-specific security monitoring.
+
+### What It Checks for obywatel.bielik.ai
+
+- **OWASP Top 10**: SQL injection, XSS, CSRF, security misconfigurations
+- **TLS/SSL**: Certificate validity, weak ciphers, protocol versions (use network monitoring for SSL issues)
+- **Security Headers**: HSTS, CSP, X-Frame-Options, CORS policies
+- **Exposed Endpoints**: API discovery, admin panels, debug interfaces
+- **Data Validation**: Input sanitization, parameter pollution
+- **Authentication**: Session management, password policies, MFA
+- **Information Disclosure**: Error messages, server signatures, directory listings
+- **Network Security**: Open ports, services, DNS configurations
+
+**Known Issues**: The website has SSL/TLS configuration problems (`TLSV1_ALERT_INTERNAL_ERROR`). Use HTTP for content analysis and network monitoring for SSL-specific checks.
+
+### Example Findings Review
+
+```bash
+python -m toonic.server.client
+toonic> history 10
+toonic> query "security vulnerabilities with high confidence"
+toonic> query "TLS or SSL configuration issues"
+toonic> query "exposed endpoints or admin interfaces"
+toonic> sql SELECT target_path, content FROM exchanges WHERE action_type='alert' AND content LIKE '%security%' ORDER BY timestamp DESC
 ```
 
 ## Priority in Security Context

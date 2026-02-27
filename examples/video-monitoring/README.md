@@ -47,7 +47,31 @@ pip install toonic[server,llm]   # Web UI + LLM
 
 ---
 
-## Quick Start Examples
+## Quick Start (Python — 1 line)
+
+```python
+from toonic.server.quick import run
+run("rtsp://admin:pass@192.168.1.100:554/stream",
+    goal="CCTV security: detect intrusions, describe person/vehicle actions")
+```
+
+## Quick Start (fluent builder)
+
+```python
+from toonic.server.quick import watch
+
+server = (
+    watch()
+    .video("rtsp://admin:pass@192.168.1.100:554/stream",
+           detect_objects="true", detect_classes="person,car,truck",
+           detect_conf="0.4", min_event_duration_s="1.0")
+    .goal("CCTV event analysis: intrusions, suspicious activity, vehicles")
+    .triggers("examples/video-monitoring/example-triggers.yaml")
+    .build()
+)
+```
+
+## Quick Start Examples (CLI)
 
 ### 1. Basic intrusion detection (person + vehicle)
 

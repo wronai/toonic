@@ -2,7 +2,14 @@
 
 Analyze RTSP camera streams and generate captions/descriptions using multimodal LLM.
 
-## Quick Start
+## Quick Start (Python — 1 line)
+
+```python
+from toonic.server.quick import run
+run("rtsp://cam:554/stream", goal="describe video frames, caption each scene change")
+```
+
+## Quick Start (CLI)
 
 ```bash
 # With real camera

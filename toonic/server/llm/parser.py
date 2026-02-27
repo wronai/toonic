@@ -69,17 +69,60 @@ class ResponseParser:
         )
 
     def parse_raw_to_dict(self, content: str) -> Dict[str, Any] | None:
-        """Parse raw LLM content string into a dict (for autopilot executor)."""
-        clean = content.strip()
-        if clean.startswith("```"):
-            clean = clean.split("\n", 1)[1] if "\n" in clean else clean
-            clean = clean.rsplit("```", 1)[0]
+        """Parse raw LLM content string into a dict (for autopilot executor).
 
+        Handles: ```json...```, thinking preamble, nested braces.
+        """
+        if not content or not content.strip():
+            return None
+
+        clean = content.strip()
+
+        # Strip markdown fences (```json ... ```)
+        import re
+        fence_match = re.search(r'```(?:json)?\s*\n(.*?)```', clean, re.DOTALL)
+        if fence_match:
+            clean = fence_match.group(1).strip()
+
+        # Find the outermost JSON object by brace matching
         start = clean.find("{")
-        end = clean.rfind("}") + 1
-        if start >= 0 and end > start:
+        if start < 0:
+            return None
+
+        depth = 0
+        in_string = False
+        escape = False
+        end = -1
+        for i in range(start, len(clean)):
+            c = clean[i]
+            if escape:
+                escape = False
+                continue
+            if c == '\\' and in_string:
+                escape = True
+                continue
+            if c == '"' and not escape:
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if c == '{':
+                depth += 1
+            elif c == '}':
+                depth -= 1
+                if depth == 0:
+                    end = i + 1
+                    break
+
+        if end > start:
             try:
                 return json.loads(clean[start:end])
             except json.JSONDecodeError:
-                pass
+                # Try with relaxed parsing — sometimes LLM outputs trailing commas
+                try:
+                    # Remove trailing commas before } or ]
+                    relaxed = re.sub(r',\s*([}\]])', r'\1', clean[start:end])
+                    return json.loads(relaxed)
+                except json.JSONDecodeError:
+                    pass
         return None

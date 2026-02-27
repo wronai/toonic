@@ -1,13 +1,63 @@
 # Example: Programmatic Python API
 
-Use Toonic components directly in your Python code — without running the full server.
-This shows how to use the **Accumulator**, **LLM Pipeline**, **Prompt Builders**,
-and **Trigger DSL** as a library.
+Use Toonic from Python — from one-liner quick-start to low-level component access.
 
-## Components You Can Use
+## Quick Module (recommended)
+
+The `toonic.server.quick` module provides the simplest API:
+
+```python
+from toonic.server.quick import watch, run, parse_source
+
+# One-liner: start monitoring (blocking, with Web UI)
+run("./src/", "log:./app.log", goal="find bugs")
+
+# Fluent builder: full control
+server = (
+    watch("./src/")
+    .logs("./app.log")
+    .docker("*")
+    .database("db:./app.db")
+    .network("8.8.8.8,1.1.1.1")
+    .goal("full-stack monitoring")
+    .triggers("./triggers.yaml")
+    .interval(30)
+    .tokens(100_000, {"code": 0.3, "logs": 0.3, "system": 0.4})
+    .build()
+)
+
+# Auto-detect source type from string
+src = parse_source("log:./app.log")     # → SourceConfig(category="logs")
+src = parse_source("./data.csv")         # → SourceConfig(category="data")
+src = parse_source("rtsp://cam:554/s")   # → SourceConfig(category="video")
+src = parse_source("docker:*")           # → SourceConfig(category="container")
+```
+
+### ConfigBuilder typed methods
+
+| Method | Category | Example |
+|--------|----------|--------|
+| `.add(str)` | auto-detect | `.add("log:./app.log")` |
+| `.code(path)` | code | `.code("./src/")` |
+| `.logs(path)` | logs | `.logs("./app.log")` |
+| `.video(url)` | video | `.video("rtsp://cam:554/s")` |
+| `.docker(filter)` | container | `.docker("*")` |
+| `.database(dsn)` | database | `.database("db:./app.db")` |
+| `.network(hosts)` | network | `.network("8.8.8.8,1.1.1.1")` |
+| `.process(target)` | process | `.process("proc:nginx")` |
+| `.http(url)` | api | `.http("https://api.example.com")` |
+| `.directory(path)` | infra | `.directory("./data/")` |
+
+---
+
+## Low-Level Components
+
+For advanced use, access individual components directly:
 
 | Component | Module | What it does |
 |-----------|--------|-------------|
+| `ConfigBuilder` | `toonic.server.quick` | Fluent server config builder |
+| `parse_source` | `toonic.server.quick` | Universal source string parser |
 | `ContextAccumulator` | `toonic.server.core.accumulator` | Priority-based token budget management |
 | `LLMPipeline` | `toonic.server.llm.pipeline` | Orchestrates prompt → model → call → parse |
 | `LLMCaller` | `toonic.server.llm.caller` | LLM API calls with retry and mock fallback |
@@ -19,7 +69,7 @@ and **Trigger DSL** as a library.
 
 ---
 
-## Examples
+## Low-Level Examples
 
 ### 1. Accumulator with Priority
 
@@ -257,13 +307,23 @@ asyncio.run(main())
 
 ---
 
-## Running the Examples
+## Running the Demos
 
 ```bash
 # Install toonic with server extras
 pip install -e ".[server,llm]"
 
-# Run the demo script
+# Quick module demo (recommended — start here)
+python examples/programmatic-api/demo_quick.py
+
+# Low-level component demos
 python examples/programmatic-api/demo_accumulator.py
 python examples/programmatic-api/demo_pipeline.py
 ```
+
+## Files in This Example
+
+- **`README.md`** — this file
+- **`demo_quick.py`** — ConfigBuilder, parse_source, watch() demos (start here)
+- **`demo_accumulator.py`** — priority-based eviction demo
+- **`demo_pipeline.py`** — prompt builders, response parser, LLM pipeline demo

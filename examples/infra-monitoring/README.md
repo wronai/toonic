@@ -14,10 +14,37 @@ Toonic server — with priority-based context and event-driven triggers.
 
 ---
 
+## Quick Start (Python — 1 line)
+
+```python
+from toonic.server.quick import run
+run("docker:*", "db:./app.db", "net:8.8.8.8", "proc:nginx",
+    goal="infrastructure health: containers + database + network + services")
+```
+
+## Quick Start (fluent builder)
+
+```python
+from toonic.server.quick import watch
+
+server = (
+    watch()
+    .docker("*")
+    .database("db:./toonic_data/history.db")
+    .network("8.8.8.8,1.1.1.1,cloudflare.com")
+    .process("proc:nginx")
+    .process("port:5432")
+    .logs("./logs/app.log")
+    .goal("infrastructure health monitoring")
+    .triggers("examples/infra-monitoring/example-triggers.yaml")
+    .interval(15)
+    .build()
+)
+```
+
 ## Quick Start — Docker Monitoring
 
 ```bash
-# Monitor all Docker containers
 python -m toonic.server \
   --source docker:* \
   --goal "monitor Docker containers: health, resource usage, restarts, errors" \

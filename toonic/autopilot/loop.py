@@ -64,6 +64,7 @@ class AutopilotLoop:
         self._actions_log: List[Dict] = []
         self._running = False
         self._on_event: Optional[Callable] = None
+        self._last_test_output: str = ""
 
     async def run(self, on_event: Optional[Callable] = None) -> List[Dict]:
         """Run the full autopilot loop. Returns action log."""
@@ -107,6 +108,7 @@ class AutopilotLoop:
                     images=[],
                     roadmap=roadmap,
                     iteration=self._iteration,
+                    test_output=self._last_test_output,
                     previous_actions=previous_actions,
                 )
 
@@ -153,10 +155,15 @@ class AutopilotLoop:
                 }
 
                 # Step 6: Run tests
-                if result.files_written:
+                if result.files_written and self.config.auto_test:
                     test_result = self.executor._execute_tests()
                     log_entry["tests_passed"] = test_result.success
                     log_entry["test_output"] = test_result.test_output[:500]
+
+                    if test_result.success:
+                        self._last_test_output = ""
+                    else:
+                        self._last_test_output = test_result.test_output
 
                     # Step 7: Fix loop if tests fail
                     if not test_result.success:
@@ -164,10 +171,12 @@ class AutopilotLoop:
                             caller, parser, chunks, test_result.test_output
                         )
                         log_entry["fix_applied"] = fix_result
+                        if fix_result:
+                            self._last_test_output = ""
 
                     # Step 8: Update roadmap
                     roadmap_update = action_data.get("roadmap_update", "")
-                    if roadmap_update and test_result.success:
+                    if roadmap_update and (not self.config.auto_test or test_result.success):
                         self._update_roadmap(roadmap_update)
 
                 self._actions_log.append(log_entry)
@@ -201,10 +210,13 @@ class AutopilotLoop:
         for attempt in range(self.config.max_fix_retries):
             logger.info(f"  Fix attempt {attempt + 1}/{self.config.max_fix_retries}")
 
+            # Re-scan project to see latest code (files changed by previous attempt)
+            fresh_chunks = await self._scan_project()
+
             prompt_data = self.fix_prompt.build(
                 goal=self.config.goal,
                 test_output=test_output,
-                chunks=chunks,
+                chunks=fresh_chunks,
             )
 
             raw = await caller.call(
