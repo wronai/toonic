@@ -3,6 +3,7 @@
 Realtime API recipes — run with: python examples/realtime-api/run.py
 """
 from toonic.server.quick import watch
+from examples._helpers import print_config_summary
 
 
 SCENARIOS = {
@@ -28,6 +29,4 @@ if __name__ == "__main__":
             .build_config()
         )
         print(f"\n=== {name} ===")
-        print(f"sources: {len(cfg.sources)}")
-        for s in cfg.sources:
-            print(f"  [{s.category:10}] {s.path_or_url}")
+        print_config_summary(cfg)

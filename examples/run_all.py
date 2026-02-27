@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import importlib
+import os
 import subprocess
 import sys
 import textwrap
@@ -21,6 +22,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 EXAMPLES_DIR = Path(__file__).parent
+DEFAULT_SCRIPT_TIMEOUT_S = 30
+PROGRAMMATIC_API_DEMOS = ["demo_quick.py", "demo_accumulator.py", "demo_pipeline.py"]
 
 
 # ── Helper functions ─────────────────────────────────────────
@@ -29,14 +32,18 @@ def _repo_root() -> Path:
     return EXAMPLES_DIR.parent
 
 
-def _run_py(script: Path, *, timeout_s: int = 30) -> subprocess.CompletedProcess:
-    env = dict(**{k: v for k, v in (getattr(__import__('os'), 'environ')).items()})
+def _example_env() -> Dict[str, str]:
+    env = dict(os.environ)
     # Make examples runnable without editable install
     env["PYTHONPATH"] = f"{_repo_root()}:{env.get('PYTHONPATH','')}".rstrip(":")
+    return env
+
+
+def _run_py(script: Path, *, timeout_s: int = DEFAULT_SCRIPT_TIMEOUT_S) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(script)],
         capture_output=True, text=True, timeout=timeout_s,
-        env=env,
+        env=_example_env(),
         cwd=str(_repo_root()),
     )
 
@@ -78,7 +85,8 @@ EXAMPLES: Dict[str, Dict[str, Any]] = {
         "quick": 'from toonic.server.quick import run\nrun("rtsp://cam:554/stream", goal="caption each scene change")',
         "preset": None,
         "sources": ["rtsp://localhost:8554/test-cam1"],
-        "has_demo": False,
+        "has_demo": True,
+        "demo_script": "run.py",
     },
     "http-monitoring": {
         "desc": "HTTP/API endpoint monitoring: uptime, SSL, headers",
@@ -113,7 +121,8 @@ EXAMPLES: Dict[str, Dict[str, Any]] = {
         "quick": 'from toonic.server.quick import run\nrun("./data.csv", "./config.yaml", goal="analyze data formats")',
         "preset": None,
         "sources": [],
-        "has_demo": False,
+        "has_demo": True,
+        "demo_script": "run.py",
     },
     "archive-monitoring": {
         "desc": "Analyze archives (zip/tar) by unpacking and watching extracted contents",
@@ -255,12 +264,12 @@ def verify_demos() -> List[str]:
     """Run demo scripts that don't require network/server."""
     errors = []
     demo_dir = EXAMPLES_DIR / "programmatic-api"
-    for script in ["demo_quick.py", "demo_accumulator.py", "demo_pipeline.py"]:
+    for script in PROGRAMMATIC_API_DEMOS:
         path = demo_dir / script
         if not path.exists():
             errors.append(f"  MISSING: {path}")
             continue
-        result = _run_py(path, timeout_s=30)
+        result = _run_py(path, timeout_s=DEFAULT_SCRIPT_TIMEOUT_S)
         if result.returncode != 0:
             errors.append(f"  FAIL: {script} — {(result.stderr or result.stdout)[:200]}")
     return errors
@@ -336,20 +345,28 @@ def execute_all(*, continue_on_error: bool = True) -> bool:
         scripts.append({
             "name": f"{example_name}/run.py",
             "path": run_py,
-            "timeout": 30,
+            "timeout": DEFAULT_SCRIPT_TIMEOUT_S,
         })
 
     # Security audit quick demo (dry build)
     quick_audit = EXAMPLES_DIR / "security-audit" / "quick_audit.py"
     if quick_audit.exists():
-        scripts.append({"name": "security-audit/quick_audit.py", "path": quick_audit, "timeout": 30})
+        scripts.append({
+            "name": "security-audit/quick_audit.py",
+            "path": quick_audit,
+            "timeout": DEFAULT_SCRIPT_TIMEOUT_S,
+        })
 
     # Programmatic API demos (should run offline)
     demo_dir = EXAMPLES_DIR / "programmatic-api"
-    for script in ["demo_quick.py", "demo_accumulator.py", "demo_pipeline.py"]:
+    for script in PROGRAMMATIC_API_DEMOS:
         p = demo_dir / script
         if p.exists():
-            scripts.append({"name": f"programmatic-api/{script}", "path": p, "timeout": 30})
+            scripts.append({
+                "name": f"programmatic-api/{script}",
+                "path": p,
+                "timeout": DEFAULT_SCRIPT_TIMEOUT_S,
+            })
 
     skipped = {
         # Requires RTSP stream to actually do something meaningful (we keep run.py dry), but might still import OpenCV.
@@ -372,7 +389,7 @@ def execute_all(*, continue_on_error: bool = True) -> bool:
             continue
         print(f"\nRUN: {name}")
         try:
-            result = _run_py(path, timeout_s=int(item.get("timeout", 30)))
+            result = _run_py(path, timeout_s=int(item.get("timeout", DEFAULT_SCRIPT_TIMEOUT_S)))
         except subprocess.TimeoutExpired:
             ok = False
             print(f"  FAIL (timeout): {name}")

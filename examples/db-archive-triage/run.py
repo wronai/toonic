@@ -5,6 +5,7 @@ DB + Archive triage — run with: python examples/db-archive-triage/run.py
 from pathlib import Path
 
 from toonic.server.quick import unpack_archive, watch
+from examples._helpers import print_config_summary
 
 
 if __name__ == "__main__":
@@ -28,6 +29,4 @@ if __name__ == "__main__":
         .build_config()
     )
 
-    print(f"sources: {len(cfg.sources)}")
-    for s in cfg.sources:
-        print(f"  [{s.category:10}] {s.path_or_url}")
+    print_config_summary(cfg)

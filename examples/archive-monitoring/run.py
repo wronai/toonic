@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from toonic.server.quick import watch_archive
+from examples._helpers import print_config_summary, print_to_run_hint
 
 
 def main() -> None:
@@ -26,9 +27,9 @@ def main() -> None:
 
     # Note: this builds config; starting the server is intentionally omitted to keep it runnable offline.
     cfg = server.config
-    print(f"Built config: {len(cfg.sources)} sources")
-    for s in cfg.sources[:10]:
-        print(f"  [{s.category:10}] {s.path_or_url}")
+    print_config_summary(cfg, title="Archive Monitor")
+    print(f"Goal: {cfg.goal[:70]}...")
+    print_to_run_hint("watch_archive", '"./bundle.zip"')
 
 
 if __name__ == "__main__":

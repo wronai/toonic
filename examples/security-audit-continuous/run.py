@@ -2,6 +2,8 @@
 """Continuous security monitoring (dry build) — run with: python examples/security-audit-continuous/run.py"""
 
 from toonic.server.quick import security_audit
+from examples._helpers import print_config_summary, print_to_run_hint
+
 
 if __name__ == "__main__":
     builder = (
@@ -16,9 +18,6 @@ if __name__ == "__main__":
         )
     )
     cfg = builder.build_config()
-    print(f"Security Monitoring (continuous): interval={cfg.interval}s, sources={len(cfg.sources)}")
-    for s in cfg.sources:
-        print(f"  [{s.category}] {s.path_or_url}")
-    print("\nTo run continuously:")
-    print('  from toonic.server.quick import security_audit')
-    print('  security_audit("./src/", "log:./app.log").interval(300).run()')
+    print_config_summary(cfg, title="Security Monitoring (continuous)")
+    print_to_run_hint("security_audit", '"./src/", "log:./app.log"')
+    print("  .interval(300).run()")

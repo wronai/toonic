@@ -2,6 +2,8 @@
 """Full-stack security audit (dry build) — run with: python examples/security-audit-fullstack/run.py"""
 
 from toonic.server.quick import security_audit
+from examples._helpers import print_config_summary, print_to_run_hint
+
 
 if __name__ == "__main__":
     builder = (
@@ -18,9 +20,6 @@ if __name__ == "__main__":
         )
     )
     cfg = builder.build_config()
-    print(f"Security Audit (full-stack): {len(cfg.sources)} sources")
-    for s in cfg.sources:
-        print(f"  [{s.category}] {s.path_or_url}")
-    print("\nTo run on your stack:")
-    print('  from toonic.server.quick import security_audit')
-    print('  security_audit("./src/", "log:./auth.log").network("api.example.com").database("db:./app.db").run()')
+    print_config_summary(cfg, title="Security Audit (full-stack)")
+    print_to_run_hint("security_audit", '"./src/", "log:./auth.log"')
+    print("  .network('api.example.com').database('db:./app.db').run()")

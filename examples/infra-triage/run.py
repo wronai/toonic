@@ -3,6 +3,7 @@
 Infra triage recipes — run with: python examples/infra-triage/run.py
 """
 from toonic.server.quick import watch
+from examples._helpers import print_config_summary
 
 
 if __name__ == "__main__":
@@ -20,6 +21,4 @@ if __name__ == "__main__":
         .build_config()
     )
 
-    print(f"sources: {len(cfg.sources)}")
-    for s in cfg.sources:
-        print(f"  [{s.category:10}] {s.path_or_url}")
+    print_config_summary(cfg)
