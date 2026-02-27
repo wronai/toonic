@@ -42,29 +42,66 @@ logger = logging.getLogger("toonic.quick")
 # ══════════════════════════════════════════════════════════════
 
 _PREFIX_CATEGORY = {
+    # Code / files
     "file": "code", "code": "code", "src": "code",
+    # Logs
     "log": "logs", "logs": "logs",
+    # Config
     "config": "config", "cfg": "config",
-    "data": "data", "csv": "data", "json": "data",
+    # Data / archives
+    "data": "data", "csv": "data", "json": "data", "archive": "data",
+    # Documents
     "doc": "document", "document": "document", "pdf": "document",
+    # Video / audio
     "video": "video", "cam": "video",
     "audio": "audio", "mic": "audio",
+    # Containers
     "docker": "container", "container": "container",
-    "db": "database", "sqlite": "database", "postgres": "database", "postgresql": "database", "mysql": "database",
+    # Databases
+    "db": "database", "sqlite": "database", "postgres": "database",
+    "postgresql": "database", "mysql": "database", "redis": "database",
+    "mongodb": "database", "mongo": "database",
+    # Network
     "net": "network", "ping": "network", "dns": "network",
-    "proc": "process", "pid": "process", "port": "process", "tcp": "process", "service": "process",
-    "http": "api", "https": "api", "api": "api",
+    # Process
+    "proc": "process", "pid": "process", "port": "process",
+    "tcp": "process", "service": "process",
+    # Web / API
+    "http": "api", "https": "api", "api": "api", "web": "web",
+    "ws": "api", "wss": "api", "grpc": "api",
+    # Infrastructure
     "dir": "infra", "directory": "infra",
-    "archive": "data",
+    # Messaging (IoT / queues)
+    "mqtt": "data", "amqp": "data", "kafka": "data",
+    "nats": "data", "stomp": "data",
+    # Remote access
+    "ssh": "infra", "ftp": "data", "sftp": "data", "ldap": "network",
 }
 
+# 20 popular protocols — mapped to SourceCategory values.
+# Protocols with existing watchers: http(s), rtsp(s), rtmp, ws(s), grpc,
+#   postgresql, postgres, mysql, redis, mongodb.
+# Protocols without watchers fall back to category for clear error messaging.
 _PROTO_CATEGORY = {
-    "rtsp": "video", "rtsps": "video",
-    "http": "api", "https": "api",
+    # 1-2: Web / HTTP  →  HttpWatcher
+    "http": "web", "https": "web",
+    # 3-4: WebSocket   →  HttpWatcher (HTTP upgrade probe)
     "ws": "api", "wss": "api",
-    "mqtt": "data", "amqp": "data",
-    "postgresql": "database", "postgres": "database", "mysql": "database",
-    "redis": "database", "mongodb": "database",
+    # 5: gRPC          →  HttpWatcher (HTTP/2-based)
+    "grpc": "api",
+    # 6-8: Video streaming  →  StreamWatcher
+    "rtsp": "video", "rtsps": "video", "rtmp": "video",
+    # 9-13: Databases  →  DatabaseWatcher
+    "postgresql": "database", "postgres": "database",
+    "mysql": "database", "redis": "database", "mongodb": "database",
+    # 14-15: File transfer (no watcher yet)
+    "ftp": "data", "sftp": "data",
+    # 16: SSH (no watcher yet)
+    "ssh": "infra",
+    # 17-20: Messaging / IoT (no watcher yet)
+    "mqtt": "data", "amqp": "data", "kafka": "data", "nats": "data",
+    # Bonus: LDAP, STOMP
+    "ldap": "network", "stomp": "data",
 }
 
 

@@ -232,28 +232,33 @@ class ToonicServer:
     async def _run_analysis(self, goal_override: str = "") -> None:
         """Build context and query LLM."""
         goal = goal_override or self.config.goal
-        context = self.accumulator.get_context(
-            goal=goal,
-            system_prompt="",
-        )
-        if not context.strip():
+        # Prefer structured chunks for correct prompt selection (SOLID/CQRS-friendly).
+        # Keep context string for history preview/backward compatibility.
+        context = self.accumulator.get_context(goal=goal, system_prompt="")
+        chunks, images = self.accumulator.get_chunks(max_tokens=self.config.max_context_tokens)
+        if not context.strip() and not chunks:
             return
 
         stats = self.accumulator.get_stats()
 
         # Determine category and collect images for multimodal
         category = "text"
-        images = []
-        if stats["per_category"].get("video", {}).get("sources", 0) > 0:
+        if images or any(
+            (c.category.value if isinstance(c.category, SourceCategory) else c.category) in ("video", "audio")
+            for c in chunks
+        ):
             category = "multimodal"
-            # Send up to 8 recent images (event frames + ROI crops + diffs)
-            images = list(self._recent_images[-8:])
+
+        # Send up to 8 recent images (event frames + ROI crops + diffs)
+        if category == "multimodal":
+            images = list((images or [])[-8:]) or list(self._recent_images[-8:])
 
         request = LLMRequest(
             context=context,
             goal=goal,
             category=category,
             images=images,
+            source_chunks=chunks,
         )
 
         await self._emit_event("analysis_start", {
@@ -276,10 +281,14 @@ class ToonicServer:
             self.config.goal = goal
 
         context = self.accumulator.get_context(goal=self.config.goal)
+        chunks, images = self.accumulator.get_chunks(max_tokens=self.config.max_context_tokens)
+        category = "multimodal" if images else "text"
         request = LLMRequest(
             context=context,
             goal=self.config.goal,
-            category="text",
+            category=category,
+            images=images,
+            source_chunks=chunks,
             model_override=model,
         )
         action = await self.router.query(request)

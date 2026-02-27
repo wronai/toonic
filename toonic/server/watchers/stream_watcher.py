@@ -579,7 +579,7 @@ class StreamWatcher(BaseWatcher):
     @classmethod
     def supports(cls, path_or_url: str) -> float:
         p = path_or_url.lower()
-        if p.startswith("rtsp://"):
+        if p.startswith(("rtsp://", "rtsps://", "rtmp://")):
             return 0.95
         if any(p.endswith(x) for x in (".mp4", ".avi", ".mkv", ".mov", ".webm")):
             return 0.8

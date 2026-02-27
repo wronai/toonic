@@ -324,7 +324,10 @@ class HttpWatcher(BaseWatcher):
             if "stream" in p or p.endswith((".m3u8", ".ts")):
                 return 0.3
             return 0.85
-        if p.startswith("web:"):
+        # WebSocket / gRPC — HTTP-based, we can probe the endpoint
+        if p.startswith(("ws://", "wss://", "grpc://")):
+            return 0.80
+        if p.startswith(("web:", "api:")):
             return 0.95
         return 0.0
 

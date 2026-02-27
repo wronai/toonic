@@ -166,7 +166,7 @@ class FileWatcher(BaseWatcher):
 
     @classmethod
     def supports(cls, path_or_url: str) -> float:
-        if path_or_url.startswith(("rtsp://", "http://", "ws://", "mqtt://")):
+        if "://" in path_or_url:
             return 0.0
         p = Path(path_or_url)
         if p.exists():

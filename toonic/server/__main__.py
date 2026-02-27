@@ -104,32 +104,73 @@ def parse_args():
     return parser.parse_args()
 
 
+# Protocols that have a matching watcher and work out of the box.
+_SUPPORTED_PROTOCOLS = {
+    # HttpWatcher (incl. WebSocket/gRPC probe via HTTP)
+    "http", "https", "ws", "wss", "grpc",
+    # StreamWatcher
+    "rtsp", "rtsps", "rtmp",
+    # DatabaseWatcher
+    "postgresql", "postgres", "mysql", "redis", "mongodb",
+}
+
+# Protocols recognised but without a dedicated watcher yet.
+_UNSUPPORTED_PROTOCOLS = {
+    "ftp", "sftp", "ssh",
+    "mqtt", "amqp", "kafka", "nats", "stomp",
+    "ldap",
+}
+
+
 def parse_source_string(source_str: str):
-    """Parse source string like 'file:./src/' or 'rtsp://cam1'."""
+    """Parse source string like 'file:./src/' or 'rtsp://cam1'.
+
+    Supports 20 popular protocols (see _SUPPORTED_PROTOCOLS / _UNSUPPORTED_PROTOCOLS).
+    Delegates category detection to toonic.server.quick.parse_source.
+    """
     from toonic.server.config import SourceConfig
+    from toonic.server.quick import parse_source as quick_parse_source
 
+    # ── Protocol URLs: proto://... ──────────────────────────────
     if "://" in source_str and not source_str.startswith("file:"):
-        # Protocol URL
-        proto = source_str.split("://")[0]
-        cat_map = {"rtsp": "video", "http": "data", "https": "data",
-                    "ws": "data", "wss": "data", "mqtt": "data"}
-        return SourceConfig(
-            path_or_url=source_str,
-            category=cat_map.get(proto, "data"),
-        )
+        proto = source_str.split("://", 1)[0].lower()
 
-    # Prefixed: file:, log:, code:, config:, etc.
+        if proto in _UNSUPPORTED_PROTOCOLS:
+            supported = sorted(_SUPPORTED_PROTOCOLS)
+            raise ValueError(
+                f"Protocol '{proto}://' is not supported by any watcher yet.\n"
+                f"Supported protocols: {', '.join(p + '://' for p in supported)}\n"
+                f"Use a prefix instead (e.g. data:{source_str}) to treat it as raw data."
+            )
+
+        src = quick_parse_source(source_str)
+        return SourceConfig(path_or_url=src.path_or_url, category=src.category, options=src.options)
+
+    # ── Prefixed: log:path, docker:*, db:./app.db, etc. ─────────
     if ":" in source_str:
         prefix, _, path = source_str.partition(":")
-        cat_map = {"file": "code", "code": "code", "log": "logs", "logs": "logs",
-                    "config": "config", "data": "data", "doc": "document",
-                    "video": "video", "audio": "audio"}
-        return SourceConfig(
-            path_or_url=path,
-            category=cat_map.get(prefix, "code"),
-        )
 
-    # Plain path
+        # Prefixes that watchers require as part of the source string.
+        keep_prefixes = {
+            "log", "logs",
+            "dir", "directory",
+            "docker", "container",
+            "db", "sqlite", "postgres", "postgresql", "mysql", "redis", "mongodb", "mongo",
+            "net", "ping", "dns",
+            "proc", "pid", "port", "tcp", "service",
+        }
+
+        src = quick_parse_source(source_str)
+
+        if prefix.lower() in keep_prefixes:
+            normalized = source_str
+        else:
+            # For file-like prefixes normalize to raw path for FileWatcher.
+            normalized = path
+
+        return SourceConfig(path_or_url=normalized, category=src.category, options=src.options)
+
+    # ── Plain path ──────────────────────────────────────────────
     return SourceConfig(path_or_url=source_str, category="code")
 
 

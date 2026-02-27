@@ -71,8 +71,8 @@ class TestParseSource:
 
     @pytest.mark.parametrize("url,expected_cat", [
         ("rtsp://192.168.1.1:554/stream", "video"),
-        ("http://api.example.com/health", "api"),
-        ("https://api.example.com/v2", "api"),
+        ("http://api.example.com/health", "web"),
+        ("https://api.example.com/v2", "web"),
         ("postgresql://user:pass@db:5432/mydb", "database"),
         ("redis://cache:6379", "database"),
         ("mqtt://broker:1883/topic", "data"),

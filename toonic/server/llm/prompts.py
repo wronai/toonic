@@ -144,18 +144,34 @@ class CCTVEventPrompt:
         return {"system": system, "user": "\n".join(user_parts), "images": images}
 
 
+# Categories that should NEVER trigger CodeAnalysisPrompt.
+_NON_CODE_CATEGORIES = {
+    SourceCategory.WEB, SourceCategory.API, SourceCategory.NETWORK,
+    SourceCategory.VIDEO, SourceCategory.AUDIO, SourceCategory.LOGS,
+    SourceCategory.DATA, SourceCategory.DOCUMENT,
+    SourceCategory.CONTAINER, SourceCategory.PROCESS, SourceCategory.INFRA,
+}
+
+
 def select_prompt_builder(goal: str, categories: set) -> PromptBuilder:
     """Auto-select PromptBuilder based on goal and data categories."""
     goal_lower = goal.lower()
 
     # CCTV keywords
-    cctv_keywords = {"cctv", "camera", "security", "monitor", "detect", "intrusion", "surveillance"}
+    cctv_keywords = {"cctv", "camera", "security cam", "intrusion", "surveillance"}
     if SourceCategory.VIDEO in categories and any(k in goal_lower for k in cctv_keywords):
         return CCTVEventPrompt()
 
-    # Code keywords
-    code_keywords = {"code", "bug", "refactor", "quality", "fix", "analyze code"}
-    if (categories & {SourceCategory.CODE, SourceCategory.CONFIG}) or any(k in goal_lower for k in code_keywords):
+    # If ALL categories are non-code, never use CodeAnalysisPrompt regardless of goal.
+    has_code = bool(categories & {SourceCategory.CODE, SourceCategory.CONFIG})
+    all_non_code = categories and categories <= _NON_CODE_CATEGORIES
+
+    if has_code and not all_non_code:
+        return CodeAnalysisPrompt()
+
+    # Goal-based fallback: only if no structured categories provided.
+    code_keywords = {"code", "bug", "refactor", "quality", "analyze code"}
+    if not categories and any(k in goal_lower for k in code_keywords):
         return CodeAnalysisPrompt()
 
     return GenericPrompt()
