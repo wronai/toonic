@@ -1,0 +1,78 @@
+# Multi-Source Monitoring Configuration
+# Usage: python -m toonic.server --config examples/multi-source/toonic-server.yaml
+
+host: "0.0.0.0"
+port: 8900
+goal: "comprehensive monitoring: code quality + log anomalies + video security + service health"
+goal_type: "monitor"
+interval: 30.0
+max_context_tokens: 120000
+log_level: "INFO"
+
+# Priority-aware token allocation across categories
+token_allocation:
+  code: 0.25
+  config: 0.05
+  logs: 0.20
+  video: 0.20
+  audio: 0.05
+  document: 0.05
+  database: 0.05
+  network: 0.05
+  system: 0.10
+
+models:
+  text:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 8192
+    api_key_env: OPENROUTER_API_KEY
+  code:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 16384
+    api_key_env: OPENROUTER_API_KEY
+  multimodal:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 8192
+    supports: ["text", "image", "audio"]
+    api_key_env: OPENROUTER_API_KEY
+
+sources:
+  # Code analysis
+  - path_or_url: "./examples/code-analysis/sample-project/"
+    category: "code"
+    options:
+      poll_interval: "10"
+
+  # Log monitoring
+  - path_or_url: "./docker/test-data/sample.logfile"
+    category: "logs"
+    options:
+      poll_interval: "2"
+
+  # RTSP camera (Docker test stream or real camera)
+  - path_or_url: "rtsp://localhost:8554/test-cam1"
+    category: "video"
+    options:
+      poll_interval: "2"
+      detect_objects: "true"
+      detect_classes: "person,car,truck"
+      max_silent_s: "120"
+
+  # Database monitoring (SQLite history)
+  - path_or_url: "db:./toonic_data/history.db"
+    category: "database"
+    options:
+      poll_interval: "30"
+      track_schema: "true"
+      track_row_counts: "true"
+
+  # Network connectivity checks
+  - path_or_url: "net:8.8.8.8,1.1.1.1"
+    category: "network"
+    options:
+      poll_interval: "15"
+      check_dns: "true"
+      check_ping: "true"

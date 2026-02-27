@@ -1,0 +1,67 @@
+# Infrastructure Monitoring Configuration
+# Usage: python -m toonic.server --config examples/infra-monitoring/toonic-server.yaml
+
+host: "0.0.0.0"
+port: 8900
+goal: "infrastructure health monitoring: Docker containers, database, network, services"
+goal_type: "monitor"
+interval: 30.0
+max_context_tokens: 80000
+log_level: "INFO"
+
+token_allocation:
+  code: 0.05
+  config: 0.05
+  logs: 0.15
+  video: 0.05
+  audio: 0.05
+  document: 0.05
+  database: 0.15
+  network: 0.15
+  container: 0.15
+  process: 0.10
+
+models:
+  text:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 8192
+    api_key_env: OPENROUTER_API_KEY
+
+sources:
+  # Docker: all containers
+  - path_or_url: "docker:*"
+    category: "container"
+    options:
+      poll_interval: "15"
+      track_stats: "true"
+      track_logs: "true"
+      log_tail: "10"
+
+  # Database: SQLite (Toonic's own history DB)
+  - path_or_url: "db:./toonic_data/history.db"
+    category: "database"
+    options:
+      poll_interval: "30"
+      track_schema: "true"
+      track_row_counts: "true"
+
+  # Network: public DNS + internal services
+  - path_or_url: "net:8.8.8.8,1.1.1.1,cloudflare.com"
+    category: "network"
+    options:
+      poll_interval: "15"
+      check_dns: "true"
+      check_ping: "true"
+
+  # Process: nginx
+  - path_or_url: "proc:nginx"
+    category: "process"
+    options:
+      poll_interval: "10"
+
+  # Port: PostgreSQL
+  - path_or_url: "port:5432"
+    category: "process"
+    options:
+      poll_interval: "10"

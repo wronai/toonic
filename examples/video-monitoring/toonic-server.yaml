@@ -1,0 +1,52 @@
+# CCTV Video Monitoring Configuration
+# Usage: python -m toonic.server --config examples/video-monitoring/toonic-server.yaml
+
+host: "0.0.0.0"
+port: 8900
+goal: "CCTV security: detect intrusions, describe person/vehicle actions, classify events"
+goal_type: "monitor"
+interval: 0    # event-driven only (use triggers)
+max_context_tokens: 80000
+log_level: "INFO"
+
+token_allocation:
+  video: 0.60
+  logs: 0.10
+  code: 0.05
+  config: 0.05
+  audio: 0.05
+  document: 0.05
+  system: 0.10
+
+models:
+  text:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 4096
+    api_key_env: OPENROUTER_API_KEY
+  multimodal:
+    provider: openrouter
+    model: "google/gemini-2.5-flash-preview:thinking"
+    max_tokens: 8192
+    supports: ["text", "image"]
+    api_key_env: OPENROUTER_API_KEY
+
+sources:
+  # Single camera — detection mode
+  - path_or_url: "rtsp://admin:password@192.168.1.100:554/stream"
+    category: "video"
+    options:
+      detect_objects: "true"
+      detect_model: "yolov8n.pt"
+      detect_conf: "0.4"
+      detect_classes: "person,car,truck,bicycle,motorcycle,bus,dog,cat"
+      detect_resolution: "640"
+      min_event_frames: "2"
+      min_event_duration_s: "1.0"
+      event_buffer_s: "10.0"
+      roi_padding: "0.15"
+      roi_max_crops: "4"
+      send_resolution: "320"
+      send_quality: "40"
+      poll_interval: "2.0"
+      max_silent_s: "120"

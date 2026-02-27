@@ -1,0 +1,68 @@
+# Multi-Source Trigger Rules
+# Usage: python -m toonic.server --triggers examples/multi-source/example-triggers.yaml ...
+
+triggers:
+  # Video: event-driven with fallback heartbeat
+  - name: cctv-intrusion
+    source: video
+    mode: on_event
+    events:
+      - type: object
+        label: "person"
+        min_duration_s: 1.0
+        threshold: 0.4
+      - type: object
+        label: "car"
+        min_duration_s: 2.0
+        threshold: 0.5
+    fallback:
+      periodic_s: 120
+    cooldown_s: 10
+    goal: "CCTV: describe detected person/vehicle actions, direction, classify event"
+    priority: 8
+
+  # Logs: error spike detection
+  - name: error-spike
+    source: logs
+    mode: on_event
+    events:
+      - type: pattern
+        regex: "ERROR|CRITICAL|FATAL"
+        count_threshold: 3
+        window_s: 60
+    fallback:
+      periodic_s: 300
+    goal: "analyze error spike: root cause, affected components, fix suggestions"
+    priority: 9
+
+  # Code: periodic analysis
+  - name: code-review
+    source: code
+    mode: periodic
+    interval_s: 300
+    goal: "review recent code changes: bugs, security issues, improvements"
+    priority: 5
+
+  # Network: connectivity loss
+  - name: network-alert
+    source: network
+    mode: on_event
+    events:
+      - type: anomaly
+        threshold: 0.5
+    fallback:
+      periodic_s: 600
+    goal: "network connectivity report: latency, packet loss, DNS resolution"
+    priority: 7
+
+  # Database: schema drift
+  - name: db-watch
+    source: database
+    mode: on_event
+    events:
+      - type: anomaly
+        threshold: 0.3
+    fallback:
+      periodic_s: 600
+    goal: "database monitoring: schema changes, row count anomalies, performance"
+    priority: 6

@@ -83,6 +83,10 @@ class LLMCaller:
         except ImportError:
             return self._mock_response(model, system, user)
 
+        if not self.api_key:
+            logger.info("No API key set — using mock response")
+            return self._mock_response(model, system, user)
+
         messages = [{"role": "system", "content": system}]
 
         # Build user message — with images if multimodal
@@ -133,14 +137,27 @@ class LLMCaller:
         return {"content": "", "error": last_error, "model": model_id, "tokens_used": 0}
 
     def _mock_response(self, model: str, system: str, user: str) -> Dict[str, Any]:
-        """Mock response when litellm is not installed."""
+        """Mock response when litellm is not installed or no API key."""
         model_id = self._litellm_model_id(model)
-        mock_content = json.dumps({
-            "action": "report",
-            "content": f"[MOCK] Analysis received. Context: {len(user)} chars. "
-                       f"Install litellm for real LLM integration: pip install litellm",
-            "confidence": 0.0,
-        })
+
+        # For autopilot prompts, generate a structured mock with file changes
+        if "implement" in system.lower() or "autopilot" in system.lower() or "files" in system.lower():
+            mock_content = json.dumps({
+                "action": "implement",
+                "description": "[MOCK] Autopilot iteration — set OPENROUTER_API_KEY for real LLM. "
+                               f"Context: {len(user)} chars analyzed.",
+                "files": [],
+                "next_step": "Set OPENROUTER_API_KEY environment variable to enable real code generation",
+                "confidence": 0.0,
+            })
+        else:
+            mock_content = json.dumps({
+                "action": "report",
+                "content": f"[MOCK] Analysis received. Context: {len(user)} chars. "
+                           f"Set OPENROUTER_API_KEY for real LLM integration.",
+                "confidence": 0.0,
+            })
+
         return {
             "content": mock_content,
             "model": model_id,

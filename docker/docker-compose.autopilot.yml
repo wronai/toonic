@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  autopilot-demo:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.autopilot
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - demo-output:/tmp/demos
+    
+  # Run with real LLM (needs API key)
+  autopilot-live:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.autopilot
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - PYTHONUNBUFFERED=1
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        cd /tmp && \
+        python -m toonic init "REST API for bookstore with books and reviews" --name bookstore -o /tmp/bookstore && \
+        cd /tmp/bookstore && \
+        python -m toonic autopilot . --goal "build MVP with CRUD endpoints, tests, and documentation" --max-iter 10 --interval 15
+    volumes:
+      - demo-output:/tmp
+    profiles:
+      - live
+
+volumes:
+  demo-output:

@@ -1,0 +1,74 @@
+# CCTV Video Monitoring Trigger Rules
+# Usage: python -m toonic.server --triggers examples/video-monitoring/example-triggers.yaml ...
+
+triggers:
+  # Primary: YOLO-based person/vehicle detection
+  - name: intrusion-detect
+    source: video
+    mode: on_event
+    events:
+      - type: object
+        label: "person"
+        threshold: 0.4
+        min_duration_s: 1.0
+      - type: object
+        label: "car"
+        threshold: 0.5
+        min_duration_s: 2.0
+      - type: object
+        label: "truck"
+        threshold: 0.5
+        min_duration_s: 2.0
+    event_logic: any
+    fallback:
+      periodic_s: 120
+    cooldown_s: 10
+    goal: "CCTV event analysis: describe person/vehicle actions, direction, trajectory. Classify: normal_activity/suspicious/intrusion/vehicle_entry"
+    priority: 9
+    actions:
+      - send_to_llm
+      - alert
+
+  # Secondary: scene change fallback (no YOLO needed)
+  - name: scene-change
+    source: video
+    mode: on_event
+    events:
+      - type: scene_change
+        threshold: 0.4
+    fallback:
+      periodic_s: 300
+    cooldown_s: 30
+    goal: "describe what changed in the scene compared to previous frame"
+    priority: 4
+
+  # Motion-based (general movement without object classification)
+  - name: motion-alert
+    source: video
+    mode: on_event
+    events:
+      - type: motion
+        threshold: 0.15
+        min_duration_s: 2.0
+    cooldown_s: 15
+    goal: "motion detected — describe movement location and intensity"
+    priority: 6
+
+  # Night mode: lower thresholds after hours
+  - name: night-watch
+    source: video
+    mode: hybrid
+    interval_s: 180
+    events:
+      - type: object
+        label: "person"
+        threshold: 0.3
+        min_duration_s: 0.5
+    fallback:
+      periodic_s: 180
+    cooldown_s: 5
+    goal: "night security: any person detected is suspicious, describe immediately"
+    priority: 10
+    actions:
+      - send_to_llm
+      - alert

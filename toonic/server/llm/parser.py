@@ -67,3 +67,19 @@ class ResponseParser:
             tokens_used=raw.get("tokens_used", 0),
             duration_s=raw.get("duration_s", 0.0),
         )
+
+    def parse_raw_to_dict(self, content: str) -> Dict[str, Any] | None:
+        """Parse raw LLM content string into a dict (for autopilot executor)."""
+        clean = content.strip()
+        if clean.startswith("```"):
+            clean = clean.split("\n", 1)[1] if "\n" in clean else clean
+            clean = clean.rsplit("```", 1)[0]
+
+        start = clean.find("{")
+        end = clean.rfind("}") + 1
+        if start >= 0 and end > start:
+            try:
+                return json.loads(clean[start:end])
+            except json.JSONDecodeError:
+                pass
+        return None

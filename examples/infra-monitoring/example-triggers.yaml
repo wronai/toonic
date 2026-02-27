@@ -1,0 +1,85 @@
+# Infrastructure Monitoring Trigger Rules
+# Usage: python -m toonic.server --triggers examples/infra-monitoring/example-triggers.yaml ...
+
+triggers:
+  # Docker: container crash/restart detection
+  - name: container-crash
+    source: container
+    mode: on_event
+    events:
+      - type: anomaly
+        threshold: 0.5
+    fallback:
+      periodic_s: 300
+    cooldown_s: 15
+    goal: "Docker alert: container crashed/restarted — identify cause from logs, suggest fix"
+    priority: 9
+    actions:
+      - send_to_llm
+      - alert
+
+  # Docker: periodic health summary
+  - name: container-health
+    source: container
+    mode: periodic
+    interval_s: 300
+    goal: "Docker health summary: running/stopped containers, resource usage, anomalies"
+    priority: 4
+
+  # Database: schema drift detection
+  - name: db-schema-drift
+    source: database
+    mode: on_event
+    events:
+      - type: anomaly
+        threshold: 0.3
+    cooldown_s: 60
+    goal: "database schema change detected — describe changes, assess impact, check migrations"
+    priority: 8
+    actions:
+      - send_to_llm
+      - alert
+
+  # Database: periodic check
+  - name: db-periodic
+    source: database
+    mode: periodic
+    interval_s: 600
+    goal: "database health: table sizes, growth trends, query performance"
+    priority: 3
+
+  # Network: connectivity loss
+  - name: network-down
+    source: network
+    mode: on_event
+    events:
+      - type: anomaly
+        threshold: 0.5
+    cooldown_s: 30
+    goal: "network connectivity lost — identify which endpoints are down, check DNS, suggest remediation"
+    priority: 10
+    actions:
+      - send_to_llm
+      - alert
+
+  # Network: periodic latency report
+  - name: network-latency
+    source: network
+    mode: periodic
+    interval_s: 300
+    goal: "network latency report: per-endpoint response times, DNS resolution, trends"
+    priority: 3
+
+  # Process: service down
+  - name: service-down
+    source: process
+    mode: on_event
+    events:
+      - type: anomaly
+        threshold: 0.5
+    cooldown_s: 15
+    goal: "service down — identify which process/port is unavailable, check logs, suggest restart"
+    priority: 9
+    actions:
+      - send_to_llm
+      - alert

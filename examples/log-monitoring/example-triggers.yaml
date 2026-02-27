@@ -1,0 +1,60 @@
+# Log Monitoring Trigger Rules
+# Usage: python -m toonic.server --triggers examples/log-monitoring/example-triggers.yaml ...
+
+triggers:
+  # Error spike: ≥5 ERROR/CRITICAL in 60s window
+  - name: error-spike
+    source: logs
+    mode: on_event
+    events:
+      - type: pattern
+        regex: "ERROR|CRITICAL|FATAL"
+        count_threshold: 5
+        window_s: 60
+    fallback:
+      periodic_s: 300
+    cooldown_s: 30
+    goal: "analyze error spike: identify root cause, affected components, correlate errors, suggest fixes"
+    priority: 9
+    actions:
+      - send_to_llm
+      - alert
+
+  # Critical alert: immediate on any CRITICAL
+  - name: critical-immediate
+    source: logs
+    mode: on_event
+    events:
+      - type: pattern
+        regex: "CRITICAL|FATAL"
+        count_threshold: 1
+        window_s: 10
+    cooldown_s: 10
+    goal: "CRITICAL error detected — immediate triage: severity, blast radius, recommended action"
+    priority: 10
+    actions:
+      - send_to_llm
+      - alert
+
+  # Warning trend: many warnings may indicate degradation
+  - name: warning-trend
+    source: logs
+    mode: on_event
+    events:
+      - type: pattern
+        regex: "WARNING"
+        count_threshold: 20
+        window_s: 300
+    fallback:
+      periodic_s: 600
+    cooldown_s: 60
+    goal: "warning trend analysis: identify patterns, predict potential failures, suggest preventive actions"
+    priority: 6
+
+  # Periodic health summary
+  - name: log-summary
+    source: logs
+    mode: periodic
+    interval_s: 600
+    goal: "10-minute log summary: error rates, top error types, component health, trends"
+    priority: 3

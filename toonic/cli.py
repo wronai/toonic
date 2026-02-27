@@ -17,6 +17,8 @@ def cli_main(args: List[str] | None = None) -> None:
     toonic spec <source> [--fmt toon] [-o output]
     toonic reproduce <spec> [-o output] [--as target-format]
     toonic formats [--check]
+    toonic init "description" [--name NAME] [--lang python]
+    toonic autopilot [DIR] [--goal GOAL] [--max-iter N]
     """
     import argparse
 
@@ -42,6 +44,23 @@ def cli_main(args: List[str] | None = None) -> None:
     # --- formats ---
     fmt_parser = subparsers.add_parser('formats', help='Lista obsługiwanych formatów')
     fmt_parser.add_argument('--check', action='store_true', help='Sprawdź zależności')
+
+    # --- init ---
+    init_parser = subparsers.add_parser('init', help='Scaffold new project from description')
+    init_parser.add_argument('description', help='Project description (natural language)')
+    init_parser.add_argument('--name', default='', help='Project name')
+    init_parser.add_argument('--lang', default='', help='Language (python, javascript)')
+    init_parser.add_argument('-o', '--output', default='', help='Output directory')
+
+    # --- autopilot ---
+    auto_parser = subparsers.add_parser('autopilot', help='Autonomous development loop')
+    auto_parser.add_argument('project_dir', nargs='?', default='.', help='Project directory')
+    auto_parser.add_argument('--goal', '-g', default='build MVP', help='Development goal')
+    auto_parser.add_argument('--max-iter', type=int, default=20, help='Max iterations')
+    auto_parser.add_argument('--interval', type=float, default=10.0, help='Seconds between iterations')
+    auto_parser.add_argument('--model', '-m', default='', help='LLM model override')
+    auto_parser.add_argument('--dry-run', action='store_true', help='Show changes without writing')
+    auto_parser.add_argument('--no-test', action='store_true', help='Skip auto-testing')
 
     parsed = parser.parse_args(args)
 
@@ -72,6 +91,63 @@ def cli_main(args: List[str] | None = None) -> None:
             for key, ok in info['available'].items():
                 status = "OK" if ok else "MISSING"
                 print(f"  [{status}] {key}")
+
+    elif parsed.command == 'init':
+        from toonic.autopilot.scaffold import ProjectScaffold
+        spec, files = ProjectScaffold.init(
+            description=parsed.description,
+            name=parsed.name,
+            language=parsed.lang,
+            output_dir=parsed.output,
+        )
+        print(f"\n  Project '{spec.name}' created!")
+        print(f"  ─────────────────────────────────")
+        print(f"  Type:     {spec.project_type}")
+        print(f"  Language: {spec.language}")
+        print(f"  Files:    {len(files)}")
+        print(f"  Dir:      {parsed.output or './' + spec.name}/")
+        print(f"\n  Next steps:")
+        print(f"    cd {spec.name}")
+        print(f"    toonic autopilot . --goal 'build MVP'")
+        print()
+
+    elif parsed.command == 'autopilot':
+        import asyncio
+        from toonic.autopilot.loop import AutopilotLoop, AutopilotConfig
+        config = AutopilotConfig(
+            project_dir=parsed.project_dir,
+            goal=parsed.goal,
+            max_iterations=parsed.max_iter,
+            interval_s=parsed.interval,
+            model=parsed.model,
+            dry_run=parsed.dry_run,
+            auto_test=not parsed.no_test,
+        )
+        loop = AutopilotLoop(config)
+
+        async def _event_printer(event_type, data):
+            if event_type == 'iteration_start':
+                print(f"\n── Iteration {data['iteration']} ──")
+            elif event_type == 'llm_response':
+                print(f"  LLM: {data.get('description', '')[:80]}")
+                print(f"  Files: {data.get('files_count', 0)}")
+            elif event_type == 'iteration_done':
+                written = data.get('files_written', [])
+                if written:
+                    for f in written:
+                        print(f"  ✓ {f}")
+                if data.get('error'):
+                    print(f"  ✗ {data['error'][:100]}")
+            elif event_type == 'complete':
+                print(f"\n  ✓ ROADMAP complete in {data['iterations']} iterations!")
+            elif event_type == 'error':
+                print(f"  ERROR: {data.get('error', data.get('message', ''))}")
+
+        try:
+            results = asyncio.run(loop.run(on_event=_event_printer))
+            print(f"\nAutopilot finished: {len(results)} actions")
+        except KeyboardInterrupt:
+            print("\nAutopilot stopped.")
 
     else:
         parser.print_help()

@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml VERSION README.md ./
+COPY toonic/ toonic/
+
+RUN pip install --no-cache-dir -e ".[server,llm,dev]"
+
+# Default: run autopilot demo script
+COPY docker/demo-autopilot.sh /app/demo-autopilot.sh
+RUN chmod +x /app/demo-autopilot.sh
+
+ENV PYTHONUNBUFFERED=1
+
+ENTRYPOINT ["/app/demo-autopilot.sh"]
