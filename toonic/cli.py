@@ -19,6 +19,7 @@ def cli_main(args: List[str] | None = None) -> None:
     toonic formats [--check]
     toonic init "description" [--name NAME] [--lang python]
     toonic autopilot [DIR] [--goal GOAL] [--max-iter N]
+    toonic examples [--list] [--verify] [--preset NAME] [SOURCES...]
     """
     import argparse
 
@@ -51,6 +52,15 @@ def cli_main(args: List[str] | None = None) -> None:
     init_parser.add_argument('--name', default='', help='Project name')
     init_parser.add_argument('--lang', default='', help='Language (python, javascript)')
     init_parser.add_argument('-o', '--output', default='', help='Output directory')
+
+    # --- examples ---
+    ex_parser = subparsers.add_parser('examples', help='List, verify, run examples & presets')
+    ex_parser.add_argument('--list', '-l', action='store_true', help='List examples & presets')
+    ex_parser.add_argument('--verify', action='store_true', help='Verify all examples')
+    ex_parser.add_argument('--show', type=str, help='Show example details')
+    ex_parser.add_argument('--preset', '-p', type=str, help='Build config from preset (dry)')
+    ex_parser.add_argument('--run-demo', type=str, help='Run a demo script')
+    ex_parser.add_argument('sources', nargs='*', help='Sources for preset')
 
     # --- autopilot ---
     auto_parser = subparsers.add_parser('autopilot', help='Autonomous development loop')
@@ -110,6 +120,50 @@ def cli_main(args: List[str] | None = None) -> None:
         print(f"    cd {spec.name}")
         print(f"    toonic autopilot . --goal 'build MVP'")
         print()
+
+    elif parsed.command == 'examples':
+        from examples.run_all import (
+            list_examples, show_example, verify_all, EXAMPLES,
+        )
+        if parsed.list:
+            list_examples()
+        elif parsed.verify:
+            ok = verify_all()
+            if not ok:
+                sys.exit(1)
+        elif parsed.show:
+            show_example(parsed.show)
+        elif parsed.preset:
+            from toonic.server.quick import PRESETS
+            name = parsed.preset
+            if name in PRESETS:
+                sources = parsed.sources or ['./examples/code-analysis/sample-project/']
+                builder = PRESETS[name]['fn'](*sources)
+                cfg = builder.build_config()
+                print(f"  Preset:  {name}")
+                print(f"  Goal:    {cfg.goal}")
+                print(f"  Sources: {len(cfg.sources)}")
+                for s in cfg.sources:
+                    print(f"    [{s.category}] {s.path_or_url}")
+                print(f"\n  To run: from toonic.server.quick import {name.replace('-', '_')}")
+                print(f'  {name.replace("-", "_")}({", ".join(repr(s) for s in sources)}).run()')
+            else:
+                print(f"Unknown preset: {name}")
+                print(f"Available: {', '.join(PRESETS.keys())}")
+                sys.exit(1)
+        elif parsed.run_demo:
+            import subprocess
+            from pathlib import Path as P
+            script = P('examples/programmatic-api') / parsed.run_demo
+            if not script.exists():
+                script = P('examples/programmatic-api') / f'demo_{parsed.run_demo}.py'
+            if script.exists():
+                subprocess.run([sys.executable, str(script)])
+            else:
+                print(f"Script not found: {parsed.run_demo}")
+                sys.exit(1)
+        else:
+            list_examples()
 
     elif parsed.command == 'autopilot':
         import asyncio

@@ -18,4 +18,24 @@ Quick-start:
     run("./src/", "log:./app.log", goal="find bugs")
 """
 
-__all__ = ["ServerConfig", "ToonicServer", "watch", "monitor", "run"]
+from toonic.server.config import ServerConfig
+from toonic.server.main import ToonicServer
+from toonic.server.quick import (
+    monitor,
+    parse_source,
+    run,
+    unpack_archive,
+    watch,
+    watch_archive,
+)
+
+__all__ = [
+    "ServerConfig",
+    "ToonicServer",
+    "watch",
+    "monitor",
+    "run",
+    "parse_source",
+    "unpack_archive",
+    "watch_archive",
+]

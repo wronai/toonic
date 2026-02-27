@@ -1,0 +1,136 @@
+# Security Monitoring Configuration
+# Continuous monitoring for obywatel.bielik.ai
+
+# Target domain
+domain: "obywatel.bielik.ai"
+
+# Monitoring interval in seconds (300 = 5 minutes)
+check_interval: 300
+
+# Alert thresholds
+alert_threshold:
+  ssl_expiry_days: 30          # Alert if certificate expires within 30 days
+  response_time_ms: 2000       # Alert if response time exceeds 2 seconds
+  security_headers_missing: 2  # Alert if 2+ security headers missing
+  security_score_below: 70     # Alert if security score drops below 70%
+
+# Notification settings
+notifications:
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: "your-email@gmail.com"
+    password: "your-app-password"
+    recipients:
+      - "security-team@company.com"
+      - "admin@company.com"
+  
+  webhook:
+    enabled: false
+    url: "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+    # Alternative: Discord webhook
+    # url: "https://discord.com/api/webhooks/YOUR/DISCORD/WEBHOOK"
+
+# Security checks to run
+checks:
+  ssl_certificate: true        # Check SSL certificate validity and expiry
+  security_headers: true       # Check for required security headers
+  response_time: true          # Monitor website response time
+  content_changes: true        # Check for unexpected content changes
+  dependency_check: true       # Monitor external dependencies
+
+# Required security headers
+required_security_headers:
+  - "content-security-policy"
+  - "x-frame-options"
+  - "x-content-type-options"
+  - "referrer-policy"
+  - "strict-transport-security"
+  - "permissions-policy"
+
+# SSL/TLS configuration requirements
+ssl_requirements:
+  min_version: "TLSv1.2"
+  strong_ciphers:
+    - "ECDHE-RSA-AES256-GCM-SHA512"
+    - "ECDHE-RSA-AES128-GCM-SHA256"
+    - "DHE-RSA-AES256-GCM-SHA512"
+  
+# Content monitoring
+content_monitoring:
+  check_development_urls: true
+  check_error_indicators: true
+  check_security_patterns: true
+  forbidden_patterns:
+    - "localhost"
+    - "127.0.0.1"
+    - "internal server error"
+    - "stack trace"
+    - "database error"
+
+# Dependency monitoring
+dependency_monitoring:
+  check_cdn_integrity: true
+  monitor_version_updates: true
+  trusted_domains:
+    - "cdn.jsdelivr.net"
+    - "fonts.googleapis.com"
+    - "fonts.gstatic.com"
+    - "cdnjs.cloudflare.com"
+
+# Reporting and logging
+logging:
+  level: "INFO"
+  file: "security_monitoring.log"
+  max_size_mb: 100
+  backup_count: 5
+
+reporting:
+  generate_daily_report: true
+  generate_weekly_summary: true
+  save_historical_data: true
+  max_data_points: 1000
+
+# Integration settings
+integrations:
+  toonic_server:
+    enabled: true
+    base_url: "http://localhost:8901"
+    api_key: ""
+  
+  ssl_labs:
+    enabled: false
+    api_key: ""
+    check_interval_hours: 24
+  
+  securitytrails:
+    enabled: false
+    api_key: ""
+
+# Advanced settings
+advanced:
+  concurrent_checks: true
+  timeout_seconds: 30
+  retry_attempts: 3
+  retry_delay_seconds: 5
+  
+  # Rate limiting to avoid overwhelming the target
+  rate_limit:
+    requests_per_minute: 12
+    burst_size: 5
+
+# Dashboard settings
+dashboard:
+  enabled: true
+  port: 8080
+  refresh_interval_seconds: 30
+  show_trends: true
+  show_alerts: true
+
+# Backup and recovery
+backup:
+  enabled: true
+  backup_interval_hours: 24
+  backup_retention_days: 30
+  backup_location: "./backups/"

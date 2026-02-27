@@ -26,6 +26,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import shutil
+import tarfile
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -51,6 +55,7 @@ _PREFIX_CATEGORY = {
     "proc": "process", "pid": "process", "port": "process", "tcp": "process", "service": "process",
     "http": "api", "https": "api", "api": "api",
     "dir": "infra", "directory": "infra",
+    "archive": "data",
 }
 
 _PROTO_CATEGORY = {
@@ -87,13 +92,14 @@ def parse_source(source: Union[str, SourceConfig, Dict[str, Any]]) -> SourceConf
 
     # Prefixed: log:./app.log, docker:*, db:./app.db
     if ":" in source_str:
-        prefix, _, path = source_str.partition(":")
+        prefix, _, _path = source_str.partition(":")
         cat = _PREFIX_CATEGORY.get(prefix.lower(), "code")
         return SourceConfig(path_or_url=source_str, category=cat)
 
     # Plain path — auto-detect from extension / content
     p = Path(source_str)
     ext = p.suffix.lower()
+    suffixes = [s.lower() for s in p.suffixes]
     name = p.name.lower()
 
     ext_map = {
@@ -105,7 +111,12 @@ def parse_source(source: Union[str, SourceConfig, Dict[str, Any]]) -> SourceConf
         ".md": "document", ".rst": "document", ".txt": "document", ".pdf": "document",
         ".mp4": "video", ".avi": "video", ".mkv": "video", ".mov": "video",
         ".mp3": "audio", ".wav": "audio", ".flac": "audio", ".ogg": "audio",
+        ".zip": "data", ".tar": "data",
     }
+
+    # Multi-suffix archives
+    if suffixes[-2:] in ([".tar", ".gz"], [".tar", ".bz2"], [".tar", ".xz"]):
+        return SourceConfig(path_or_url=source_str, category="data")
 
     if ext in ext_map:
         cat = ext_map[ext]
@@ -117,6 +128,73 @@ def parse_source(source: Union[str, SourceConfig, Dict[str, Any]]) -> SourceConf
         cat = "code"
 
     return SourceConfig(path_or_url=source_str, category=cat)
+
+
+def unpack_archive(archive_path: str, output_dir: str | None = None) -> str:
+    """Unpack an archive (zip/tar/tar.gz/...) and return the extraction directory."""
+    ap = Path(archive_path)
+    if not ap.exists():
+        raise FileNotFoundError(f"Archive does not exist: {archive_path}")
+
+    out_dir = Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="toonic-archive-"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    lower = ap.name.lower()
+    try:
+        if lower.endswith(".zip"):
+            with zipfile.ZipFile(ap, "r") as zf:
+                zf.extractall(out_dir)
+            return str(out_dir)
+
+        if any(lower.endswith(s) for s in (".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz2", ".tar.xz", ".txz")):
+            with tarfile.open(ap, "r:*") as tf:
+                try:
+                    tf.extractall(out_dir, filter="data")
+                except TypeError:
+                    tf.extractall(out_dir)
+            return str(out_dir)
+
+        raise ValueError(f"Unsupported archive format: {archive_path}")
+    except Exception:
+        if output_dir is None:
+            shutil.rmtree(out_dir, ignore_errors=True)
+        raise
+
+
+def watch_archive(
+    archive_path: str,
+    *,
+    extract_dir: str | None = None,
+    directory_category: str = "infra",
+    include_files_as_sources: bool = False,
+    max_files: int = 200,
+) -> ConfigBuilder:
+    """Unpack an archive and return a ConfigBuilder watching its contents."""
+    extracted = unpack_archive(archive_path, output_dir=extract_dir)
+    b = watch().add(f"dir:{extracted}")
+
+    if directory_category and b._sources:
+        b._sources[-1].category = directory_category
+
+    if include_files_as_sources:
+        root = Path(extracted)
+        count = 0
+        for p in sorted(root.rglob("*")):
+            if not p.is_file():
+                continue
+            if p.name.startswith("."):
+                continue
+            try:
+                if p.stat().st_size > 2_000_000:
+                    continue
+            except OSError:
+                continue
+            b.add(str(p))
+            count += 1
+            if count >= max_files:
+                break
+
+    return b
 
 
 # ══════════════════════════════════════════════════════════════

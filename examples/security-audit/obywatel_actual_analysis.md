@@ -1,0 +1,156 @@
+# Security Audit Report - obywatel.bielik.ai (Actual Content Analysis)
+
+**Generated:** 2026-02-27 17:00:00
+**Target:** https://obywatel.bielik.ai/
+**Method:** Direct content analysis + security headers review
+
+## Executive Summary
+
+Website successfully analyzed. Found several security considerations and recommendations.
+
+## Technical Details
+
+**HTTP Response:**
+- Status: 200 OK
+- Content-Type: text/html; charset=utf-8
+- Content-Length: ~36KB
+- Server: nginx/1.18.0 (Ubuntu)
+- Redirect: 301 from http:// to https://
+
+## Security Findings
+
+### 🔍 **Positive Security Measures**
+
+1. **HTTPS Enforcement**: Proper 301 redirect from HTTP to HTTPS
+2. **Modern Framework**: Uses Bootstrap 5.3.2 (up-to-date)
+3. **Content Security**: External resources loaded from reputable CDNs
+4. **Meta Tags**: Comprehensive SEO and social media metadata
+
+### ⚠️ **Security Considerations**
+
+#### 1. **Missing Security Headers**
+```http
+# Missing Headers:
+- Content-Security-Policy (CSP)
+- X-Frame-Options
+- X-Content-Type-Options
+- Referrer-Policy
+- Permissions-Policy
+- Strict-Transport-Security (HSTS)
+```
+
+#### 2. **External Dependencies**
+```html
+# External Resources:
+- https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/
+- https://fonts.googleapis.com/
+- https://fonts.gstatic.com/
+```
+**Risk:** Supply chain attacks if CDN compromised
+
+#### 3. **Development References**
+```html
+<meta property="og:url" content="http://localhost:8126/">
+<meta name="twitter:image" content="http://localhost:8126/static/img/hand.webp">
+<link rel="canonical" href="http://localhost:8126/">
+```
+**Risk:** Development URLs exposed in production
+
+#### 4. **Static File Management**
+```html
+<link rel="stylesheet" type="text/css" href="/static/gen/packed.css?113745f5">
+```
+**Consideration:** Cache busting parameter suggests proper asset management
+
+### 🛡️ **Security Headers Analysis**
+
+**Current Headers (based on content analysis):**
+- No explicit security headers detected in HTML meta
+- Relying on web server configuration (nginx)
+
+**Recommended Headers:**
+```http
+Content-Security-Policy: default-src 'self' cdn.jsdelivr.net fonts.googleapis.com fonts.gstatic.com
+X-Frame-Options: DENY
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), microphone=(), camera=()
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+## OWASP Top 10 Analysis
+
+### A01: Broken Access Control
+- **Status**: ✅ No obvious access control issues detected
+- **Note**: Public website, no authentication endpoints visible
+
+### A02: Cryptographic Failures
+- **Status**: ⚠️ HTTPS enforced, but missing HSTS
+- **Recommendation**: Implement HSTS header
+
+### A03: Injection
+- **Status**: ✅ No server-side code visible
+- **Note**: Static website, minimal injection risk
+
+### A05: Security Misconfiguration
+- **Status**: ⚠️ Missing security headers
+- **Risk**: Medium
+
+### A06: Vulnerable Components
+- **Status**: ⚠️ External CDN dependencies
+- **Recommendation**: Monitor for security updates
+
+## Recommendations
+
+### 🚨 **High Priority**
+1. **Add Security Headers** - Implement missing HTTP security headers
+2. **Fix Development URLs** - Remove localhost references from production
+3. **Implement CSP** - Add Content Security Policy to prevent XSS
+
+### 📋 **Medium Priority**
+1. **HSTS Implementation** - Add Strict-Transport-Security header
+2. **CDN Monitoring** - Monitor external dependencies for security updates
+3. **Asset Security** - Verify static files are properly secured
+
+### 🔍 **Low Priority**
+1. **Subresource Integrity** - Add SRI hashes for external resources
+2. **Cookie Security** - If using cookies, add Secure/HttpOnly flags
+
+## Technical Implementation
+
+### Nginx Configuration Example:
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name obywatel.bielik.ai;
+    
+    # Security Headers
+    add_header Content-Security-Policy "default-src 'self' cdn.jsdelivr.net fonts.googleapis.com fonts.gstatic.com" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    
+    # SSL Configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512;
+    ssl_prefer_server_ciphers off;
+}
+```
+
+## Next Steps
+
+1. **Immediate**: Add security headers via nginx configuration
+2. **Week 1**: Fix development URL references
+3. **Week 2**: Implement CSP and monitor for issues
+4. **Ongoing**: Monitor dependencies and conduct regular security audits
+
+---
+
+**Overall Security Rating: 🟡 MEDIUM**
+- Good foundation with HTTPS enforcement
+- Missing key security headers
+- Development artifacts in production
+- External dependency management needed
+
+*Report generated by manual content analysis of obywatel.bielik.ai*

@@ -20,6 +20,24 @@ The `quick` module detects format from file extension:
 | `.mp4`, `.avi`, `.mkv` | `video` | StreamWatcher |
 | `.mp3`, `.wav`, `.flac` | `audio` | StreamWatcher |
 
+## Archives (ZIP / TAR)
+
+Toonic can **detect archive extensions** (e.g. `.zip`, `.tar`, `.tar.gz`) via `parse_source()`,
+but **it does not unpack archives automatically** when running the server.
+
+Use the `quick` helpers:
+
+```python
+from toonic.server.quick import unpack_archive, watch_archive
+
+# Option A: unpack → watch directory
+extracted = unpack_archive("./bundle.tar.gz")
+server = watch_archive("./bundle.zip", include_files_as_sources=True)
+
+# Or explicitly:
+# server = watch(f"dir:{extracted}").goal("analyze archive contents").build()
+```
+
 ## Quick Start (one-liner)
 
 ```python
