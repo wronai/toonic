@@ -1,461 +1,495 @@
-# toonic | 71f 18460L | python:71
+# toonic | 75f 14325L | python:75
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
-M[71]:
-  TODO/stage_0_foundation.py,268
-  TODO/stage_1_document_handlers.py,422
-  TODO/stage_2_data_config_handlers.py,527
-  TODO/stage_3_api_infra_handlers.py,617
-  TODO/stage_4_pipeline_cli.py,332
-  TODO/stage_5_video_handler.py,419
-  TODO/stage_6_audio_handler.py,354
-  TODO/stage_7_evidence_graph.py,364
-  examples/code-analysis/sample-project/config.py,9
-  examples/code-analysis/sample-project/main.py,64
+M[75]:
+  examples/code-analysis/sample-project/config.py,11
+  examples/code-analysis/sample-project/main.py,84
   tests/__init__.py,0
-  tests/conftest.py,77
-  tests/test_cli.py,34
-  tests/test_core.py,144
-  tests/test_evidence_graph.py,130
-  tests/test_handlers.py,181
-  tests/test_pipeline.py,67
-  tests/test_server.py,418
-  tests/test_triggers.py,378
-  tests/test_watchers.py,543
-  toonic/__init__.py,31
-  toonic/__main__.py,4
-  toonic/cli.py,61
-  toonic/core/__init__.py,23
-  toonic/core/base.py,30
-  toonic/core/detector.py,42
-  toonic/core/models.py,33
-  toonic/core/protocols.py,49
-  toonic/core/registry.py,81
-  toonic/formats/__init__.py,105
-  toonic/formats/api.py,130
-  toonic/formats/audio.py,251
-  toonic/formats/config.py,187
-  toonic/formats/data.py,277
-  toonic/formats/database.py,205
-  toonic/formats/document.py,327
-  toonic/formats/evidence.py,225
-  toonic/formats/infra.py,189
-  toonic/formats/video.py,253
-  toonic/pipeline.py,184
-  toonic/server/__init__.py,7
-  toonic/server/__main__.py,230
-  toonic/server/client.py,264
-  toonic/server/config.py,137
+  tests/conftest.py,106
+  tests/test_cli.py,44
+  tests/test_core.py,185
+  tests/test_evidence_graph.py,150
+  tests/test_handlers.py,236
+  tests/test_llm_pipeline.py,296
+  tests/test_pipeline.py,91
+  tests/test_server.py,545
+  tests/test_triggers.py,494
+  tests/test_watchers.py,686
+  toonic/__init__.py,42
+  toonic/__main__.py,5
+  toonic/cli.py,81
+  toonic/core/__init__.py,26
+  toonic/core/base.py,38
+  toonic/core/detector.py,52
+  toonic/core/models.py,40
+  toonic/core/protocols.py,66
+  toonic/core/registry.py,102
+  toonic/formats/__init__.py,113
+  toonic/formats/api.py,167
+  toonic/formats/audio.py,335
+  toonic/formats/config.py,236
+  toonic/formats/data.py,343
+  toonic/formats/database.py,258
+  toonic/formats/document.py,404
+  toonic/formats/evidence.py,292
+  toonic/formats/infra.py,238
+  toonic/formats/video.py,329
+  toonic/pipeline.py,244
+  toonic/server/__init__.py,9
+  toonic/server/__main__.py,285
+  toonic/server/client.py,319
+  toonic/server/config.py,171
   toonic/server/core/__init__.py,1
-  toonic/server/core/accumulator.py,80
-  toonic/server/core/history.py,307
-  toonic/server/core/query.py,180
-  toonic/server/core/router.py,249
-  toonic/server/main.py,299
-  toonic/server/models.py,96
+  toonic/server/core/accumulator.py,201
+  toonic/server/core/history.py,346
+  toonic/server/core/query.py,230
+  toonic/server/core/router.py,177
+  toonic/server/llm/__init__.py,27
+  toonic/server/llm/caller.py,150
+  toonic/server/llm/parser.py,69
+  toonic/server/llm/pipeline.py,63
+  toonic/server/llm/prompts.py,161
+  toonic/server/main.py,383
+  toonic/server/models.py,127
   toonic/server/transport/__init__.py,1
-  toonic/server/transport/broxeen_bridge.py,257
-  toonic/server/transport/rest_api.py,900
-  toonic/server/triggers/__init__.py,15
-  toonic/server/triggers/detectors.py,245
-  toonic/server/triggers/dsl.py,189
-  toonic/server/triggers/nlp2yaml.py,225
-  toonic/server/triggers/scheduler.py,187
-  toonic/server/watchers/__init__.py,17
-  toonic/server/watchers/base.py,100
-  toonic/server/watchers/database_watcher.py,314
-  toonic/server/watchers/directory_watcher.py,274
-  toonic/server/watchers/docker_watcher.py,242
-  toonic/server/watchers/file_watcher.py,150
-  toonic/server/watchers/http_watcher.py,263
-  toonic/server/watchers/log_watcher.py,130
-  toonic/server/watchers/network_watcher.py,300
-  toonic/server/watchers/process_watcher.py,322
-  toonic/server/watchers/stream_watcher.py,464
-  unified_toon.py,82
+  toonic/server/transport/app.py,91
+  toonic/server/transport/broxeen_bridge.py,322
+  toonic/server/transport/rest_api.py,10
+  toonic/server/transport/routes/__init__.py,1
+  toonic/server/transport/routes/api.py,236
+  toonic/server/transport/routes/history.py,60
+  toonic/server/transport/routes/sources.py,50
+  toonic/server/transport/routes/websocket.py,42
+  toonic/server/triggers/__init__.py,18
+  toonic/server/triggers/detectors.py,333
+  toonic/server/triggers/dsl.py,228
+  toonic/server/triggers/nlp2yaml.py,291
+  toonic/server/triggers/scheduler.py,230
+  toonic/server/watchers/__init__.py,19
+  toonic/server/watchers/base.py,124
+  toonic/server/watchers/database_watcher.py,388
+  toonic/server/watchers/directory_watcher.py,337
+  toonic/server/watchers/docker_watcher.py,297
+  toonic/server/watchers/file_watcher.py,177
+  toonic/server/watchers/http_watcher.py,332
+  toonic/server/watchers/log_watcher.py,188
+  toonic/server/watchers/network_watcher.py,386
+  toonic/server/watchers/process_watcher.py,387
+  toonic/server/watchers/stream_watcher.py,600
+  unified_toon.py,119
 D:
-  TODO/stage_0_foundation.py:
-    i: hashlib,dataclasses.{dataclass,field},importlib.util,pathlib.Path,typing.{Any,Dict,List,Optional,Protocol}
-    e: FileLogic,FileHandler,BaseHandlerMixin,FormatRegistry,CodeLogicBase,SpecDetector
-    FileLogic: to_dict(0),complexity(0)  # Dane logiczne pliku — minimalny inter...
-    FileHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Jeden handler = jeden typ pliku.
-    BaseHandlerMixin: _compute_hash(1),_read_content(2),_format_toon_header(2)  # Domyślne implementacje wspólne dla wi...
-    FormatRegistry: register(1),resolve(2),get_by_category(1),available(0),list_categories(0)  # Centralny rejestr handlerów z dwuetap...
-    CodeLogicBase: to_dict(0),complexity(0)  # Bazowy model logiki kodu — adaptacja...
-  TODO/stage_1_document_handlers.py:
-    i: hashlib,json,re,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict,List,Optional}
-    e: DocumentSection,DocumentLogic,MarkdownHandler,TextHandler,RstHandler,register_document_handlers
-    DocumentSection:   # Pojedyncza sekcja dokumentu.
-    DocumentLogic: to_dict(0),complexity(0)  # Logika dokumentu — implementuje FileL...
-    MarkdownHandler: parse(1),_extract_sections(1),_summarize(2),to_spec(2),_to_toon(1)  # Handler dla plików Markdown (.md, .ma...
-    TextHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla plików tekstowych (.txt).
-    RstHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla reStructuredText (.rst).
-    register_document_handlers()->None
-  TODO/stage_2_data_config_handlers.py:
-    i: csv,hashlib,io,json,re,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict}
-    e: ColumnSpec,TableLogic,JsonSchemaLogic,ConfigEntry,ConfigLogic,CsvHandler,JsonDataHandler,DockerfileHandler
-    ColumnSpec:   # Specyfikacja kolumny tabeli.
-    TableLogic: to_dict(0),complexity(0)  # Logika danych tabelarycznych — CSV, E...
-    JsonSchemaLogic: to_dict(0),complexity(0)  # Logika danych JSON — schemat i strukt...
-    ConfigEntry:   # Pojedynczy wpis konfiguracyjny.
-    ConfigLogic: to_dict(0),complexity(0)  # Logika pliku konfiguracyjnego.
-    register_data_config_handlers()->None
-  TODO/stage_3_api_infra_handlers.py:
-    i: hashlib,json,re,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict,List,Optional}
-    e: ColumnDef,TableDef,SqlSchemaLogic,EndpointSpec,ApiLogic,InfraResource,InfraLogic,SqlHandler
-    ColumnDef:   # Definicja kolumny tabeli SQL.
-    TableDef:   # Definicja tabeli SQL.
-    SqlSchemaLogic: to_dict(0),complexity(0)  # Logika schematu SQL — DDL, migracje,...
-    EndpointSpec:   # Specyfikacja endpointu API.
-    ApiLogic: to_dict(0),complexity(0)  # Logika API — OpenAPI, GraphQL.
-    register_api_infra_handlers()->None
-  TODO/stage_4_pipeline_cli.py:
-    i: sys,time,dataclasses.{dataclass,field},pathlib.Path,stage_0_foundation.FileLogic,typing.{Any,Dict,List,Optional}
-    e: ReproductionResult,Pipeline,cli_main,initialize_all_handlers
-    ReproductionResult:   # Wynik operacji reprodukcji.
-    Pipeline: to_spec(3),reproduce(4),roundtrip(4),batch(4),formats(0)  # Fasada nad całym przepływem parse ↔ r...
-    cli_main(args:Any=None)->None
-    initialize_all_handlers()->None
-  TODO/stage_5_video_handler.py:
-    i: base64,hashlib,json,threading,time,collections.deque,dataclasses.{dataclass,field},io.BytesIO,pathlib.Path
-    e: KeyframeSpec,VideoSegment,VideoLogic,LowQRTSPExtractor,SceneDetector,VideoFileHandler,RTSPMultiCamHandler,register_video_handlers
-    KeyframeSpec:   # Pojedynczy keyframe z video.
-    VideoSegment:   # Segment video — zgrupowane keyframes...
-    VideoLogic: to_dict(0),complexity(0)  # Logika video — implementuje FileLogic...
-    LowQRTSPExtractor: __init__(4),start(0),stop(0),_capture_thread(3),get_sync_frame(0)  # Pure OpenCV RTSP → low-quality keyfra...
-    SceneDetector: __init__(1),is_scene_change(1),detect_from_file(2)  # Detekcja zmian scen — pixel diff bez AI.
-    register_video_handlers()->None
-  TODO/stage_6_audio_handler.py:
-    i: base64,hashlib,json,struct,time,dataclasses.{dataclass,field},io.BytesIO,pathlib.Path,typing.Any
-    e: SpeechSegment,AudioLogic,MuLawCodec,TelephonyFilter,SpeechDetector,AudioFileHandler,register_audio_handlers
-    SpeechSegment:   # Pojedynczy segment wykrytej mowy.
-    AudioLogic: to_dict(0),complexity(0)  # Logika audio — implementuje FileLogic...
-    MuLawCodec: compress(1),decompress(1)  # μ-law kompresja/dekompresja — standar...
-    TelephonyFilter: lowpass_3khz(2)  # Filtr dolnoprzepustowy 3kHz — pasmo t...
-    SpeechDetector: __init__(2),_get_vad(0),detect_speech_segments(3)  # Voice Activity Detection z WebRTC VAD.
-    register_audio_handlers()->None
-  TODO/stage_7_evidence_graph.py:
-    i: hashlib,json,time,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict,List,Optional}
-    e: EvidenceNode,EvidenceGraph,EvidenceGraphBuilder,EvidenceGraphHandler,register_evidence_handlers
-    EvidenceNode:   # Pojedynczy węzeł dowodowy w Evidence...
-    EvidenceGraph: to_dict(0),complexity(0)  # Multimodalny graf dowodowy — implemen...
-    EvidenceGraphBuilder: __init__(0),add_code_evidence(2),add_document_evidence(2),add_video_evidence(2),add_audio_evidence(2)  # Buduje Evidence Graph z wielu źródeł.
-    EvidenceGraphHandler: parse(1),to_spec(2),_to_toon(1),reproduce(3),sniff(2)  # Handler dla Evidence Graph — generuje...
-    register_evidence_handlers()->None
+  examples/code-analysis/sample-project/config.py:
+    i: os
   examples/code-analysis/sample-project/main.py:
-    i: os,sys,typing.{List,Optional}
+    i: os;sys;typing.{List,Optional}
     e: UserService,OrderService,main
-    UserService: __init__(1),create_user(2),get_user(1),list_users(1),deactivate_user(1)  # Manages user operations.
-    OrderService: __init__(0),create_order(3),get_orders(1),process_payment(1)  # Manages orders — has intentional issu...
+    UserService: __init__,create_user,get_user,list_users,deactivate_user  # Manages user operations.
+    OrderService: __init__,create_order,get_orders,process_payment  # Manages orders — has intentional issues for analys
     main()
   tests/conftest.py:
-    i: pytest,tempfile,os,pathlib.Path,toonic.core.registry.FormatRegistry,toonic.formats.initialize_all_handlers
+    i: pytest;tempfile;os;pathlib.{Path};toonic.core.registry.{FormatRegistry};toonic.formats.{initialize_all_handlers}
     e: reset_registry,anyio_backend,tmp_md,tmp_csv,tmp_env,tmp_sql,tmp_json,tmp_txt
     reset_registry()
     anyio_backend()
-    tmp_md(tmp_path)
-    tmp_csv(tmp_path)
-    tmp_env(tmp_path)
-    tmp_sql(tmp_path)
-    tmp_json(tmp_path)
-    tmp_txt(tmp_path)
+    tmp_md()
+    tmp_csv()
+    tmp_env()
+    tmp_sql()
+    tmp_json()
+    tmp_txt()
   tests/test_cli.py:
-    i: pytest,sys,io.StringIO,toonic.cli.cli_main
+    i: pytest;io.{StringIO};sys;toonic.cli.{cli_main}
     e: TestCLI
-    TestCLI: test_formats_command(1),test_spec_command(2),test_spec_csv_command(2),test_spec_output_to_file(2),test_help(1)
+    TestCLI: test_formats_command,test_spec_command,test_spec_csv_command,test_spec_output_to_file,test_help,test_no_command
   tests/test_core.py:
-    i: pytest,pathlib.Path,toonic.core
+    i: pytest;pathlib.{Path};toonic.core.{FileLogic,FileHandler,BaseHandlerMixin,FormatRegistry,SpecDetector,...}
     e: TestFormatRegistry,TestSpecDetector,TestCodeLogicBase,TestBaseHandlerMixin
-    TestFormatRegistry: test_register_and_resolve(0),test_available(0),test_list_categories(0),test_resolve_none_for_unknown(0),test_content_sniffing_disambiguation(0)  # Tests for FormatRegistry.
-    TestSpecDetector: test_detect_code(0),test_detect_document(0),test_detect_database(0),test_detect_infra(0),test_detect_api(0)  # Tests for SpecDetector.
-    TestCodeLogicBase: test_to_dict(0),test_complexity(0)  # Tests for CodeLogicBase.
-    TestBaseHandlerMixin: test_format_toon_header(0)  # Tests for BaseHandlerMixin.
+    TestFormatRegistry: test_register_and_resolve,test_available,test_list_categories,test_resolve_none_for_unknown,test_content_sniffing_disambiguation  # Tests for FormatRegistry.
+    TestSpecDetector: test_detect_code,test_detect_document,test_detect_database,test_detect_infra,test_detect_api,test_detect_data,test_detect_config,test_detect_unknown,,...  # Tests for SpecDetector.
+    TestCodeLogicBase: test_to_dict,test_complexity  # Tests for CodeLogicBase.
+    TestBaseHandlerMixin: test_format_toon_header  # Tests for BaseHandlerMixin.
   tests/test_evidence_graph.py:
-    i: pytest,toonic.core.registry.FormatRegistry,toonic.formats.evidence.{EvidenceGraph,EvidenceGraphBuilder,EvidenceGraphHandler,EvidenceNode}
+    i: pytest;toonic.formats.evidence.{EvidenceNode,EvidenceGraph,EvidenceGraphBuilder,EvidenceGraphHandler};toonic.core.registry.{FormatRegistry}
     e: TestEvidenceNode,TestEvidenceGraphBuilder
-    TestEvidenceNode: test_create(0)
-    TestEvidenceGraphBuilder: test_add_code_evidence(0),test_add_document_evidence(0),test_add_video_evidence(0),test_add_audio_evidence(0),test_add_database_evidence(0)
+    TestEvidenceNode: test_create
+    TestEvidenceGraphBuilder: test_add_code_evidence,test_add_document_evidence,test_add_video_evidence,test_add_audio_evidence,test_add_database_evidence,test_add_test_evidence,test_build_full_graph,test_toon_generation,,...
   tests/test_handlers.py:
-    i: json,pytest,pathlib.Path,toonic.core.registry.FormatRegistry,toonic.formats.data.{CsvHandler,JsonDataHandler},toonic.formats.document.{DocumentLogic,MarkdownHandler,RstHandler,TextHandler}
+    i: json;pytest;pathlib.{Path};toonic.core.registry.{FormatRegistry};toonic.formats.document.{MarkdownHandler,TextHandler,RstHandler,DocumentLogic};toonic.formats.data.{CsvHandler,JsonDataHandler,TableLogic,JsonSchemaLogic};toonic.formats.config.{DockerfileHandler,EnvHandler,ConfigLogic};toonic.formats.database.{SqlHandler,SqlSchemaLogic};toonic.formats.api.{OpenApiHandler,ApiLogic};toonic.formats.infra.{KubernetesHandler,GithubActionsHandler,InfraLogic}
     e: TestMarkdownHandler,TestTextHandler,TestCsvHandler,TestJsonDataHandler,TestEnvHandler,TestSqlHandler,TestContentSniffing
-    TestMarkdownHandler: test_resolve(1),test_parse(1),test_to_toon(1),test_to_yaml(1),test_to_json(1)
-    TestTextHandler: test_parse(1),test_to_toon(1)
-    TestCsvHandler: test_resolve(1),test_parse(1),test_to_toon(1),test_reproduce(1)
-    TestJsonDataHandler: test_resolve(1),test_parse(1),test_to_toon(1),test_negative_sniff_package_json(0)
-    TestEnvHandler: test_resolve(1),test_parse(1),test_to_toon_masks_sensitive(1),test_reproduce(1)
+    TestMarkdownHandler: test_resolve,test_parse,test_to_toon,test_to_yaml,test_to_json,test_reproduce_template,test_sniff,test_complexity
+    TestTextHandler: test_parse,test_to_toon
+    TestCsvHandler: test_resolve,test_parse,test_to_toon,test_reproduce
+    TestJsonDataHandler: test_resolve,test_parse,test_to_toon,test_negative_sniff_package_json
+    TestEnvHandler: test_resolve,test_parse,test_to_toon_masks_sensitive,test_reproduce
+    TestSqlHandler: test_resolve,test_parse,test_to_toon,test_reproduce,test_detect_mysql
+    TestContentSniffing: test_k8s_beats_gh_on_deployment,test_gh_beats_k8s_on_workflow,test_openapi_beats_k8s  # Test content sniffing disambiguation for .yaml fil
+  tests/test_llm_pipeline.py:
+    i: pytest;pathlib.{Path};toonic.server.models.{ContextChunk,ContentType,SourceCategory,ActionResponse};toonic.server.llm.prompts.{GenericPrompt,CodeAnalysisPrompt,CCTVEventPrompt,select_prompt_builder};toonic.server.llm.parser.{ResponseParser};toonic.server.core.accumulator.{ContextAccumulator,BudgetConfig}
+    e: TestGenericPrompt,TestCodeAnalysisPrompt,TestCCTVEventPrompt,TestSelectPromptBuilder,TestResponseParser,TestAccumulatorPriority,TestContentTypeModel,TestTemplateLoading
+    TestGenericPrompt: test_includes_goal,test_includes_chunk_content,test_with_images
+    TestCodeAnalysisPrompt: test_uses_toon_instruction,test_separates_code_and_logs,test_no_images_in_code_analysis
+    TestCCTVEventPrompt: test_forbids_scene_description,test_no_detections
+    TestSelectPromptBuilder: test_cctv,test_code,test_generic,test_config_triggers_code
+    TestResponseParser: test_parse_valid_json,test_parse_json_in_markdown_fence,test_parse_plain_text_fallback,test_parse_error,test_parse_preserves_duration,test_parse_action_type_alias
+    TestAccumulatorPriority: test_high_priority_survives_eviction,test_get_stats_shows_utilization,test_backward_compat_get_context,test_clear_by_category
+    TestContentTypeModel: test_default_values,test_custom_priority,test_content_type_enum_values
+    TestTemplateLoading: test_web_ui_template_exists,test_events_viewer_template_exists,test_web_ui_has_doctype,test_load_template_fallback
   tests/test_pipeline.py:
-    i: pytest,pathlib.Path,toonic.pipeline.{Pipeline,ReproductionResult}
+    i: pytest;pathlib.{Path};toonic.pipeline.{Pipeline,ReproductionResult}
     e: TestPipelineToSpec,TestPipelineRoundtrip,TestPipelineBatch,TestPipelineFormats
-    TestPipelineToSpec: test_markdown_to_toon(1),test_csv_to_toon(1),test_env_to_toon(1),test_sql_to_toon(1),test_json_to_toon(1)  # Test Pipeline.to_spec() — file → spec.
-    TestPipelineRoundtrip: test_markdown_roundtrip(1)  # Test Pipeline.roundtrip() — file → sp...
-    TestPipelineBatch: test_batch_processing(1),test_batch_not_a_directory(1)  # Test Pipeline.batch() — process direc...
-    TestPipelineFormats: test_formats_structure(0),test_has_expected_categories(0)  # Test Pipeline.formats() — list availa...
+    TestPipelineToSpec: test_markdown_to_toon,test_csv_to_toon,test_env_to_toon,test_sql_to_toon,test_json_to_toon,test_nonexistent_file,test_output_to_file  # Test Pipeline.to_spec() — file → spec.
+    TestPipelineRoundtrip: test_markdown_roundtrip  # Test Pipeline.roundtrip() — file → spec → reproduc
+    TestPipelineBatch: test_batch_processing,test_batch_not_a_directory  # Test Pipeline.batch() — process directory.
+    TestPipelineFormats: test_formats_structure,test_has_expected_categories  # Test Pipeline.formats() — list available handlers.
   tests/test_server.py:
-    i: pytest,anyio,asyncio,tempfile,time,pathlib.Path,toonic.server.config.{ModelConfig,ServerConfig,SourceConfig},toonic.server.models.ContextChunk
-    e: TestServerConfig,TestModels,TestAccumulator,TestRouter,TestWatcherRegistry,TestFileWatcher,TestLogWatcher,TestConversationHistory
-    TestServerConfig: test_default_config(0),test_from_dict(0),test_to_dict(0)
-    TestModels: test_context_chunk(0),test_context_chunk_with_raw_data(0),test_action_response(0),test_server_event(0)
-    TestAccumulator: test_update_and_get(0),test_stats(0),test_delta_keeps_history(0),test_clear(0)
-    TestRouter: test_model_selection(0),test_parse_json_response(0),test_parse_plain_text_response(0),test_mock_query(0),test_stats(0)
-    TestWatcherRegistry: test_file_watcher_supports(0),test_log_watcher_supports(0),test_stream_watcher_supports(0),test_registry_resolve(0),test_registry_create(0)
+    i: pytest;anyio;asyncio;tempfile;time;pathlib.{Path};toonic.server.config.{ServerConfig,SourceConfig,ModelConfig};toonic.server.models.{ContextChunk,ActionResponse,ServerEvent,SourceCategory};toonic.server.core.accumulator.{ContextAccumulator};toonic.server.core.history.{ConversationHistory,ExchangeRecord}
+    e: TestServerConfig,TestModels,TestAccumulator,TestRouter,TestWatcherRegistry,TestFileWatcher,TestLogWatcher,TestConversationHistory,TestQueryAdapter,TestToonicServer
+    TestServerConfig: test_default_config,test_from_dict,test_to_dict
+    TestModels: test_context_chunk,test_context_chunk_with_raw_data,test_action_response,test_server_event
+    TestAccumulator: test_update_and_get,test_stats,test_delta_keeps_history,test_clear
+    TestRouter: test_model_selection,test_parse_json_response,test_parse_plain_text_response,test_mock_query,test_stats,test_router_with_history
+    TestWatcherRegistry: test_file_watcher_supports,test_log_watcher_supports,test_stream_watcher_supports,test_registry_resolve,test_registry_create
+    TestFileWatcher: test_full_scan
+    TestLogWatcher: test_initial_tail
+    TestConversationHistory: test_record_and_get,test_recent_with_filters,test_search,test_stats,test_execute_sql,test_clear,test_to_dict,test_parse_duration
+    TestQueryAdapter: test_local_parse_time_filter,test_local_parse_category,test_local_parse_model,test_local_parse_aggregate,test_sql_query_select_only,test_sql_query_blocks_write,test_nlp_query_with_data
+    TestToonicServer: test_server_lifecycle,test_add_remove_source
   tests/test_triggers.py:
-    i: asyncio,time,pytest,toonic.server.triggers.detectors.MotionDetector,toonic.server.triggers.dsl
+    i: asyncio;time;pytest;toonic.server.triggers.dsl.{TriggerConfig,TriggerRule,EventCondition,FallbackConfig,load_triggers,...};toonic.server.triggers.detectors.{MotionDetector,SceneChangeDetector,ObjectDetector,AudioLevelDetector,SpeechDetector,...};toonic.server.triggers.scheduler.{TriggerScheduler,TriggerEvent,RuleState};toonic.server.triggers.nlp2yaml.{NLP2YAML}
     e: TestDSL,TestDetectors,TestScheduler,TestNLP2YAML
-    TestDSL: test_event_condition_roundtrip(0),test_trigger_rule_roundtrip(0),test_trigger_config_roundtrip(0),test_load_dump_yaml(0),test_get_rules_for_source(0)
-    TestDetectors: test_motion_detector(0),test_motion_detector_with_duration(0),test_scene_change_detector(0),test_object_detector_with_match(0),test_object_detector_no_match(0)
-    TestScheduler: test_periodic_mode(0),test_on_event_mode(0),test_on_event_with_fallback(0),test_hybrid_mode(0),test_source_filter(0)
-    TestNLP2YAML: test_parse_person_detected(0),test_parse_every_n_seconds(0),test_parse_motion_detection(0),test_parse_error_pattern(0),test_parse_scene_change(0)
+    TestDSL: test_event_condition_roundtrip,test_trigger_rule_roundtrip,test_trigger_config_roundtrip,test_load_dump_yaml,test_get_rules_for_source
+    TestDetectors: test_motion_detector,test_motion_detector_with_duration,test_scene_change_detector,test_object_detector_with_match,test_object_detector_no_match,test_object_detector_size_filter,test_audio_level_detector,test_speech_detector,,...
+    TestScheduler: test_periodic_mode,test_on_event_mode,test_on_event_with_fallback,test_hybrid_mode,test_source_filter,test_cooldown,test_add_remove_rule,test_default_periodic,,...
+    TestNLP2YAML: test_parse_person_detected,test_parse_every_n_seconds,test_parse_motion_detection,test_parse_error_pattern,test_parse_scene_change,test_parse_speech_detection,test_generate_yaml_output,test_generate_fallback,,...
   tests/test_watchers.py:
-    i: asyncio,json,os,sqlite3,tempfile,time,pathlib.Path,unittest.mock.{AsyncMock,MagicMock,patch}
+    i: asyncio;json;os;sqlite3;tempfile;time;pathlib.{Path};unittest.mock.{AsyncMock,MagicMock,patch};pytest;toonic.server.models.{ContextChunk,SourceCategory}
     e: TestWatcherRegistryNew,TestSourceCategoryNew,TestHttpWatcher,TestProcessWatcher,TestDirectoryWatcher,TestDockerWatcher,TestDatabaseWatcher,TestNetworkWatcher
-    TestWatcherRegistryNew: test_http_watcher_supports(0),test_process_watcher_supports(0),test_directory_watcher_supports(0),test_docker_watcher_supports(0),test_database_watcher_supports(0)
-    TestSourceCategoryNew: test_new_categories_exist(0),test_all_categories(0)
-    TestHttpWatcher: test_init(0),test_init_with_options(0),test_to_toon(0),test_to_toon_with_error(0),test_to_toon_with_ssl(0)
-    TestProcessWatcher: test_parse_target_process(0),test_parse_target_pid(0),test_parse_target_port(0),test_parse_target_tcp(0),test_parse_target_service(0)
-    TestDirectoryWatcher: test_init(0),test_init_without_prefix(0),test_human_size(0),test_take_snapshot(1),test_initial_scan_emits_tree(1)
+    TestWatcherRegistryNew: test_http_watcher_supports,test_process_watcher_supports,test_directory_watcher_supports,test_docker_watcher_supports,test_database_watcher_supports,test_network_watcher_supports,test_registry_resolves_new_watchers,test_registry_create_by_category,,...
+    TestSourceCategoryNew: test_new_categories_exist,test_all_categories
+    TestHttpWatcher: test_init,test_init_with_options,test_to_toon,test_to_toon_with_error,test_to_toon_with_ssl
+    TestProcessWatcher: test_parse_target_process,test_parse_target_pid,test_parse_target_port,test_parse_target_tcp,test_parse_target_service,test_parse_target_bare,test_init,test_detect_changes_came_alive,,...
+    TestDirectoryWatcher: test_init,test_init_without_prefix,test_human_size,test_take_snapshot,test_initial_scan_emits_tree,test_detect_file_creation,test_detect_file_deletion,test_ignore_patterns,,...
+    TestDockerWatcher: test_init,test_init_all_containers,test_detect_changes_new_container,test_detect_changes_removed_container,test_detect_changes_state_change,test_to_toon
+    TestDatabaseWatcher: test_init_sqlite,test_init_sqlite_prefix,test_init_postgresql,test_detect_db_type,test_check_sqlite,test_check_sqlite_custom_queries,test_check_sqlite_nonexistent,test_detect_changes_row_count,,...
+    TestNetworkWatcher: test_init,test_init_with_ports,test_init_ping_prefix,test_init_dns_prefix,test_detect_changes_went_down,test_detect_changes_came_up,test_detect_changes_latency_spike,test_detect_changes_port_change,,...
+  toonic/__init__.py:
+    i: toonic.core.{FileLogic,FileHandler,BaseHandlerMixin,FormatRegistry,SpecDetector,...};toonic.pipeline.{Pipeline,ReproductionResult}
+  toonic/__main__.py:
+    i: toonic.cli.{cli_main}
   toonic/cli.py:
-    i: sys,pathlib.Path,toonic.pipeline.Pipeline,typing.{List,Optional}
+    i: __future__.{annotations};sys;pathlib.{Path};typing.{List,Optional};toonic.pipeline.{Pipeline}
     e: cli_main
-    cli_main(args:Any=None)->None
+    cli_main()
+  toonic/core/__init__.py:
+    i: toonic.core.protocols.{FileLogic,FileHandler};toonic.core.registry.{FormatRegistry};toonic.core.base.{BaseHandlerMixin};toonic.core.detector.{SpecDetector};toonic.core.models.{CodeLogicBase}
   toonic/core/base.py:
-    i: hashlib,pathlib.Path,typing.Any
+    i: __future__.{annotations};hashlib;pathlib.{Path};typing.{Any}
     e: BaseHandlerMixin
-    BaseHandlerMixin: _compute_hash(1),_read_content(2),_format_toon_header(2)  # Domyślne implementacje wspólne dla wi...
+    BaseHandlerMixin: _compute_hash,_read_content,_format_toon_header  # Domyślne implementacje wspólne dla wielu handlerów
   toonic/core/detector.py:
+    i: __future__.{annotations}
     e: SpecDetector
-    SpecDetector: detect(1),detect_spec_format(1)  # Wykrywa typ logiki z nagłówka pliku s...
+    SpecDetector: detect,detect_spec_format  # Wykrywa typ logiki z nagłówka pliku spec (YAML/TOO
   toonic/core/models.py:
-    i: dataclasses.{dataclass,field},typing.{Any,Dict,List}
+    i: __future__.{annotations};dataclasses.{dataclass,field};typing.{Any,Dict,List}
     e: CodeLogicBase
-    CodeLogicBase: to_dict(0),complexity(0)  # Bazowy model logiki kodu — adaptacja...
+    CodeLogicBase: to_dict,complexity  # Bazowy model logiki kodu — adaptacja istniejącego 
   toonic/core/protocols.py:
-    i: pathlib.Path,typing.{Any,Protocol,runtime_checkable}
+    i: __future__.{annotations};pathlib.{Path};typing.{Any,Protocol,runtime_checkable}
     e: FileLogic,FileHandler
-    FileLogic: to_dict(0),complexity(0)  # Dane logiczne pliku — minimalny inter...
-    FileHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Jeden handler = jeden typ pliku.
+    FileLogic: to_dict,complexity  # Dane logiczne pliku — minimalny interfejs.  Zastęp
+    FileHandler: parse,to_spec,reproduce,sniff  # Jeden handler = jeden typ pliku. Trzy metody, nie 
   toonic/core/registry.py:
-    i: importlib.util,pathlib.Path,toonic.core.protocols.FileHandler,typing.{Any,Dict,List,Optional}
+    i: __future__.{annotations};importlib.util;pathlib.{Path};typing.{Any,Dict,List,Optional};toonic.core.protocols.{FileHandler}
     e: FormatRegistry
-    FormatRegistry: register(1),resolve(2),get_by_category(1),available(0),list_categories(0)  # Centralny rejestr handlerów z dwuetap...
+    FormatRegistry: register,resolve,get_by_category,available,list_categories,_check_deps,reset  # Centralny rejestr handlerów z dwuetapowym rozwiązy
   toonic/formats/__init__.py:
-    i: toonic.formats.data.{ColumnSpec,CsvHandler,JsonSchemaLogic,TableLogic},toonic.formats.document
+    i: toonic.formats.document.{DocumentSection,DocumentLogic,MarkdownHandler,TextHandler,RstHandler,...};toonic.formats.data.{ColumnSpec,TableLogic,JsonSchemaLogic,CsvHandler,JsonDataHandler,...};toonic.formats.config.{ConfigEntry,ConfigLogic,DockerfileHandler,EnvHandler,register_config_handlers};toonic.formats.database.{ColumnDef,TableDef,SqlSchemaLogic,SqlHandler,register_database_handlers};toonic.formats.api.{EndpointSpec,ApiLogic,OpenApiHandler,register_api_handlers};toonic.formats.infra.{InfraResource,InfraLogic,KubernetesHandler,GithubActionsHandler,register_infra_handlers};toonic.formats.video.{KeyframeSpec,VideoSegment,VideoLogic,VideoFileHandler,register_video_handlers};toonic.formats.audio.{SpeechSegment,AudioLogic,AudioFileHandler,register_audio_handlers};toonic.formats.evidence.{EvidenceNode,EvidenceGraph,EvidenceGraphBuilder,EvidenceGraphHandler,register_evidence_handlers}
     e: initialize_all_handlers
-    initialize_all_handlers()->None
+    initialize_all_handlers()
   toonic/formats/api.py:
-    i: json,re,dataclasses.{dataclass,field},pathlib.Path,toonic.core.base.BaseHandlerMixin,toonic.core.registry.FormatRegistry,typing.{Any,Dict,List}
+    i: __future__.{annotations};json;re;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List};toonic.core.base.{BaseHandlerMixin};toonic.core.registry.{FormatRegistry}
     e: EndpointSpec,ApiLogic,OpenApiHandler,register_api_handlers
     EndpointSpec:   # Specyfikacja endpointu API.
-    ApiLogic: to_dict(0),complexity(0)  # Logika API — OpenAPI, GraphQL.
-    OpenApiHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla OpenAPI/Swagger specs.
-    register_api_handlers()->None
+    ApiLogic: to_dict,complexity  # Logika API — OpenAPI, GraphQL.
+    OpenApiHandler: parse,to_spec,reproduce,sniff  # Handler dla OpenAPI/Swagger specs.
+    register_api_handlers()
   toonic/formats/audio.py:
-    i: base64,hashlib,json,struct,time,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict}
+    i: __future__.{annotations};base64;hashlib;json;struct;time;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List,Optional,Tuple};toonic.core.base.{BaseHandlerMixin}
     e: SpeechSegment,AudioLogic,MuLawCodec,TelephonyFilter,SpeechDetector,AudioFileHandler,register_audio_handlers
     SpeechSegment:   # Pojedynczy segment wykrytej mowy.
-    AudioLogic: to_dict(0),complexity(0)  # Logika audio — implementuje FileLogic...
-    MuLawCodec: compress(1),decompress(1)  # μ-law kompresja/dekompresja — standar...
-    TelephonyFilter: lowpass_3khz(2)  # Filtr dolnoprzepustowy 3kHz — pasmo t...
-    SpeechDetector: __init__(2),_get_vad(0),detect_speech_segments(3)  # Voice Activity Detection z WebRTC VAD.
-    register_audio_handlers()->None
+    AudioLogic: to_dict,complexity  # Logika audio — implementuje FileLogic Protocol.
+    MuLawCodec: compress,decompress  # μ-law kompresja/dekompresja — standard G.711 telep
+    TelephonyFilter: lowpass_3khz  # Filtr dolnoprzepustowy 3kHz — pasmo telefoniczne I
+    SpeechDetector: __init__,_get_vad,detect_speech_segments  # Voice Activity Detection z WebRTC VAD.
+    AudioFileHandler: parse,to_spec,_to_toon,reproduce,sniff  # Handler dla plików audio (.wav, .mp3, .flac, .ogg)
+    register_audio_handlers()
   toonic/formats/config.py:
-    i: json,re,dataclasses.{dataclass,field},pathlib.Path,toonic.core.base.BaseHandlerMixin,toonic.core.registry.FormatRegistry,typing.{Any,Dict,List}
+    i: __future__.{annotations};json;re;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List};toonic.core.base.{BaseHandlerMixin};toonic.core.registry.{FormatRegistry}
     e: ConfigEntry,ConfigLogic,DockerfileHandler,EnvHandler,register_config_handlers
     ConfigEntry:   # Pojedynczy wpis konfiguracyjny.
-    ConfigLogic: to_dict(0),complexity(0)  # Logika pliku konfiguracyjnego.
-    DockerfileHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla Dockerfile.
-    EnvHandler: parse(1),_infer_type(1),_categorize(1),to_spec(2),reproduce(3)  # Handler dla plików .env.
-    register_config_handlers()->None
+    ConfigLogic: to_dict,complexity  # Logika pliku konfiguracyjnego.
+    DockerfileHandler: parse,to_spec,reproduce,sniff  # Handler dla Dockerfile.
+    EnvHandler: parse,_infer_type,_categorize,to_spec,reproduce,sniff  # Handler dla plików .env.
+    register_config_handlers()
   toonic/formats/data.py:
-    i: csv,io,json,re,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict,List}
+    i: __future__.{annotations};csv;io;json;re;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List};toonic.core.base.{BaseHandlerMixin};toonic.core.registry.{FormatRegistry}
     e: ColumnSpec,TableLogic,JsonSchemaLogic,CsvHandler,JsonDataHandler,register_data_handlers
     ColumnSpec:   # Specyfikacja kolumny tabeli.
-    TableLogic: to_dict(0),complexity(0)  # Logika danych tabelarycznych — CSV, E...
-    JsonSchemaLogic: to_dict(0),complexity(0)  # Logika danych JSON — schemat i strukt...
-    CsvHandler: parse(1),_infer_dtype(1),to_spec(2),_to_toon(1),_to_yaml(1)  # Handler dla CSV/TSV.
-    JsonDataHandler: parse(1),_compute_depth(2),_count_keys(1),to_spec(2),reproduce(3)  # Handler dla plików z danymi JSON (nie...
-    register_data_handlers()->None
+    TableLogic: to_dict,complexity  # Logika danych tabelarycznych — CSV, Excel, SQL wyn
+    JsonSchemaLogic: to_dict,complexity  # Logika danych JSON — schemat i struktura.
+    CsvHandler: parse,_infer_dtype,to_spec,_to_toon,_to_yaml,reproduce,sniff  # Handler dla CSV/TSV.
+    JsonDataHandler: parse,_compute_depth,_count_keys,to_spec,reproduce,sniff  # Handler dla plików z danymi JSON (nie JSON Schema,
+    register_data_handlers()
   toonic/formats/database.py:
-    i: json,re,dataclasses.{dataclass,field},pathlib.Path,toonic.core.base.BaseHandlerMixin,toonic.core.registry.FormatRegistry,typing.{Any,Dict,List}
+    i: __future__.{annotations};json;re;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List};toonic.core.base.{BaseHandlerMixin};toonic.core.registry.{FormatRegistry}
     e: ColumnDef,TableDef,SqlSchemaLogic,SqlHandler,register_database_handlers
     ColumnDef:   # Definicja kolumny tabeli SQL.
     TableDef:   # Definicja tabeli SQL.
-    SqlSchemaLogic: to_dict(0),complexity(0)  # Logika schematu SQL — DDL, migracje,...
-    SqlHandler: parse(1),_extract_tables(1),_extract_columns(1),to_spec(2),_to_toon(1)  # Handler dla SQL DDL/DML.
-    register_database_handlers()->None
+    SqlSchemaLogic: to_dict,complexity  # Logika schematu SQL — DDL, migracje, procedury.
+    SqlHandler: parse,_extract_tables,_extract_columns,to_spec,_to_toon,reproduce,sniff  # Handler dla SQL DDL/DML.
+    register_database_handlers()
   toonic/formats/document.py:
-    i: json,re,dataclasses.{dataclass,field},pathlib.Path,toonic.core.base.BaseHandlerMixin,toonic.core.registry.FormatRegistry,typing.{Any,Dict,List}
+    i: __future__.{annotations};json;re;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List};toonic.core.base.{BaseHandlerMixin};toonic.core.registry.{FormatRegistry}
     e: DocumentSection,DocumentLogic,MarkdownHandler,TextHandler,RstHandler,register_document_handlers
     DocumentSection:   # Pojedyncza sekcja dokumentu.
-    DocumentLogic: to_dict(0),complexity(0)  # Logika dokumentu — implementuje FileL...
-    MarkdownHandler: parse(1),_extract_sections(1),_summarize(2),to_spec(2),_to_toon(1)  # Handler dla plików Markdown (.md, .ma...
-    TextHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla plików tekstowych (.txt).
-    RstHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla reStructuredText (.rst).
-    register_document_handlers()->None
+    DocumentLogic: to_dict,complexity  # Logika dokumentu — implementuje FileLogic Protocol
+    MarkdownHandler: parse,_extract_sections,_summarize,to_spec,_to_toon,_to_yaml,reproduce,_reproduce_template,,...  # Handler dla plików Markdown (.md, .markdown).
+    TextHandler: parse,to_spec,reproduce,sniff  # Handler dla plików tekstowych (.txt).
+    RstHandler: parse,to_spec,reproduce,sniff  # Handler dla reStructuredText (.rst).
+    register_document_handlers()
   toonic/formats/evidence.py:
-    i: hashlib,json,dataclasses.{dataclass,field},pathlib.Path,toonic.core.base.BaseHandlerMixin,typing.{Any,Dict,List,Tuple}
+    i: __future__.{annotations};hashlib;json;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List,Tuple};toonic.core.base.{BaseHandlerMixin};toonic.core.registry.{FormatRegistry}
     e: EvidenceNode,EvidenceGraph,EvidenceGraphBuilder,EvidenceGraphHandler,register_evidence_handlers
-    EvidenceNode:   # Pojedynczy węzeł dowodowy w Evidence...
-    EvidenceGraph: to_dict(0),complexity(0)  # Multimodalny graf dowodowy — implemen...
-    EvidenceGraphBuilder: __init__(0),add_code_evidence(2),add_document_evidence(2),add_video_evidence(2),add_audio_evidence(2)  # Buduje Evidence Graph z wielu źródeł.
-    EvidenceGraphHandler: parse(1),to_spec(2),_to_toon(1),reproduce(3),sniff(2)  # Handler dla Evidence Graph.
-    register_evidence_handlers()->None
+    EvidenceNode:   # Pojedynczy węzeł dowodowy w Evidence Graph.
+    EvidenceGraph: to_dict,complexity  # Multimodalny graf dowodowy — implementuje FileLogi
+    EvidenceGraphBuilder: __init__,add_code_evidence,add_document_evidence,add_video_evidence,add_audio_evidence,add_database_evidence,add_test_evidence,build,,...  # Buduje Evidence Graph z wielu źródeł.
+    EvidenceGraphHandler: parse,to_spec,_to_toon,reproduce,sniff  # Handler dla Evidence Graph.
+    register_evidence_handlers()
   toonic/formats/infra.py:
-    i: json,re,dataclasses.{dataclass,field},pathlib.Path,toonic.core.base.BaseHandlerMixin,toonic.core.registry.FormatRegistry,typing.{Any,Dict,List}
+    i: __future__.{annotations};json;re;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List};toonic.core.base.{BaseHandlerMixin};toonic.core.registry.{FormatRegistry}
     e: InfraResource,InfraLogic,KubernetesHandler,GithubActionsHandler,register_infra_handlers
     InfraResource:   # Zasób infrastrukturalny.
-    InfraLogic: to_dict(0),complexity(0)  # Logika infrastruktury — Kubernetes, T...
-    KubernetesHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla manifestów Kubernetes.
-    GithubActionsHandler: parse(1),to_spec(2),reproduce(3),sniff(2)  # Handler dla GitHub Actions workflow.
-    register_infra_handlers()->None
+    InfraLogic: to_dict,complexity  # Logika infrastruktury — Kubernetes, Terraform, CI/
+    KubernetesHandler: parse,to_spec,reproduce,sniff  # Handler dla manifestów Kubernetes.
+    GithubActionsHandler: parse,to_spec,reproduce,sniff  # Handler dla GitHub Actions workflow.
+    register_infra_handlers()
   toonic/formats/video.py:
-    i: base64,hashlib,json,threading,time,collections.deque,dataclasses.{dataclass,field},pathlib.Path,typing.Any
+    i: __future__.{annotations};base64;hashlib;json;threading;time;collections.{deque};dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List,Optional,Tuple}
     e: KeyframeSpec,VideoSegment,VideoLogic,LowQRTSPExtractor,SceneDetector,VideoFileHandler,register_video_handlers
     KeyframeSpec:   # Pojedynczy keyframe z video.
-    VideoSegment:   # Segment video — zgrupowane keyframes...
-    VideoLogic: to_dict(0),complexity(0)  # Logika video — implementuje FileLogic...
-    LowQRTSPExtractor: __init__(4),start(0),stop(0),_capture_thread(3),get_sync_frame(0)  # Pure OpenCV RTSP → low-quality keyfra...
-    SceneDetector: __init__(1),is_scene_change(1),detect_from_file(2)  # Detekcja zmian scen — pixel diff bez AI.
-    register_video_handlers()->None
+    VideoSegment:   # Segment video — zgrupowane keyframes + audio.
+    VideoLogic: to_dict,complexity  # Logika video — implementuje FileLogic Protocol.
+    LowQRTSPExtractor: __init__,start,stop,_capture_thread,get_sync_frame,get_all_recent  # Pure OpenCV RTSP → low-quality keyframe buffer.
+    SceneDetector: __init__,is_scene_change,detect_from_file  # Detekcja zmian scen — pixel diff bez AI.
+    VideoFileHandler: parse,to_spec,_to_toon,reproduce,sniff  # Handler dla plików video (.mp4, .avi, .mkv, .mov, 
+    register_video_handlers()
   toonic/pipeline.py:
-    i: sys,time,dataclasses.{dataclass,field},pathlib.Path,toonic.core.registry.FormatRegistry,typing.{Any,Dict,List,Optional}
+    i: __future__.{annotations};sys;time;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List,Optional};toonic.core.registry.{FormatRegistry};toonic.core.detector.{SpecDetector}
     e: ReproductionResult,Pipeline
     ReproductionResult:   # Wynik operacji reprodukcji.
-    Pipeline: _ensure_initialized(0),to_spec(3),reproduce(4),roundtrip(4),batch(4)  # Fasada nad całym przepływem parse ↔ r...
+    Pipeline: _ensure_initialized,to_spec,reproduce,roundtrip,batch,formats  # Fasada nad całym przepływem parse ↔ reproduce.  Tr
+  toonic/server/__init__.py:
   toonic/server/__main__.py:
-    i: argparse,asyncio,logging,signal,socket,subprocess,sys,pathlib.Path
+    i: __future__.{annotations};argparse;asyncio;logging;signal;socket;subprocess;sys;pathlib.{Path}
     e: check_port_occupied,stop_process_using_port,ensure_port_available,parse_args,parse_source_string,run_server,main
-    check_port_occupied(host:str;port:int)->bool
-    stop_process_using_port(host:str;port:int)->bool
-    ensure_port_available(host:str;port:int)->None
+    check_port_occupied()
+    stop_process_using_port()
+    ensure_port_available()
     parse_args()
-    parse_source_string(source_str:str)
-    run_server(args)
+    parse_source_string()
+    run_server()
     main()
   toonic/server/client.py:
-    i: argparse,asyncio,json,sys,threading,websockets,httpx,typing.Optional,urllib.{error,request}
+    i: __future__.{annotations};argparse;asyncio;json;sys;threading;typing.{Optional};urllib.request;urllib.error
     e: ToonicClient,run_shell,main
-    ToonicClient: __init__(1),get_status(0),get_actions(1),get_formats(0),analyze(2)  # REST + WebSocket client for Toonic Se...
-    run_shell(base_url:str='http://localhost:8900')
+    ToonicClient: __init__,get_status,get_actions,get_formats,analyze,add_source,convert,get_history,,...  # REST + WebSocket client for Toonic Server.
+    run_shell()
     main()
   toonic/server/config.py:
-    i: os,json,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict,List,Optional}
+    i: __future__.{annotations};os;json;dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List,Optional}
     e: ModelConfig,SourceConfig,ServerConfig
     ModelConfig:   # LLM model configuration.
     SourceConfig:   # Data source configuration.
-    ServerConfig: from_dict(1),from_yaml_file(1),from_env(0),to_dict(0)  # Main server configuration.
-    _load_dotenv()->None
+    ServerConfig: from_dict,from_yaml_file,from_env,to_dict  # Main server configuration.
   toonic/server/core/accumulator.py:
-    i: time,threading,collections.defaultdict,toonic.server.models.{ContextChunk,SourceCategory},typing.{Any,Dict,List,Optional}
-    e: ContextAccumulator
-    ContextAccumulator: __init__(2),update(1),get_context(2),_build_context(2),get_stats(0)  # Manages context window for LLM — allo...
+    i: __future__.{annotations};time;threading;collections.{defaultdict};dataclasses.{dataclass,field};typing.{Any,Dict,List,Optional,Tuple};toonic.server.models.{ContextChunk,SourceCategory}
+    e: BudgetConfig,ContextAccumulator
+    BudgetConfig:   # Token budget configuration per category.
+    ContextAccumulator: __init__,update,get_context,get_chunks,_build_context,_enforce_budget,get_stats,clear  # Manages context window for LLM — allocates token b
   toonic/server/core/history.py:
-    i: json,os,sqlite3,time,threading,uuid,dataclasses.{asdict,dataclass,field},pathlib.Path
-    e: ExchangeRecord,_CREATE_SQL,_INSERT_SQL,ConversationHistory
-    ExchangeRecord: __post_init__(0),to_dict(0)  # Single LLM exchange record.
-    ConversationHistory: __init__(2),_init_db(0),_conn(0),record(1),get(1)  # SQLite-backed conversation history fo...
+    i: __future__.{annotations};json;os;sqlite3;time;threading;uuid;dataclasses.{dataclass,field,asdict};pathlib.{Path};typing.{Any,Dict,List,Optional}
+    e: ExchangeRecord,ConversationHistory
+    ExchangeRecord: __post_init__,to_dict  # Single LLM exchange record.
+    ConversationHistory: __init__,_init_db,_conn,record,get,recent,search,execute_sql,,...  # SQLite-backed conversation history for all LLM exc
   toonic/server/core/query.py:
-    i: json,logging,os,re,time,toonic.server.core.history.ConversationHistory,typing.{Any,Dict,List,Optional}
-    e: SCHEMA_DESCRIPTION,NLP_TO_SQL_PROMPT,QueryAdapter
-    QueryAdapter: __init__(1),nlp_query(2),sql_query(1),_execute_query(3),_try_local_parse(1)  # Translates NLP queries to SQL and exe...
+    i: __future__.{annotations};json;logging;os;re;time;typing.{Any,Dict,List,Optional};toonic.server.core.history.{ConversationHistory}
+    e: QueryAdapter
+    QueryAdapter: __init__,nlp_query,sql_query,_execute_query,_try_local_parse,_generate_sql  # Translates NLP queries to SQL and executes against
   toonic/server/core/router.py:
-    i: asyncio,json,logging,os,time,dataclasses.dataclass,typing.{Any,Dict,List,Optional}
+    i: __future__.{annotations};asyncio;json;logging;os;time;dataclasses.{dataclass};typing.{Any,Dict,List,Optional};toonic.server.config.{ModelConfig,ServerConfig};toonic.server.models.{ActionResponse,ContextChunk,SourceCategory}
     e: LLMRequest,LLMRouter
-    LLMRequest: __post_init__(0)  # Request to send to an LLM.
-    LLMRouter: __init__(2),_get_model_for_category(1),query(1),_litellm_model_id(1),_call_llm(2)  # Routes LLM requests to appropriate mo...
+    LLMRequest: __post_init__  # Request to send to an LLM.
+    LLMRouter: __init__,query,_get_model_for_category,_record_exchange,get_stats  # Routes LLM requests to appropriate models based on
+  toonic/server/llm/__init__.py:
+    i: toonic.server.llm.pipeline.{LLMPipeline};toonic.server.llm.prompts.{PromptBuilder,GenericPrompt,CodeAnalysisPrompt,CCTVEventPrompt,select_prompt_builder};toonic.server.llm.caller.{LLMCaller};toonic.server.llm.parser.{ResponseParser}
+  toonic/server/llm/caller.py:
+    i: __future__.{annotations};asyncio;json;logging;os;time;dataclasses.{dataclass,field};typing.{Any,Dict,List,Optional}
+    e: LLMCaller
+    LLMCaller: __post_init__,select_model,_litellm_model_id,call,_mock_response  # Calls LLM API with retry, timeout, and metrics.
+  toonic/server/llm/parser.py:
+    i: __future__.{annotations};json;logging;dataclasses.{dataclass};typing.{Any,Dict};toonic.server.models.{ActionResponse}
+    e: ResponseParser
+    ResponseParser: parse  # Parses raw LLM response dict into ActionResponse.
+  toonic/server/llm/pipeline.py:
+    i: __future__.{annotations};logging;dataclasses.{dataclass,field};typing.{Any,Dict,List,Optional};toonic.server.models.{ActionResponse,ContextChunk};toonic.server.llm.prompts.{PromptBuilder,GenericPrompt,select_prompt_builder};toonic.server.llm.caller.{LLMCaller};toonic.server.llm.parser.{ResponseParser}
+    e: LLMPipeline
+    LLMPipeline: execute  # Orchestrates the full LLM flow: prompt → model → c
+  toonic/server/llm/prompts.py:
+    i: __future__.{annotations};dataclasses.{dataclass};typing.{Any,Dict,List,Protocol};toonic.server.models.{ContextChunk,SourceCategory}
+    e: PromptBuilder,GenericPrompt,CodeAnalysisPrompt,CCTVEventPrompt,select_prompt_builder
+    PromptBuilder: build  # Builds prompt from context. Different implementati
+    GenericPrompt: build  # Default prompt — works for any data type.
+    CodeAnalysisPrompt: build  # Prompt optimized for code analysis — understands T
+    CCTVEventPrompt: build  # Prompt for CCTV — enforces event analysis instead 
+    select_prompt_builder()
   toonic/server/main.py:
-    i: asyncio,json,logging,os,signal,time,uuid,pathlib.Path,typing.{Any,Callable}
+    i: __future__.{annotations};asyncio;json;logging;os;signal;time;uuid;pathlib.{Path};typing.{Any,Callable,Dict,List,Optional,...}
     e: ToonicServer
-    ToonicServer: __init__(2),start(0),stop(0),add_source(1),remove_source(1)  # Main server — connects watchers → acc...
+    ToonicServer: __init__,start,stop,add_source,remove_source,_consume_watcher,_on_trigger_fired,_analysis_loop,,...  # Main server — connects watchers → accumulator → LL
   toonic/server/models.py:
-    i: time,dataclasses.{dataclass,field},enum.Enum,typing.{Any,Dict,List,Optional}
-    e: SourceCategory,ContextChunk,ActionResponse,ServerEvent
+    i: __future__.{annotations};time;dataclasses.{dataclass,field};enum.{Enum};typing.{Any,Dict,List,Optional}
+    e: SourceCategory,ContentType,ContextChunk,ActionResponse,ServerEvent
     SourceCategory: 
-    ContextChunk: __post_init__(0),to_dict(0)  # Single chunk of context from a data s...
-    ActionResponse: to_dict(0)  # LLM response → action to execute.
-    ServerEvent: __post_init__(0),to_dict(0)  # Event emitted by the server to clients.
+    ContentType:   # Content type — allows Accumulator to make intellig
+    ContextChunk: __post_init__,to_dict  # Single chunk of context from a data source.
+    ActionResponse: to_dict  # LLM response → action to execute.
+    ServerEvent: __post_init__,to_dict  # Event emitted by the server to clients.
+  toonic/server/transport/app.py:
+    i: __future__.{annotations};json;logging;pathlib.{Path};typing.{Any};fastapi.{FastAPI};fastapi.responses.{HTMLResponse};fastapi.middleware.cors.{CORSMiddleware}
+    e: create_app
+    create_app()
   toonic/server/transport/broxeen_bridge.py:
-    i: base64,logging,time,typing.{Any,Dict,List,Optional}
+    i: __future__.{annotations};base64;logging;time;typing.{Any,Dict,List,Optional}
     e: register_broxeen_routes
-    register_broxeen_routes(app;server)->None
+    register_broxeen_routes()
   toonic/server/transport/rest_api.py:
-    i: asyncio,json,logging,os,time,pathlib.Path,typing.{Any,Dict,List,Optional}
-    e: EVENTS_VIEWER_HTML,WEB_UI_HTML,create_app
-    create_app(server)->Any
+    i: toonic.server.transport.app.{create_app,_load_template}
+  toonic/server/transport/routes/api.py:
+    i: __future__.{annotations};json;logging;pathlib.{Path};typing.{Any,Dict,List,Optional};fastapi.{APIRouter};fastapi.responses.{JSONResponse}
+    e: set_server,get_status,get_actions,analyze_now,get_events,get_triggers,get_data_dir,list_formats,convert_file,get_events_file
+    set_server()
+    get_status()
+    get_actions()
+    analyze_now()
+    get_events()
+    get_triggers()
+    get_data_dir()
+    list_formats()
+    convert_file()
+    get_events_file()
+    get_exchanges()
+  toonic/server/transport/routes/history.py:
+    i: __future__.{annotations};logging;fastapi.{APIRouter};fastapi.responses.{JSONResponse}
+    e: set_server,get_history,get_history_stats,nlp_query,sql_query
+    set_server()
+    get_history()
+    get_history_stats()
+    nlp_query()
+    sql_query()
+  toonic/server/transport/routes/sources.py:
+    i: __future__.{annotations};logging;typing.{Any,Dict,Optional};fastapi.{APIRouter};fastapi.responses.{JSONResponse}
+    e: set_server,list_sources,add_source,remove_source
+    set_server()
+    list_sources()
+    add_source()
+    remove_source()
+  toonic/server/transport/routes/websocket.py:
+    i: __future__.{annotations};asyncio;json;logging;time;fastapi.{FastAPI,WebSocket,WebSocketDisconnect}
+    e: register
+    register()
+  toonic/server/triggers/__init__.py:
+    i: toonic.server.triggers.dsl.{TriggerConfig,TriggerRule,load_triggers,dump_triggers};toonic.server.triggers.scheduler.{TriggerScheduler};toonic.server.triggers.nlp2yaml.{NLP2YAML}
   toonic/server/triggers/detectors.py:
-    i: logging,re,time,collections.deque,dataclasses.{dataclass,field},typing.{Any,Dict,List,Optional}
-    e: DetectionResult,BaseDetector,MotionDetector,SceneChangeDetector,ObjectDetector,AudioLevelDetector,SpeechDetector,PatternDetector
-    DetectionResult: __post_init__(0),to_dict(0)  # Result of a single detection evaluation.
-    BaseDetector: __init__(1),evaluate(1),_check_duration(1),_check_count_window(0)  # Base class for event detectors.
-    MotionDetector: evaluate(1)  # Detect motion based on frame differen...
-    SceneChangeDetector: evaluate(1)  # Detect significant scene changes.
-    ObjectDetector: evaluate(1)  # Detect specific objects via frame ana...
-    create_detector(condition:EventCondition)->BaseDetector
-    create_detectors(conditions:List[EventCondition])->List[BaseDetector]
+    i: __future__.{annotations};logging;re;time;collections.{deque};dataclasses.{dataclass,field};typing.{Any,Dict,List,Optional};toonic.server.triggers.dsl.{EventCondition}
+    e: DetectionResult,BaseDetector,MotionDetector,SceneChangeDetector,ObjectDetector,AudioLevelDetector,SpeechDetector,PatternDetector,AnomalyDetector,create_detector
+    DetectionResult: __post_init__,to_dict  # Result of a single detection evaluation.
+    BaseDetector: __init__,evaluate,_check_duration,_check_count_window  # Base class for event detectors.
+    MotionDetector: evaluate  # Detect motion based on frame difference score.
+    SceneChangeDetector: evaluate  # Detect significant scene changes.
+    ObjectDetector: evaluate  # Detect specific objects via frame analysis metadat
+    AudioLevelDetector: evaluate  # Detect audio level exceeding threshold.
+    SpeechDetector: evaluate  # Detect speech activity.
+    PatternDetector: __init__,evaluate  # Detect text patterns (regex) in log/text data.
+    AnomalyDetector: __init__,evaluate  # Detect anomalies — significant deviation from rece
+    create_detector()
+    create_detectors()
   toonic/server/triggers/dsl.py:
-    i: copy,logging,dataclasses.{dataclass,field},typing.{Any,Dict,List,Optional}
+    i: __future__.{annotations};copy;logging;dataclasses.{dataclass,field};typing.{Any,Dict,List,Optional}
     e: EventCondition,FallbackConfig,TriggerRule,TriggerConfig,load_triggers,dump_triggers
-    EventCondition: to_dict(0),from_dict(1)  # Single event detection condition.
-    FallbackConfig: to_dict(0),from_dict(1)  # Fallback behavior when no events fire.
-    TriggerRule: to_dict(0),from_dict(1)  # Single trigger rule — when and how to...
-    TriggerConfig: to_dict(0),from_dict(1),get_rules_for_source(1)  # Top-level trigger configuration (mult...
-    load_triggers(yaml_str:str)->TriggerConfig
-    dump_triggers(config:TriggerConfig)->str
+    EventCondition: to_dict,from_dict  # Single event detection condition.
+    FallbackConfig: to_dict,from_dict  # Fallback behavior when no events fire.
+    TriggerRule: to_dict,from_dict  # Single trigger rule — when and how to send data to
+    TriggerConfig: to_dict,from_dict,get_rules_for_source  # Top-level trigger configuration (multiple rules).
+    load_triggers()
+    dump_triggers()
   toonic/server/triggers/nlp2yaml.py:
-    i: json,logging,os,re,toonic.server.triggers.dsl.{EventCondition,TriggerConfig,TriggerRule},typing.{Any,Dict,Optional}
-    e: YAML_SCHEMA_PROMPT,NLP2YAML
-    NLP2YAML: __init__(2),generate(3),generate_yaml(3),_try_local_parse(3),_generate_via_llm(3)  # Converts natural language to YAML tri...
+    i: __future__.{annotations};json;logging;os;re;typing.{Any,Dict,Optional};toonic.server.triggers.dsl.{TriggerConfig,TriggerRule,EventCondition,FallbackConfig,load_triggers,...}
+    e: NLP2YAML
+    NLP2YAML: __init__,generate,generate_yaml,_try_local_parse,_generate_via_llm,_extract_time,_extract_float  # Converts natural language to YAML trigger configur
   toonic/server/triggers/scheduler.py:
-    i: asyncio,logging,time,dataclasses.{dataclass,field},typing.{Any,Callable,Coroutine,Dict,List}
+    i: __future__.{annotations};asyncio;logging;time;dataclasses.{dataclass,field};typing.{Any,Callable,Coroutine,Dict,List,...};toonic.server.triggers.dsl.{TriggerConfig,TriggerRule};toonic.server.triggers.detectors.{BaseDetector,DetectionResult,create_detectors}
     e: TriggerEvent,RuleState,TriggerScheduler
-    TriggerEvent: __post_init__(0),to_dict(0)  # Fired when a trigger rule decides to...
-    RuleState: __init__(1),evaluate(2),get_stats(0)  # Runtime state for a single trigger rule.
-    TriggerScheduler: __init__(1),on_trigger(1),evaluate(2),evaluate_async(2),add_rule(1)  # Manages all trigger rules and evaluat...
+    TriggerEvent: __post_init__,to_dict  # Fired when a trigger rule decides to dispatch.
+    RuleState: __init__,evaluate,get_stats  # Runtime state for a single trigger rule.
+    TriggerScheduler: __init__,on_trigger,evaluate,evaluate_async,add_rule,remove_rule,get_stats,from_yaml,,...  # Manages all trigger rules and evaluates incoming d
+  toonic/server/watchers/__init__.py:
+    i: toonic.server.watchers.base.{BaseWatcher,WatcherRegistry};toonic.server.watchers.file_watcher.{FileWatcher};toonic.server.watchers.log_watcher.{LogWatcher};toonic.server.watchers.stream_watcher.{StreamWatcher};toonic.server.watchers.http_watcher.{HttpWatcher};toonic.server.watchers.process_watcher.{ProcessWatcher};toonic.server.watchers.directory_watcher.{DirectoryWatcher};toonic.server.watchers.docker_watcher.{DockerWatcher};toonic.server.watchers.database_watcher.{DatabaseWatcher};toonic.server.watchers.network_watcher.{NetworkWatcher}
   toonic/server/watchers/base.py:
-    i: asyncio,logging,toonic.server.models.{ContextChunk,SourceCategory},typing
+    i: __future__.{annotations};asyncio;logging;typing.{Any,AsyncIterator,Dict,List,Optional,...};toonic.server.models.{ContextChunk,SourceCategory}
     e: BaseWatcher,WatcherRegistry
-    BaseWatcher: __init__(2),start(0),stop(0),get_chunks(0),emit(1)  # Base class for all data source watchers.
-    WatcherRegistry: register(1),resolve(1),create(3),list_all(0)  # Registry of available watchers.
+    BaseWatcher: __init__,start,stop,get_chunks,emit,supports  # Base class for all data source watchers.
+    WatcherRegistry: register,resolve,create,list_all  # Registry of available watchers.
   toonic/server/watchers/database_watcher.py:
-    i: asyncio,hashlib,json,logging,sqlite3,time,pathlib.Path,typing.{Any,Dict,List}
+    i: __future__.{annotations};asyncio;hashlib;json;logging;sqlite3;time;pathlib.{Path};typing.{Any,Dict,List,Optional,Tuple};urllib.parse.{urlparse}
     e: DatabaseWatcher
-    DatabaseWatcher: __init__(2),_detect_db_type(0),start(0),stop(0),_poll_loop(0)  # Watches databases for schema changes,...
+    DatabaseWatcher: __init__,_detect_db_type,start,stop,_poll_loop,_check,_check_sqlite,_check_postgresql,,...  # Watches databases for schema changes, row count ch
   toonic/server/watchers/directory_watcher.py:
-    i: asyncio,hashlib,logging,os,stat,time,pathlib.Path,typing.{Any,Dict,List}
+    i: __future__.{annotations};asyncio;hashlib;logging;os;stat;time;pathlib.{Path};typing.{Any,Dict,List,Optional,Set,...};toonic.server.models.{ContextChunk,SourceCategory}
     e: DirectoryWatcher
-    DirectoryWatcher: __init__(2),start(0),stop(0),_initial_scan(0),_poll_loop(0)  # Watches directory trees for structura...
+    DirectoryWatcher: __init__,start,stop,_initial_scan,_poll_loop,_check_changes,_take_snapshot,_walk,,...  # Watches directory trees for structural changes (ne
   toonic/server/watchers/docker_watcher.py:
-    i: asyncio,json,logging,time,toonic.server.models.ContextChunk,typing.{Any,Dict,List,Optional,Tuple}
+    i: __future__.{annotations};asyncio;json;logging;time;typing.{Any,Dict,List,Optional,Tuple};toonic.server.models.{ContextChunk,SourceCategory};toonic.server.watchers.base.{BaseWatcher,WatcherRegistry}
     e: DockerWatcher
-    DockerWatcher: __init__(2),start(0),stop(0),_check_docker(0),_poll_loop(0)  # Watches Docker containers for status...
+    DockerWatcher: __init__,start,stop,_check_docker,_poll_loop,_check,_list_containers,_fetch_stats,,...  # Watches Docker containers for status changes, reso
   toonic/server/watchers/file_watcher.py:
-    i: asyncio,hashlib,logging,os,time,pathlib.Path,toonic.server.models.{ContextChunk,SourceCategory},typing.{Dict,Set}
+    i: __future__.{annotations};asyncio;hashlib;logging;os;time;pathlib.{Path};typing.{Dict,Set};toonic.server.models.{ContextChunk,SourceCategory};toonic.server.watchers.base.{BaseWatcher,WatcherRegistry}
     e: FileWatcher
-    FileWatcher: __init__(2),start(0),stop(0),_full_scan(0),_poll_loop(0)  # Watches a directory for file changes,...
+    FileWatcher: __init__,start,stop,_full_scan,_poll_loop,_check_changes,_convert_file,_detect_category,,...  # Watches a directory for file changes, converts to 
   toonic/server/watchers/http_watcher.py:
-    i: asyncio,hashlib,logging,ssl,time,datetime,datetime.timezone,typing.{Any,Dict,List}
+    i: __future__.{annotations};asyncio;hashlib;logging;ssl;time;datetime.{datetime,timezone};typing.{Any,Dict,List,Optional};urllib.parse.{urlparse};toonic.server.models.{ContextChunk,SourceCategory}
     e: HttpWatcher
-    HttpWatcher: __init__(2),start(0),stop(0),_poll_loop(0),_check_endpoint(0)  # Watches HTTP/HTTPS endpoints for avai...
+    HttpWatcher: __init__,start,stop,_poll_loop,_check_endpoint,_fetch,_check_ssl_cert,_to_toon,,...  # Watches HTTP/HTTPS endpoints for availability, con
   toonic/server/watchers/log_watcher.py:
-    i: asyncio,logging,os,time,pathlib.Path,toonic.server.models.{ContextChunk,SourceCategory},toonic.server.watchers.base.{BaseWatcher,WatcherRegistry},typing.Dict
+    i: __future__.{annotations};asyncio;logging;os;time;pathlib.{Path};typing.{Dict};toonic.server.models.{ContextChunk,ContentType,SourceCategory};toonic.server.watchers.base.{BaseWatcher,WatcherRegistry}
     e: LogWatcher
-    LogWatcher: __init__(2),start(0),stop(0),_initial_tail(0),_tail_loop(0)  # Tails log files and emits TOON-compre...
+    LogWatcher: __init__,start,stop,_initial_tail,_tail_loop,_check_new_lines,_to_toon,supports  # Tails log files and emits TOON-compressed log cont
   toonic/server/watchers/network_watcher.py:
-    i: asyncio,logging,socket,time,toonic.server.models.ContextChunk,typing.{Any,Dict,List,Optional,Tuple}
+    i: __future__.{annotations};asyncio;logging;socket;time;typing.{Any,Dict,List,Optional,Tuple};toonic.server.models.{ContextChunk,SourceCategory};toonic.server.watchers.base.{BaseWatcher,WatcherRegistry}
     e: NetworkWatcher
-    NetworkWatcher: __init__(2),start(0),stop(0),_poll_loop(0),_check(0)  # Watches network endpoints for connect...
+    NetworkWatcher: __init__,start,stop,_poll_loop,_check,_check_target,_resolve_dns,_ping,,...  # Watches network endpoints for connectivity, latenc
   toonic/server/watchers/process_watcher.py:
-    i: asyncio,logging,os,re,socket,time,typing.{Any,Dict,List,Optional}
+    i: __future__.{annotations};asyncio;logging;os;re;socket;time;typing.{Any,Dict,List,Optional,Tuple};toonic.server.models.{ContextChunk,SourceCategory};toonic.server.watchers.base.{BaseWatcher,WatcherRegistry}
     e: ProcessWatcher
-    ProcessWatcher: __init__(2),_parse_target(1),start(0),stop(0),_poll_loop(0)  # Watches system processes, ports, and...
+    ProcessWatcher: __init__,_parse_target,start,stop,_poll_loop,_check,_check_process_name,_check_pid,,...  # Watches system processes, ports, and service healt
   toonic/server/watchers/stream_watcher.py:
-    i: asyncio,base64,logging,time,collections.deque,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict}
+    i: __future__.{annotations};asyncio;base64;logging;time;collections.{deque};dataclasses.{dataclass,field};pathlib.{Path};typing.{Any,Dict,List,Optional,Tuple};toonic.server.models.{ContextChunk,ContentType,SourceCategory}
     e: Detection,FrameRecord,StreamWatcher
-    Detection:   # Single object detection from YOLO or...
+    Detection:   # Single object detection from YOLO or similar.
     FrameRecord:   # Buffered frame with optional detections.
-    StreamWatcher: __init__(2),start(0),stop(0),_init_yolo(0),_capture_loop(0)  # Watches RTSP/HTTP streams with option...
-    _bool(v)->bool
+    StreamWatcher: __init__,start,stop,_init_yolo,_capture_loop,_capture_opencv,_run_detection,_detect_sync,,...  # Watches RTSP/HTTP streams with optional YOLO pre-d
   unified_toon.py:
-    i: sys,argparse,pathlib.Path,toonic.core.detector.SpecDetector,toonic.pipeline.Pipeline,typing.{Any,Dict,List}
+    i: sys;argparse;pathlib.{Path};typing.{List,Dict,Any};toonic.pipeline.{Pipeline};toonic.core.detector.{SpecDetector}
     e: create_unified_toon,create_unified_spec,main
-    create_unified_toon(source_dir:str;output_file:str;fmt:str='toon')->None
-    create_unified_spec(files_data:List[Dict[str;Any]];source_dir:str)->str
+    create_unified_toon()
+    create_unified_spec()
     main()

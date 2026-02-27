@@ -177,19 +177,26 @@ class TestRouter:
         assert model.model == cfg.models["multimodal"].model
 
     def test_parse_json_response(self):
-        cfg = ServerConfig(history_enabled=False)
-        router = LLMRouter(cfg)
-        resp = '{"action": "code_fix", "content": "fix the bug", "confidence": 0.9}'
-        action = router._parse_response(resp)
-        assert action.action_type == "code_fix"
-        assert action.confidence == 0.9
+        from toonic.server.llm.parser import ResponseParser
+        parser = ResponseParser()
+        result = parser.parse({
+            "content": '{"action": "code_fix", "content": "fix the bug", "confidence": 0.9}',
+            "model": "test-model",
+            "tokens_used": 100,
+        })
+        assert result.action_type == "code_fix"
+        assert result.confidence == 0.9
 
     def test_parse_plain_text_response(self):
-        cfg = ServerConfig(history_enabled=False)
-        router = LLMRouter(cfg)
-        action = router._parse_response("This is a plain text analysis result")
-        assert action.action_type == "report"
-        assert "plain text" in action.content
+        from toonic.server.llm.parser import ResponseParser
+        parser = ResponseParser()
+        result = parser.parse({
+            "content": "This is a plain text analysis result",
+            "model": "test-model",
+            "tokens_used": 20,
+        })
+        assert result.action_type == "report"
+        assert "plain text" in result.content
 
     @pytest.mark.anyio
     async def test_mock_query(self):
