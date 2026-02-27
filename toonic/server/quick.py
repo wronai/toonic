@@ -67,7 +67,7 @@ _PREFIX_CATEGORY = {
     "proc": "process", "pid": "process", "port": "process",
     "tcp": "process", "service": "process",
     # Web / API
-    "http": "api", "https": "api", "api": "api", "web": "web",
+    "http": "web", "https": "web", "api": "api", "web": "web",
     "ws": "api", "wss": "api", "grpc": "api",
     # Infrastructure
     "dir": "infra", "directory": "infra",

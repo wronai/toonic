@@ -107,9 +107,8 @@ python -m toonic.server \
 These protocols are intentionally rejected by CLI parser (`parse_source_string`):
 
 ```bash
-python -m toonic.server --source "ws://example.com" --goal "test"
 python -m toonic.server --source "mqtt://broker:1883/topic" --goal "test"
 python -m toonic.server --source "amqp://mq" --goal "test"
 ```
 
-Use supported protocols (`http(s)`, `rtsp`, DB URLs) or watcher prefixes (`net:`, `proc:`, `docker:`, `dir:`, `log:`).
+Use supported protocols (`http(s)`, `ws(s)`, `grpc`, `rtsp`, DB URLs) or watcher prefixes (`net:`, `proc:`, `docker:`, `dir:`, `log:`).
