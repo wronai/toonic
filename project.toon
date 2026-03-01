@@ -1,6 +1,11 @@
-# toonic | 119f 21386L | python:119
+# toonic | 124f 21921L | python:124
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
-M[119]:
+M[124]:
+  toonic/server/watchers/stream/__init__.py,9
+  toonic/server/watchers/stream/capture.py,159
+  toonic/server/watchers/stream/detection.py,70
+  toonic/server/watchers/stream/events.py,164
+  toonic/server/watchers/stream/models.py,22
   examples/_helpers.py,19
   examples/archive-monitoring/run.py,22
   examples/code-analysis/run.py,13
@@ -121,6 +126,30 @@ M[119]:
   toonic/server/watchers/stream_watcher.py,472
   unified_toon.py,82
 D:
+  toonic/server/watchers/stream/capture.py:
+    i: asyncio,base64,logging,time,pathlib.Path,typing.TYPE_CHECKING
+    e: capture_opencv,capture_mock
+    capture_opencv(watcher:StreamWatcher)->None
+    _handle_basic_mode(watcher:StreamWatcher;cv2;small;gray;now:float;is_keyframe:bool;...+1)->None
+    capture_mock(watcher:StreamWatcher)->None
+  toonic/server/watchers/stream/detection.py:
+    i: asyncio,logging,models.Detection,typing.{List,TYPE_CHECKING}
+    e: init_yolo,run_detection
+    init_yolo(watcher:StreamWatcher)->bool
+    run_detection(watcher:StreamWatcher;frame)->List[Detection]
+    _detect_sync(watcher:StreamWatcher;frame)->List[Detection]
+  toonic/server/watchers/stream/events.py:
+    i: base64,logging,time,models.FrameRecord,toonic.server.models.{ContentType,ContextChunk,SourceCategory},typing.{List,TYPE_CHECKING}
+    e: check_event_and_emit,emit_heartbeat
+    check_event_and_emit(watcher:StreamWatcher;cv2;np)->None
+    _select_event_frames(watcher:StreamWatcher;frames:List[FrameRecord])->List[FrameRecord]
+    _extract_roi_crops(watcher:StreamWatcher;cv2;frames:List[FrameRecord])->List[bytes]
+    emit_heartbeat(watcher:StreamWatcher;cv2;small;scene_score:float)->None
+  toonic/server/watchers/stream/models.py:
+    i: dataclasses.{dataclass,field},typing.{Any,List,Tuple}
+    e: Detection,FrameRecord
+    Detection:   # Single object detection from YOLO or...
+    FrameRecord:   # Buffered frame with optional detections.
   examples/_helpers.py:
     i: toonic.server.config.ServerConfig,typing.List
     e: print_config_summary,print_to_run_hint

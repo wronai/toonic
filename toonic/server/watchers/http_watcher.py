@@ -86,80 +86,103 @@ class HttpWatcher(BaseWatcher):
 
         try:
             status, response_time, body, headers, redirect_chain = await self._fetch()
-            result["status_code"] = status
-            result["response_time_ms"] = round(response_time * 1000, 1)
-            result["content_length"] = len(body)
-            result["content_type"] = headers.get("content-type", "unknown")
-
-            if redirect_chain:
-                result["redirects"] = redirect_chain
-
-            # Content hash for change detection
-            content_hash = hashlib.sha256(body).hexdigest()[:16]
-            result["content_hash"] = content_hash
-
-            # Detect changes
-            changes: List[str] = []
-
-            if self._prev_status and self._prev_status != status:
-                changes.append(f"status:{self._prev_status}->{status}")
-
-            if self._prev_hash and self._prev_hash != content_hash:
-                changes.append("content_changed")
-                self._change_count += 1
-
-            if status != self.expected_status:
-                changes.append(f"unexpected_status:{status}")
-
-            # Response time anomaly (>2x previous)
-            if self._prev_response_time > 0:
-                ratio = response_time / self._prev_response_time
-                if ratio > 2.0:
-                    changes.append(f"slow:{ratio:.1f}x")
-                result["response_time_ratio"] = round(ratio, 2)
-
-            # Keyword detection
-            body_text = body.decode("utf-8", errors="replace")
-            if self.keywords:
-                found = [kw for kw in self.keywords if kw.lower() in body_text.lower()]
-                missing = [kw for kw in self.keywords if kw.lower() not in body_text.lower()]
-                if found:
-                    result["keywords_found"] = found
-                if missing:
-                    result["keywords_missing"] = missing
-                    changes.append(f"missing_keywords:{len(missing)}")
-
-            # SSL check
-            if self.check_ssl and self.path_or_url.startswith("https://"):
-                ssl_info = await self._check_ssl_cert()
-                if ssl_info:
-                    result["ssl"] = ssl_info
-                    if ssl_info.get("days_until_expiry", 999) < 30:
-                        changes.append(f"ssl_expiring:{ssl_info['days_until_expiry']}d")
-
-            result["changes"] = changes
-            result["has_changes"] = len(changes) > 0
-
-            self._prev_hash = content_hash
-            self._prev_status = status
-            self._prev_response_time = response_time
-
+            self._update_result_with_fetch(result, status, response_time, body, headers, redirect_chain)
+            self._detect_changes(result, status, response_time, body)
+            self._check_keywords(result, body)
+            await self._check_ssl_and_update(result)
+            self._update_state(status, response_time, body)
         except Exception as e:
-            self._error_count += 1
-            result["error"] = str(e)
-            result["changes"] = ["connection_error"]
-            result["has_changes"] = True
-            logger.warning(f"[{self.source_id}] Check failed: {e}")
+            self._handle_check_error(result, e)
 
-        # Track history (last 50 checks)
+        self._update_history(result)
+        await self._emit_if_needed(result)
+
+    def _update_result_with_fetch(self, result: Dict[str, Any], status: int, 
+                                   response_time: float, body: bytes, 
+                                   headers: Dict[str, str], redirect_chain: List[Dict]) -> None:
+        """Update result dict with fetch response data."""
+        result["status_code"] = status
+        result["response_time_ms"] = round(response_time * 1000, 1)
+        result["content_length"] = len(body)
+        result["content_type"] = headers.get("content-type", "unknown")
+        if redirect_chain:
+            result["redirects"] = redirect_chain
+        result["content_hash"] = hashlib.sha256(body).hexdigest()[:16]
+
+    def _detect_changes(self, result: Dict[str, Any], status: int, 
+                        response_time: float, body: bytes) -> None:
+        """Detect various types of changes from previous check."""
+        changes: List[str] = []
+        content_hash = result["content_hash"]
+
+        if self._prev_status and self._prev_status != status:
+            changes.append(f"status:{self._prev_status}->{status}")
+
+        if self._prev_hash and self._prev_hash != content_hash:
+            changes.append("content_changed")
+            self._change_count += 1
+
+        if status != self.expected_status:
+            changes.append(f"unexpected_status:{status}")
+
+        # Response time anomaly (>2x previous)
+        if self._prev_response_time > 0:
+            ratio = response_time / self._prev_response_time
+            if ratio > 2.0:
+                changes.append(f"slow:{ratio:.1f}x")
+            result["response_time_ratio"] = round(ratio, 2)
+
+        result["changes"] = changes
+        result["has_changes"] = len(changes) > 0
+
+    def _check_keywords(self, result: Dict[str, Any], body: bytes) -> None:
+        """Check for expected keywords in response body."""
+        if not self.keywords:
+            return
+        body_text = body.decode("utf-8", errors="replace")
+        found = [kw for kw in self.keywords if kw.lower() in body_text.lower()]
+        missing = [kw for kw in self.keywords if kw.lower() not in body_text.lower()]
+        if found:
+            result["keywords_found"] = found
+        if missing:
+            result["keywords_missing"] = missing
+            result["changes"] = result.get("changes", []) + [f"missing_keywords:{len(missing)}"]
+            result["has_changes"] = True
+
+    async def _check_ssl_and_update(self, result: Dict[str, Any]) -> None:
+        """Check SSL certificate and update result if needed."""
+        if not self.check_ssl or not self.path_or_url.startswith("https://"):
+            return
+        ssl_info = await self._check_ssl_cert()
+        if ssl_info:
+            result["ssl"] = ssl_info
+            if ssl_info.get("days_until_expiry", 999) < 30:
+                result["changes"] = result.get("changes", []) + [f"ssl_expiring:{ssl_info['days_until_expiry']}d"]
+                result["has_changes"] = True
+
+    def _update_state(self, status: int, response_time: float, body: bytes) -> None:
+        """Update internal state after successful check."""
+        self._prev_hash = hashlib.sha256(body).hexdigest()[:16]
+        self._prev_status = status
+        self._prev_response_time = response_time
+
+    def _handle_check_error(self, result: Dict[str, Any], error: Exception) -> None:
+        """Handle check failure and update result."""
+        self._error_count += 1
+        result["error"] = str(error)
+        result["changes"] = ["connection_error"]
+        result["has_changes"] = True
+        logger.warning(f"[{self.source_id}] Check failed: {error}")
+
+    def _update_history(self, result: Dict[str, Any]) -> None:
+        """Track history (last 50 checks)."""
         self._history.append(result)
         if len(self._history) > 50:
             self._history = self._history[-50:]
 
-        # Build TOON spec
+    async def _emit_if_needed(self, result: Dict[str, Any]) -> None:
+        """Build TOON and emit if conditions are met."""
         toon = self._to_toon(result)
-
-        # Determine if this is worth emitting
         is_delta = self._check_count > 1
         should_emit = (
             not is_delta

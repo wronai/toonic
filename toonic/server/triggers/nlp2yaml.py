@@ -129,75 +129,40 @@ class NLP2YAML:
         """Parse common natural language patterns locally."""
         d = desc.lower().strip()
         rules = []
+        events = []
 
         # Extract time values
         periodic_s = self._extract_time(d, r'(?:every|each|co)\s+(\d+(?:\.\d+)?)\s*(s(?:ec(?:ond)?s?)?|m(?:in(?:ute)?s?)?|h(?:ours?)?)')
         fallback_s = self._extract_time(d, r'(?:otherwise|else|if\s+not|at\s+(?:least|minimum)|min\.?)\s+(?:every\s+)?(\d+(?:\.\d+)?)\s*(s(?:ec(?:ond)?s?)?|m(?:in(?:ute)?s?)?)')
         duration_s = self._extract_time(d, r'(?:for|during|lasting)\s+(\d+(?:\.\d+)?)\s*(s(?:ec(?:ond)?s?)?|m(?:in(?:ute)?s?)?)')
 
-        events = []
         mode = "periodic"
 
-        # Detect object conditions
-        # First try: "object <noun>" pattern
-        obj_match = re.search(r'\bobject\s+(\w+)', d)
-        if obj_match:
-            label = obj_match.group(1).rstrip("s")
-            if label in ("people",): label = "person"
-        else:
-            # Standalone object nouns
-            obj_match = re.search(r'\b(person|people|car|vehicle|animal|fire|smoke|face)\w*\b', d)
-            if obj_match:
-                label = obj_match.group(1).rstrip("s")
-                if label in ("people",): label = "person"
-                if label in ("vehicles",): label = "vehicle"
-            else:
-                label = None
-        if obj_match and label:
-            events.append(EventCondition(
-                type="object", label=label, threshold=0.3,
-                min_duration_s=duration_s if duration_s else 0.0,
-            ))
+        # Detect conditions
+        obj_event = self._parse_object_condition(d, duration_s)
+        if obj_event:
+            events.append(obj_event)
             mode = "on_event"
 
-        # Detect motion conditions
-        if re.search(r'\bmotion\b|\bmovement\b|\bmoving\b', d):
-            threshold = self._extract_float(d, r'motion\w*\s+(?:>|above|threshold)?\s*(\d+(?:\.\d+)?)', 0.15)
-            events.append(EventCondition(type="motion", threshold=threshold,
-                                         min_duration_s=duration_s or 0.0))
+        motion_event = self._parse_motion_condition(d, duration_s)
+        if motion_event:
+            events.append(motion_event)
             mode = "on_event"
 
-        # Detect scene change
-        if re.search(r'scene\s*change|big\s*change|significant\s*change', d):
-            threshold = self._extract_float(d, r'change\w*\s+(?:>|above|threshold)?\s*(\d+(?:\.\d+)?)', 0.4)
-            events.append(EventCondition(type="scene_change", threshold=threshold))
+        scene_event = self._parse_scene_change_condition(d)
+        if scene_event:
+            events.append(scene_event)
             mode = "on_event"
 
-        # Detect pattern/error conditions
-        pattern_match = re.search(r'(?:pattern|error|warning|critical|exception|regex)\s*[:\s]*["\']?([^"\']+)["\']?', d)
-        if pattern_match and any(w in d for w in ["error", "warning", "critical", "pattern", "regex", "exception"]):
-            regex = pattern_match.group(1).strip()
-            if regex in ("error", "warning", "critical", "exception"):
-                regex = "ERROR|CRITICAL|EXCEPTION"
-            count = int(self._extract_float(d, r'(\d+)\s+(?:times|occurrences|errors)', 1))
-            window = self._extract_time(d, r'(?:in|within)\s+(\d+(?:\.\d+)?)\s*(s(?:ec)?|m(?:in)?|h)')
-            events.append(EventCondition(type="pattern", regex=regex,
-                                         count_threshold=max(count, 1), window_s=window or 60.0))
+        pattern_event, source = self._parse_pattern_condition(d, source)
+        if pattern_event:
+            events.append(pattern_event)
             mode = "on_event"
-            if not source: source = "logs"
 
-        # Detect audio conditions
-        if re.search(r'\bspeech\b|\bvoice\b|\btalking\b|\bspoken\b', d):
-            events.append(EventCondition(type="speech", threshold=0.5,
-                                         min_duration_s=duration_s or 0.5))
+        audio_events, source = self._parse_audio_conditions(d, source, duration_s)
+        events.extend(audio_events)
+        if audio_events:
             mode = "on_event"
-            if not source: source = "audio"
-
-        if re.search(r'\bloud\b|\bnoise\b|\bsound\s*level\b|\baudio\s*level\b', d):
-            threshold = self._extract_float(d, r'(?:level|above|threshold)\s*(\d+(?:\.\d+)?)', 0.3)
-            events.append(EventCondition(type="audio_level", threshold=threshold))
-            mode = "on_event"
-            if not source: source = "audio"
 
         # Determine mode based on combination
         if events and (fallback_s or periodic_s):
@@ -205,29 +170,109 @@ class NLP2YAML:
 
         # Build rule
         if events or periodic_s:
-            name_parts = []
-            if events:
-                name_parts.append(events[0].type)
-                if events[0].label:
-                    name_parts.append(events[0].label)
-            name_parts.append(mode.replace("_", "-"))
-            name = "-".join(name_parts) or "trigger"
-
-            rule = TriggerRule(
-                name=name,
-                source=source,
-                mode=mode,
-                events=events,
-                interval_s=periodic_s if periodic_s else (fallback_s if fallback_s else 30.0),
-                fallback=FallbackConfig(periodic_s=fallback_s) if fallback_s else FallbackConfig(),
-                goal=goal,
-                cooldown_s=min(duration_s or 2.0, 10.0),
-            )
+            rule = self._build_trigger_rule(events, mode, source, goal, periodic_s, fallback_s, duration_s)
             rules.append(rule)
 
         if rules:
             return TriggerConfig(triggers=rules)
         return None
+
+    def _parse_object_condition(self, d: str, duration_s: float) -> Optional[EventCondition]:
+        """Parse object detection condition from description."""
+        # First try: "object <noun>" pattern
+        obj_match = re.search(r'\bobject\s+(\w+)', d)
+        if obj_match:
+            label = obj_match.group(1).rstrip("s")
+            if label in ("people",):
+                label = "person"
+        else:
+            # Standalone object nouns
+            obj_match = re.search(r'\b(person|people|car|vehicle|animal|fire|smoke|face)\w*\b', d)
+            if obj_match:
+                label = obj_match.group(1).rstrip("s")
+                if label in ("people",):
+                    label = "person"
+                if label in ("vehicles",):
+                    label = "vehicle"
+            else:
+                return None
+
+        if obj_match and label:
+            return EventCondition(
+                type="object", label=label, threshold=0.3,
+                min_duration_s=duration_s if duration_s else 0.0,
+            )
+        return None
+
+    def _parse_motion_condition(self, d: str, duration_s: float) -> Optional[EventCondition]:
+        """Parse motion detection condition from description."""
+        if re.search(r'\bmotion\b|\bmovement\b|\bmoving\b', d):
+            threshold = self._extract_float(d, r'motion\w*\s+(?:>|above|threshold)?\s*(\d+(?:\.\d+)?)', 0.15)
+            return EventCondition(type="motion", threshold=threshold,
+                                 min_duration_s=duration_s or 0.0)
+        return None
+
+    def _parse_scene_change_condition(self, d: str) -> Optional[EventCondition]:
+        """Parse scene change condition from description."""
+        if re.search(r'scene\s*change|big\s*change|significant\s*change', d):
+            threshold = self._extract_float(d, r'change\w*\s+(?:>|above|threshold)?\s*(\d+(?:\.\d+)?)', 0.4)
+            return EventCondition(type="scene_change", threshold=threshold)
+        return None
+
+    def _parse_pattern_condition(self, d: str, source: str) -> tuple[Optional[EventCondition], str]:
+        """Parse pattern/error condition from description. Returns (event, updated_source)."""
+        pattern_match = re.search(r'(?:pattern|error|warning|critical|exception|regex)\s*[:\s]*["\']?([^"\']+)["\']?', d)
+        if pattern_match and any(w in d for w in ["error", "warning", "critical", "pattern", "regex", "exception"]):
+            regex = pattern_match.group(1).strip()
+            if regex in ("error", "warning", "critical", "exception"):
+                regex = "ERROR|CRITICAL|EXCEPTION"
+            count = int(self._extract_float(d, r'(\d+)\s+(?:times|occurrences|errors)', 1))
+            window = self._extract_time(d, r'(?:in|within)\s+(\d+(?:\.\d+)?)\s*(s(?:ec)?|m(?:in)?|h)')
+            event = EventCondition(type="pattern", regex=regex,
+                                   count_threshold=max(count, 1), window_s=window or 60.0)
+            if not source:
+                source = "logs"
+            return event, source
+        return None, source
+
+    def _parse_audio_conditions(self, d: str, source: str, duration_s: float) -> tuple[list[EventCondition], str]:
+        """Parse audio conditions from description. Returns (events, updated_source)."""
+        events = []
+        if re.search(r'\bspeech\b|\bvoice\b|\btalking\b|\bspoken\b', d):
+            events.append(EventCondition(type="speech", threshold=0.5,
+                                         min_duration_s=duration_s or 0.5))
+            if not source:
+                source = "audio"
+
+        if re.search(r'\bloud\b|\bnoise\b|\bsound\s*level\b|\baudio\s*level\b', d):
+            threshold = self._extract_float(d, r'(?:level|above|threshold)\s*(\d+(?:\.\d+)?)', 0.3)
+            events.append(EventCondition(type="audio_level", threshold=threshold))
+            if not source:
+                source = "audio"
+
+        return events, source
+
+    def _build_trigger_rule(self, events: list, mode: str, source: str, goal: str,
+                            periodic_s: float, fallback_s: float, duration_s: float) -> TriggerRule:
+        """Build a TriggerRule from parsed components."""
+        name_parts = []
+        if events:
+            name_parts.append(events[0].type)
+            if events[0].label:
+                name_parts.append(events[0].label)
+        name_parts.append(mode.replace("_", "-"))
+        name = "-".join(name_parts) or "trigger"
+
+        return TriggerRule(
+            name=name,
+            source=source,
+            mode=mode,
+            events=events,
+            interval_s=periodic_s if periodic_s else (fallback_s if fallback_s else 30.0),
+            fallback=FallbackConfig(periodic_s=fallback_s) if fallback_s else FallbackConfig(),
+            goal=goal,
+            cooldown_s=min(duration_s or 2.0, 10.0),
+        )
 
     # ── LLM-based generation ──────────────────────────────────
 

@@ -174,12 +174,10 @@ def parse_source_string(source_str: str):
     return SourceConfig(path_or_url=source_str, category="code")
 
 
-async def run_server(args):
-    from toonic.server.config import ServerConfig, ModelConfig
-    from toonic.server.main import ToonicServer
-    from toonic.server.triggers.dsl import TriggerConfig, load_triggers
+def _build_server_config(args) -> "ServerConfig":
+    """Build ServerConfig from CLI args and config file."""
+    from toonic.server.config import ServerConfig
 
-    # Build config
     if args.config and Path(args.config).exists():
         try:
             config = ServerConfig.from_yaml_file(args.config)
@@ -204,14 +202,19 @@ async def run_server(args):
     for src_str in args.source:
         config.sources.append(parse_source_string(src_str))
 
-    # Build trigger config
-    trigger_config = None
+    return config
+
+
+async def _build_trigger_config(args) -> "TriggerConfig | None":
+    """Build TriggerConfig from file or NLP description."""
+    from toonic.server.triggers.dsl import load_triggers, dump_triggers
 
     if args.triggers and Path(args.triggers).exists():
         # Load from YAML file
         yaml_str = Path(args.triggers).read_text()
         trigger_config = load_triggers(yaml_str)
         print(f"  Triggers: loaded {len(trigger_config.triggers)} rule(s) from {args.triggers}")
+        return trigger_config
 
     elif args.when:
         # Generate from natural language via NLP2YAML
@@ -228,75 +231,91 @@ async def run_server(args):
                 break
         print(f"  Generating triggers from: {args.when}")
         trigger_config = await nlp.generate(args.when, source=source_hint, goal=args.goal)
-        from toonic.server.triggers.dsl import dump_triggers
         yaml_out = dump_triggers(trigger_config)
         print(f"  Generated YAML:\n{yaml_out}")
         # Save to CWD so user can inspect/edit
         triggers_path = Path("triggers.yaml")
         triggers_path.write_text(yaml_out)
         print(f"  Saved to: {triggers_path.resolve()}")
+        return trigger_config
 
-    # Create server
+    return None
+
+
+async def _run_no_web_mode(server: "ToonicServer", config: "ServerConfig") -> None:
+    """Run server without web UI."""
+    await server.start()
+    print(f"Toonic Server running (no-web mode)")
+    print(f"  Goal: {config.goal}")
+    print(f"  Sources: {len(config.sources)}")
+    print(f"  Interval: {config.interval}s")
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        await server.stop()
+
+
+async def _run_web_mode(server: "ToonicServer", config: "ServerConfig", args) -> None:
+    """Run server with FastAPI web UI."""
+    try:
+        from toonic.server.transport.rest_api import create_app
+        import uvicorn
+    except ImportError:
+        print("ERROR: pip install fastapi uvicorn")
+        print("  Or run with --no-web flag")
+        sys.exit(1)
+
+    # Ensure port is available before starting web UI
+    ensure_port_available(config.host, config.port)
+
+    app = create_app(server)
+
+    # Start server in background
+    await server.start()
+
+    print(f"\n  Toonic Server")
+    print(f"  ─────────────────────────────────")
+    print(f"  Web UI:   http://{config.host}:{config.port}/")
+    print(f"  API:      http://{config.host}:{config.port}/api/status")
+    print(f"  WS:       ws://{config.host}:{config.port}/ws")
+    print(f"  Goal:     {config.goal}")
+    print(f"  Sources:  {len(config.sources)}")
+    print(f"  Interval: {config.interval}s")
+    print(f"  Model:    {args.model or 'default'}")
+    print(f"  Data:     {server.data_dir.resolve()}/")
+    print(f"  History:  {server.data_dir.resolve()}/history.db")
+    print(f"  Logs:     {server.data_dir.resolve()}/events.jsonl")
+    if server.trigger_config:
+        print(f"  Triggers: {len(server.trigger_config.triggers)} rule(s)")
+    print()
+
+    uvi_config = uvicorn.Config(
+        app, host=config.host, port=config.port,
+        log_level=config.log_level.lower(),
+    )
+    uvi_server = uvicorn.Server(uvi_config)
+
+    try:
+        await uvi_server.serve()
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        pass
+    finally:
+        await server.stop()
+
+
+async def run_server(args):
+    """Main server entry point."""
+    from toonic.server.main import ToonicServer
+
+    config = _build_server_config(args)
+    trigger_config = await _build_trigger_config(args)
     server = ToonicServer(config, trigger_config=trigger_config)
 
     if args.no_web:
-        # Run server without web UI
-        await server.start()
-        print(f"Toonic Server running (no-web mode)")
-        print(f"  Goal: {config.goal}")
-        print(f"  Sources: {len(config.sources)}")
-        print(f"  Interval: {config.interval}s")
-        try:
-            while True:
-                await asyncio.sleep(1)
-        except (KeyboardInterrupt, asyncio.CancelledError):
-            await server.stop()
+        await _run_no_web_mode(server, config)
     else:
-        # Run with FastAPI web UI
-        try:
-            from toonic.server.transport.rest_api import create_app
-            import uvicorn
-        except ImportError:
-            print("ERROR: pip install fastapi uvicorn")
-            print("  Or run with --no-web flag")
-            sys.exit(1)
-
-        # Ensure port is available before starting web UI
-        ensure_port_available(config.host, config.port)
-
-        app = create_app(server)
-
-        # Start server in background
-        await server.start()
-
-        print(f"\n  Toonic Server")
-        print(f"  ─────────────────────────────────")
-        print(f"  Web UI:   http://{config.host}:{config.port}/")
-        print(f"  API:      http://{config.host}:{config.port}/api/status")
-        print(f"  WS:       ws://{config.host}:{config.port}/ws")
-        print(f"  Goal:     {config.goal}")
-        print(f"  Sources:  {len(config.sources)}")
-        print(f"  Interval: {config.interval}s")
-        print(f"  Model:    {args.model or 'default'}")
-        print(f"  Data:     {server.data_dir.resolve()}/")
-        print(f"  History:  {server.data_dir.resolve()}/history.db")
-        print(f"  Logs:     {server.data_dir.resolve()}/events.jsonl")
-        if trigger_config:
-            print(f"  Triggers: {len(trigger_config.triggers)} rule(s)")
-        print()
-
-        uvi_config = uvicorn.Config(
-            app, host=config.host, port=config.port,
-            log_level=config.log_level.lower(),
-        )
-        uvi_server = uvicorn.Server(uvi_config)
-
-        try:
-            await uvi_server.serve()
-        except (KeyboardInterrupt, asyncio.CancelledError):
-            pass
-        finally:
-            await server.stop()
+        await _run_web_mode(server, config, args)
 
 
 def main():
