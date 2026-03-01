@@ -1,3 +1,29 @@
+## [1.0.15] - 2026-03-01
+
+### Summary
+
+refactor(docs): code analysis engine
+
+### Docs
+
+- docs: update README
+- docs: update context.md
+
+### Other
+
+- scripts: update project.sh
+- update project.toon
+- update project/analysis.toon
+- update project/evolution.toon
+- update toonic/cli.py
+- update toonic/server/client.py
+- update toonic/server/quick.py
+- update toonic/server/quick/__init__.py
+- update toonic/server/quick/archive.py
+- update toonic/server/quick/builder.py
+- ... and 3 more
+
+
 ## [1.0.14] - 2026-02-26
 
 ### Summary

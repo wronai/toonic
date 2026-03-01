@@ -1,31 +1,36 @@
-# toonic | 106f 20467L | python:106
+# toonic | 119f 21386L | python:119
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
-M[106]:
-  examples/archive-monitoring/run.py,21
-  examples/protocol-recipes/run.py,34
-  tests/test_server_cli_sources.py,57
-  tests/test_server_prompt_selection.py,13
+M[119]:
+  examples/_helpers.py,19
+  examples/archive-monitoring/run.py,22
   examples/code-analysis/run.py,13
   examples/code-analysis/sample-project/config.py,9
   examples/code-analysis/sample-project/main.py,64
-  examples/http-monitoring/run.py,16
-  examples/infra-monitoring/run.py,16
+  examples/data-formats/run.py,11
+  examples/db-archive-triage/run.py,25
+  examples/directory-watching/run.py,11
+  examples/http-monitoring/run.py,13
+  examples/infra-monitoring/run.py,13
+  examples/infra-triage/run.py,20
   examples/log-monitoring/generate_logs.py,152
   examples/log-monitoring/run.py,14
-  examples/multi-source/run.py,20
+  examples/multi-source/run.py,17
   examples/programmatic-api/demo_accumulator.py,65
   examples/programmatic-api/demo_pipeline.py,130
   examples/programmatic-api/demo_quick.py,124
-  examples/run_all.py,390
-  examples/security-audit-code/run.py,11
-  examples/security-audit-continuous/run.py,21
-  examples/security-audit-fullstack/run.py,23
-  examples/security-audit-web/run.py,18
+  examples/protocol-recipes/run.py,34
+  examples/realtime-api/run.py,27
+  examples/run_all.py,446
+  examples/security-audit-code/run.py,8
+  examples/security-audit-continuous/run.py,19
+  examples/security-audit-fullstack/run.py,21
+  examples/security-audit-web/run.py,16
   examples/security-audit/continuous_monitoring.py,404
   examples/security-audit/enterprise_features.py,546
   examples/security-audit/generate_report.py,122
   examples/security-audit/quick_audit.py,108
-  examples/video-monitoring/run.py,16
+  examples/video-captioning/run.py,11
+  examples/video-monitoring/run.py,13
   tests/__init__.py,0
   tests/conftest.py,77
   tests/test_autopilot.py,274
@@ -37,6 +42,8 @@ M[106]:
   tests/test_pipeline.py,67
   tests/test_quick.py,343
   tests/test_server.py,425
+  tests/test_server_cli_sources.py,199
+  tests/test_server_prompt_selection.py,13
   tests/test_triggers.py,378
   tests/test_watchers.py,543
   toonic/__init__.py,31
@@ -46,7 +53,7 @@ M[106]:
   toonic/autopilot/loop.py,282
   toonic/autopilot/prompts.py,127
   toonic/autopilot/scaffold.py,410
-  toonic/cli.py,180
+  toonic/cli.py,226
   toonic/core/__init__.py,23
   toonic/core/base.py,30
   toonic/core/detector.py,42
@@ -65,8 +72,8 @@ M[106]:
   toonic/formats/video.py,253
   toonic/pipeline.py,184
   toonic/server/__init__.py,31
-  toonic/server/__main__.py,240
-  toonic/server/client.py,264
+  toonic/server/__main__.py,254
+  toonic/server/client.py,336
   toonic/server/config.py,137
   toonic/server/core/__init__.py,1
   toonic/server/core/accumulator.py,162
@@ -77,10 +84,16 @@ M[106]:
   toonic/server/llm/caller.py,141
   toonic/server/llm/parser.py,101
   toonic/server/llm/pipeline.py,45
-  toonic/server/llm/prompts.py,129
+  toonic/server/llm/prompts.py,139
   toonic/server/main.py,305
   toonic/server/models.py,109
-  toonic/server/quick.py,492
+  toonic/server/quick.py,58
+  toonic/server/quick/__init__.py,38
+  toonic/server/quick/archive.py,97
+  toonic/server/quick/builder.py,185
+  toonic/server/quick/parsing.py,105
+  toonic/server/quick/presets.py,136
+  toonic/server/quick/runtime.py,102
   toonic/server/transport/__init__.py,1
   toonic/server/transport/app.py,62
   toonic/server/transport/broxeen_bridge.py,257
@@ -101,31 +114,22 @@ M[106]:
   toonic/server/watchers/directory_watcher.py,274
   toonic/server/watchers/docker_watcher.py,242
   toonic/server/watchers/file_watcher.py,150
-  toonic/server/watchers/http_watcher.py,263
+  toonic/server/watchers/http_watcher.py,265
   toonic/server/watchers/log_watcher.py,153
   toonic/server/watchers/network_watcher.py,300
   toonic/server/watchers/process_watcher.py,322
   toonic/server/watchers/stream_watcher.py,472
   unified_toon.py,82
 D:
+  examples/_helpers.py:
+    i: toonic.server.config.ServerConfig,typing.List
+    e: print_config_summary,print_to_run_hint
+    print_config_summary(cfg:ServerConfig;title:Any=None)->None
+    print_to_run_hint(preset_or_fn:str;example_args:str='')->None
   examples/archive-monitoring/run.py:
-    i: pathlib.Path,toonic.server.quick.watch_archive
+    i: examples._helpers.{print_config_summary,print_to_run_hint},pathlib.Path,toonic.server.quick.watch_archive
     e: main
     main()->None
-  examples/protocol-recipes/run.py:
-    i: toonic.server.quick.watch
-    e: SCENARIOS,main
-    main()->None
-  tests/test_server_cli_sources.py:
-    i: pytest
-    e: TestParseSourceString
-    TestParseSourceString: test_protocols(3),test_file_like_prefixes_are_normalized_to_path(2),test_watcher_syntax_prefixes_are_preserved(1),test_unsupported_protocols_fail_fast(1)
-    _parse(src:str)
-  tests/test_server_prompt_selection.py:
-    i: toonic.server.llm.prompts.{CodeAnalysisPrompt,GenericPrompt,select_prompt_builder},toonic.server.models.SourceCategory
-    e: test_web_category_selects_generic_prompt,test_code_category_selects_code_analysis_prompt
-    test_web_category_selects_generic_prompt()
-    test_code_category_selects_code_analysis_prompt()
   examples/code-analysis/sample-project/main.py:
     i: os,sys,typing.{List,Optional}
     e: UserService,OrderService,main
@@ -161,17 +165,21 @@ D:
     demo_watch()
     demo_options()
     main()
+  examples/protocol-recipes/run.py:
+    i: toonic.server.quick.watch
+    e: SCENARIOS,main
+    main()->None
   examples/run_all.py:
-    i: importlib,subprocess,sys,textwrap,pathlib.Path,typing.{Any,Dict,List,Optional}
-    e: EXAMPLES_DIR,EXAMPLES,verify_imports,verify_presets,verify_config_builds,verify_demos,verify_all,execute_all
+    i: importlib,os,subprocess,sys,textwrap,pathlib.Path,typing.{Any,Dict,List,Optional}
+    e: EXAMPLES_DIR,DEFAULT_SCRIPT_TIMEOUT_S,PROGRAMMATIC_API_DEMOS,EXAMPLES,verify_imports,verify_presets,verify_config_builds,verify_demos
     _repo_root()->Path
+    _example_env()->Dict[str, str]
     _run_py(script:Path)->subprocess.CompletedProcess
     verify_imports()->List[str]
     verify_presets()->List[str]
     verify_config_builds()->List[str]
     verify_demos()->List[str]
     verify_all()->bool
-    execute_all()->bool
   examples/security-audit/continuous_monitoring.py:
     i: asyncio,json,logging,smtplib,yaml,datetime,datetime.timedelta,email.mime.text.MimeText,pathlib.Path,typing.Dict
     e: SecurityMonitor,main
@@ -274,6 +282,21 @@ D:
     TestAccumulator: test_update_and_get(0),test_stats(0),test_delta_keeps_history(0),test_clear(0)
     TestRouter: test_model_selection(0),test_parse_json_response(0),test_parse_plain_text_response(0),test_mock_query(0),test_stats(0)
     TestWatcherRegistry: test_file_watcher_supports(0),test_log_watcher_supports(0),test_stream_watcher_supports(0),test_registry_resolve(0),test_registry_create(0)
+  tests/test_server_cli_sources.py:
+    i: pytest
+    e: TestSupportedProtocols,TestUnsupportedProtocols,TestPrefixSources,TestWatcherResolution,TestPromptBuilderForProtocols
+    TestSupportedProtocols: test_cli_parser_category(2),test_quick_parser_category(2),test_cli_and_quick_agree_on_category(2)  # Protocols that have matching watchers.
+    TestUnsupportedProtocols: test_cli_raises_for_unsupported(1),test_quick_still_maps_category(2)  # Protocols without watchers — should f...
+    TestPrefixSources: test_file_like_prefixes_normalized_to_path(2),test_watcher_prefixes_preserved(1),test_plain_path(0)
+    TestWatcherResolution: test_resolve_picks_correct_watcher(2)  # Verify WatcherRegistry.resolve picks...
+    TestPromptBuilderForProtocols: test_web_source_uses_generic_prompt(0),test_api_source_uses_generic_prompt(0),test_network_source_uses_generic_prompt(0),test_code_source_uses_code_prompt(0),test_empty_categories_with_code_goal_uses_code_prompt(0)  # Web/API sources must use GenericPromp...
+    _parse(src:str)
+    _quick(src:str)
+  tests/test_server_prompt_selection.py:
+    i: toonic.server.llm.prompts.{CodeAnalysisPrompt,GenericPrompt,select_prompt_builder},toonic.server.models.SourceCategory
+    e: test_web_category_selects_generic_prompt,test_code_category_selects_code_analysis_prompt
+    test_web_category_selects_generic_prompt()
+    test_code_category_selects_code_analysis_prompt()
   tests/test_triggers.py:
     i: asyncio,time,pytest,toonic.server.triggers.detectors.MotionDetector,toonic.server.triggers.dsl
     e: TestDSL,TestDetectors,TestScheduler,TestNLP2YAML
@@ -313,9 +336,16 @@ D:
     _python_project(spec:ProjectSpec;project_dir:Path)->Dict[str, str]
     _node_project(spec:ProjectSpec;project_dir:Path)->Dict[str, str]
   toonic/cli.py:
-    i: sys,pathlib.Path,toonic.pipeline.Pipeline,typing.{List,Optional}
+    i: sys,pathlib.Path,toonic.pipeline.Pipeline,typing.{Any,Callable,Dict,List,Optional}
     e: cli_main
-    cli_main(args:Any=None)->None
+    _cmd_spec(parsed:Any)->None
+    _cmd_reproduce(parsed:Any)->None
+    _cmd_formats(parsed:Any)->None
+    _cmd_init(parsed:Any)->None
+    _cmd_examples_list()->None
+    _cmd_examples_verify()->int
+    _cmd_examples_show(name:str)->None
+    _cmd_examples_preset(name:str;sources:List[str])->int
   toonic/core/base.py:
     i: hashlib,pathlib.Path,typing.Any
     e: BaseHandlerMixin
@@ -422,7 +452,7 @@ D:
     Pipeline: _ensure_initialized(0),to_spec(3),reproduce(4),roundtrip(4),batch(4)  # Fasada nad całym przepływem parse ↔ r...
   toonic/server/__main__.py:
     i: argparse,asyncio,logging,signal,socket,subprocess,sys,pathlib.Path
-    e: check_port_occupied,stop_process_using_port,ensure_port_available,parse_args,parse_source_string,run_server,main
+    e: check_port_occupied,stop_process_using_port,ensure_port_available,parse_args,_SUPPORTED_PROTOCOLS,_UNSUPPORTED_PROTOCOLS,parse_source_string,run_server
     check_port_occupied(host:str;port:int)->bool
     stop_process_using_port(host:str;port:int)->bool
     ensure_port_available(host:str;port:int)->None
@@ -431,11 +461,17 @@ D:
     run_server(args)
     main()
   toonic/server/client.py:
-    i: argparse,asyncio,json,sys,threading,websockets,httpx,typing.Optional,urllib.{error,request}
-    e: ToonicClient,run_shell,main
+    i: argparse,asyncio,json,sys,threading,datetime,typing.{Callable,Dict,List,Optional}
+    e: ToonicClient,SHELL_COMMANDS,run_shell,main
     ToonicClient: __init__(1),get_status(0),get_actions(1),get_formats(0),analyze(2)  # REST + WebSocket client for Toonic Se...
-    run_shell(base_url:str='http://localhost:8900')
-    main()
+    _print_help()->None
+    _print_status(client:ToonicClient)->None
+    _print_actions(client:ToonicClient;parts:List[str])->None
+    _print_formats(client:ToonicClient)->None
+    _cmd_analyze(client:ToonicClient;parts:List[str];current_model:str)->None
+    _cmd_add(client:ToonicClient;parts:List[str])->bool
+    _cmd_convert(client:ToonicClient;parts:List[str])->bool
+    _cmd_model(parts:List[str];current_model:str)->str
   toonic/server/config.py:
     i: os,json,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict,List,Optional}
     e: ModelConfig,SourceConfig,ServerConfig
@@ -476,7 +512,7 @@ D:
     LLMPipeline: execute(4)  # Orchestrates the full LLM flow: promp...
   toonic/server/llm/prompts.py:
     i: dataclasses.dataclass,toonic.server.models.{ContextChunk,SourceCategory},typing.{Any,Dict,List,Protocol}
-    e: PromptBuilder,GenericPrompt,CodeAnalysisPrompt,CCTVEventPrompt,select_prompt_builder
+    e: PromptBuilder,GenericPrompt,CodeAnalysisPrompt,CCTVEventPrompt,_NON_CODE_CATEGORIES,select_prompt_builder
     PromptBuilder: build(3)  # Builds prompt from context.
     GenericPrompt: build(3)  # Default prompt — works for any data t...
     CodeAnalysisPrompt: build(3)  # Prompt optimized for code analysis —...
@@ -494,18 +530,49 @@ D:
     ContextChunk: __post_init__(0),to_dict(0)  # Single chunk of context from a data s...
     ActionResponse: to_dict(0)  # LLM response → action to execute.
     ServerEvent: __post_init__(0),to_dict(0)  # Event emitted by the server to clients.
-  toonic/server/quick.py:
-    i: asyncio,logging,os,shutil,tarfile,tempfile,zipfile,pathlib.Path,typing.{Any,Dict}
-    e: _PREFIX_CATEGORY,_PROTO_CATEGORY,parse_source,unpack_archive,watch_archive,ConfigBuilder,watch,monitor
-    ConfigBuilder: __init__(0),add(1),code(1),logs(1),video(1)  # Fluent builder for ServerConfig + Too...
-    parse_source(source:Union[str;SourceConfig;Dict[str;Any]])->SourceConfig
+  toonic/server/quick/archive.py:
+    i: logging,shutil,tarfile,tempfile,zipfile,pathlib.Path,toonic.server.quick.parsing.parse_source,typing.TYPE_CHECKING
+    e: _ZIP_EXTENSIONS,_TAR_EXTENSIONS,unpack_archive,watch_archive
+    _is_zip_file(filename:str)->bool
+    _is_tar_file(filename:str)->bool
+    _extract_zip(archive_path:Path;out_dir:Path)->None
+    _extract_tar(archive_path:Path;out_dir:Path)->None
     unpack_archive(archive_path:str;output_dir:Any=None)->str
-    watch_archive(archive_path:str)->ConfigBuilder
+    _should_include_file(p:Path)->bool
+    _collect_files_from_directory(root:Path;max_files:int)->list[Path]
+    watch_archive(archive_path:str)->"ConfigBuilder"
+  toonic/server/quick/builder.py:
+    i: logging,pathlib.Path,toonic.server.config.{ModelConfig,ServerConfig,SourceConfig},typing.{Any,Dict,List,Optional,Union}
+    e: ConfigBuilder
+    ConfigBuilder: __init__(0),add(1),code(1),logs(1),video(1)  # Fluent builder for ServerConfig + Too...
+  toonic/server/quick/parsing.py:
+    i: logging,pathlib.Path,toonic.server.config.SourceConfig,typing.{Any,Dict,Union}
+    e: _PREFIX_CATEGORY,_PROTO_CATEGORY,_EXT_MAP,_ARCHIVE_SUFFIXES,parse_source
+    _is_archive_suffix(suffixes:list)->bool
+    _detect_category_from_path(source_str:str)->str
+    _parse_protocol_url(source_str:str)->SourceConfig | None
+    _parse_prefixed_source(source_str:str)->SourceConfig | None
+    parse_source(source:Union[str;SourceConfig;Dict[str;Any]])->SourceConfig
+  toonic/server/quick/presets.py:
+    i: typing.{Any,Dict,TYPE_CHECKING}
+    e: _PRESET_SECURITY_GOAL,_PRESET_CODE_REVIEW_GOAL,_PRESET_LOG_MONITOR_GOAL,_PRESET_INFRA_HEALTH_GOAL,_PRESET_CCTV_MONITOR_GOAL,_PRESET_WEB_MONITOR_GOAL,_PRESET_FULL_STACK_GOAL,security_audit
+    _apply_overrides(builder:ConfigBuilder;overrides:Dict[str;Any])->None
+    security_audit()->"ConfigBuilder"
+    code_review()->"ConfigBuilder"
+    log_monitor()->"ConfigBuilder"
+    infra_health()->"ConfigBuilder"
+    cctv_monitor()->"ConfigBuilder"
+    web_monitor()->"ConfigBuilder"
+    full_stack()->"ConfigBuilder"
+  toonic/server/quick/runtime.py:
+    i: asyncio,logging,toonic.server.config.SourceConfig,toonic.server.quick.builder.ConfigBuilder,typing.{Any,Dict,Union}
+    e: watch,monitor,serve,run
     watch()->ConfigBuilder
     monitor()->None
+    _serve_web(app;server;host:str;port:int)->None
+    _serve_headless(server)->None
     serve(server;web:bool=True;host:str='0.0.0.0';port:int=8900)->None
     run()->None
-    security_audit()->ConfigBuilder
   toonic/server/transport/app.py:
     i: json,logging,fastapi.FastAPI,fastapi.middleware.cors.CORSMiddleware,fastapi.responses.HTMLResponse,pathlib.Path,typing.Any
     e: _TEMPLATE_DIR,create_app
