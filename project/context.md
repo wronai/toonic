@@ -4,10 +4,10 @@
 
 - **Project**: /home/tom/github/wronai/toonic
 - **Analysis Mode**: static
-- **Total Functions**: 627
+- **Total Functions**: 646
 - **Total Classes**: 122
-- **Modules**: 102
-- **Entry Points**: 506
+- **Modules**: 108
+- **Entry Points**: 512
 
 ## Architecture by Module
 
@@ -46,6 +46,11 @@
 - **Classes**: 6
 - **File**: `video.py`
 
+### toonic.server.watchers.http_watcher
+- **Functions**: 17
+- **Classes**: 1
+- **File**: `http_watcher.py`
+
 ### toonic.server.triggers.detectors
 - **Functions**: 17
 - **Classes**: 9
@@ -64,11 +69,6 @@
 ### toonic.cli
 - **Functions**: 15
 - **File**: `cli.py`
-
-### toonic.server.watchers.stream_watcher
-- **Functions**: 15
-- **Classes**: 3
-- **File**: `stream_watcher.py`
 
 ### toonic.formats.audio
 - **Functions**: 14
@@ -95,6 +95,11 @@
 - **Classes**: 1
 - **File**: `network_watcher.py`
 
+### toonic.server.triggers.nlp2yaml
+- **Functions**: 13
+- **Classes**: 1
+- **File**: `nlp2yaml.py`
+
 ### examples.run_all
 - **Functions**: 12
 - **File**: `run_all.py`
@@ -104,11 +109,6 @@
 - **Classes**: 1
 - **File**: `docker_watcher.py`
 
-### toonic.server.watchers.directory_watcher
-- **Functions**: 12
-- **Classes**: 1
-- **File**: `directory_watcher.py`
-
 ## Key Entry Points
 
 Main execution flows into the system:
@@ -117,24 +117,12 @@ Main execution flows into the system:
 > Compare current state with snapshot, detect changes.
 - **Calls**: set, set, set, set, list, bool, self._take_snapshot, self._snapshot.keys
 
-### toonic.server.triggers.nlp2yaml.NLP2YAML._try_local_parse
-> Parse common natural language patterns locally.
-- **Calls**: None.strip, self._extract_time, self._extract_time, self._extract_time, re.search, re.search, re.search, re.search
-
 ### toonic.autopilot.loop.AutopilotLoop.run
 > Run the full autopilot loop. Returns action log.
 - **Calls**: logger.info, LLMCaller, ResponseParser, range, self._emit, logger.info, self._emit, self._emit
 
-### toonic.server.watchers.stream_watcher.StreamWatcher.__init__
-- **Calls**: None.__init__, float, float, float, toonic.server.watchers.stream_watcher._bool, str, float, str
-
-### toonic.server.watchers.stream_watcher.StreamWatcher._capture_opencv
-> Capture from RTSP/file using OpenCV with optional YOLO detection.
-- **Calls**: cv2.VideoCapture, max, self._init_yolo, logger.info, cap.release, cap.isOpened, logger.error, cap.get
-
-### toonic.server.watchers.stream_watcher.StreamWatcher._check_event_and_emit
-> Check buffered frames for a confirmed event and emit multi-frame chunk.
-- **Calls**: time.time, self._select_event_frames, self._extract_roi_crops, None.join, logger.info, self._frame_buffer.clear, len, all_dets.extend
+### toonic.server.watchers.stream.watcher.StreamWatcher.__init__
+- **Calls**: None.__init__, float, float, float, toonic.server.watchers.stream.watcher._bool, str, float, str
 
 ### toonic.server.watchers.database_watcher.DatabaseWatcher._check_sqlite
 > Check SQLite database.
@@ -157,10 +145,6 @@ Main execution flows into the system:
 ### toonic.autopilot.executor.ActionExecutor._execute_code_change
 > Extract file changes from LLM response and apply them.
 - **Calls**: action.get, action.get, action.get, ExecutionResult, action.get, isinstance, self._extract_code, isinstance
-
-### toonic.server.watchers.http_watcher.HttpWatcher._check_endpoint
-> Perform HTTP check and emit results.
-- **Calls**: self._history.append, self._to_toon, time.time, round, len, headers.get, body.decode, len
 
 ### examples.run_all.main
 - **Calls**: argparse.ArgumentParser, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument, parser.add_argument
@@ -224,6 +208,21 @@ Main execution flows into the system:
 > Convert check result to TOON format.
 - **Calls**: result.get, result.get, result.get, result.get, result.get, result.get, result.get, result.get
 
+### toonic.server.watchers.log_watcher.LogWatcher._to_toon
+> Convert log lines to TOON format.
+- **Calls**: parts.append, None.join, len, parts.append, parts.append, parts.append, any, len
+
+### toonic.server.watchers.network_watcher.NetworkWatcher.__init__
+- **Calls**: None.__init__, target.startswith, float, float, int, options.get, options.get, target.startswith
+
+### toonic.server.watchers.docker_watcher.DockerWatcher._to_toon
+> Convert check result to TOON format.
+- **Calls**: result.get, result.get, result.get, result.get, result.get, sorted, None.join, None.join
+
+### toonic.server.watchers.directory_watcher.DirectoryWatcher._build_tree_toon
+> Build initial tree TOON representation.
+- **Calls**: sum, sum, parts.append, parts.extend, None.join, len, sorted, len
+
 ## Process Flows
 
 Key execution flows identified:
@@ -233,38 +232,23 @@ Key execution flows identified:
 _check_changes [toonic.server.watchers.directory_watcher.DirectoryWatcher]
 ```
 
-### Flow 2: _try_local_parse
-```
-_try_local_parse [toonic.server.triggers.nlp2yaml.NLP2YAML]
-```
-
-### Flow 3: run
+### Flow 2: run
 ```
 run [toonic.autopilot.loop.AutopilotLoop]
 ```
 
-### Flow 4: __init__
+### Flow 3: __init__
 ```
-__init__ [toonic.server.watchers.stream_watcher.StreamWatcher]
+__init__ [toonic.server.watchers.stream.watcher.StreamWatcher]
   └─ →> _bool
 ```
 
-### Flow 5: _capture_opencv
-```
-_capture_opencv [toonic.server.watchers.stream_watcher.StreamWatcher]
-```
-
-### Flow 6: _check_event_and_emit
-```
-_check_event_and_emit [toonic.server.watchers.stream_watcher.StreamWatcher]
-```
-
-### Flow 7: _check_sqlite
+### Flow 4: _check_sqlite
 ```
 _check_sqlite [toonic.server.watchers.database_watcher.DatabaseWatcher]
 ```
 
-### Flow 8: demo
+### Flow 5: demo
 ```
 demo [examples.security-audit.quick_audit]
   └─> audit_code
@@ -273,14 +257,29 @@ demo [examples.security-audit.quick_audit]
           └─ →> watch
 ```
 
-### Flow 9: main
+### Flow 6: main
 ```
 main [examples.programmatic-api.demo_accumulator]
 ```
 
-### Flow 10: parse
+### Flow 7: parse
 ```
 parse [toonic.formats.audio.AudioFileHandler]
+```
+
+### Flow 8: _find_processes
+```
+_find_processes [toonic.server.watchers.process_watcher.ProcessWatcher]
+```
+
+### Flow 9: _execute_code_change
+```
+_execute_code_change [toonic.autopilot.executor.ActionExecutor]
+```
+
+### Flow 10: _to_toon
+```
+_to_toon [toonic.server.watchers.network_watcher.NetworkWatcher]
 ```
 
 ## Key Classes
@@ -289,6 +288,12 @@ parse [toonic.formats.audio.AudioFileHandler]
 > Main server — connects watchers → accumulator → LLM router → actions.
 - **Methods**: 21
 - **Key Methods**: toonic.server.main.ToonicServer.__init__, toonic.server.main.ToonicServer.start, toonic.server.main.ToonicServer.stop, toonic.server.main.ToonicServer.add_source, toonic.server.main.ToonicServer.remove_source, toonic.server.main.ToonicServer._consume_watcher, toonic.server.main.ToonicServer._on_trigger_fired, toonic.server.main.ToonicServer._analysis_loop, toonic.server.main.ToonicServer._one_shot, toonic.server.main.ToonicServer._run_analysis
+
+### toonic.server.watchers.http_watcher.HttpWatcher
+> Watches HTTP/HTTPS endpoints for availability, content changes, and performance.
+- **Methods**: 17
+- **Key Methods**: toonic.server.watchers.http_watcher.HttpWatcher.__init__, toonic.server.watchers.http_watcher.HttpWatcher.start, toonic.server.watchers.http_watcher.HttpWatcher.stop, toonic.server.watchers.http_watcher.HttpWatcher._poll_loop, toonic.server.watchers.http_watcher.HttpWatcher._check_endpoint, toonic.server.watchers.http_watcher.HttpWatcher._update_result_with_fetch, toonic.server.watchers.http_watcher.HttpWatcher._detect_changes, toonic.server.watchers.http_watcher.HttpWatcher._check_keywords, toonic.server.watchers.http_watcher.HttpWatcher._check_ssl_and_update, toonic.server.watchers.http_watcher.HttpWatcher._update_state
+- **Inherits**: BaseWatcher
 
 ### toonic.server.watchers.process_watcher.ProcessWatcher
 > Watches system processes, ports, and service health.
@@ -301,14 +306,6 @@ parse [toonic.formats.audio.AudioFileHandler]
 - **Methods**: 15
 - **Key Methods**: examples.security-audit.continuous_monitoring.SecurityMonitor.__init__, examples.security-audit.continuous_monitoring.SecurityMonitor.load_config, examples.security-audit.continuous_monitoring.SecurityMonitor.check_ssl_certificate, examples.security-audit.continuous_monitoring.SecurityMonitor.check_security_headers, examples.security-audit.continuous_monitoring.SecurityMonitor.check_response_time, examples.security-audit.continuous_monitoring.SecurityMonitor.check_content_changes, examples.security-audit.continuous_monitoring.SecurityMonitor.check_dependencies, examples.security-audit.continuous_monitoring.SecurityMonitor.run_all_checks, examples.security-audit.continuous_monitoring.SecurityMonitor.calculate_security_score, examples.security-audit.continuous_monitoring.SecurityMonitor.send_alert
 
-### toonic.server.watchers.stream_watcher.StreamWatcher
-> Watches RTSP/HTTP streams with optional YOLO pre-detection.
-
-Key options (pass via ``**options`` or 
-- **Methods**: 14
-- **Key Methods**: toonic.server.watchers.stream_watcher.StreamWatcher.__init__, toonic.server.watchers.stream_watcher.StreamWatcher.start, toonic.server.watchers.stream_watcher.StreamWatcher.stop, toonic.server.watchers.stream_watcher.StreamWatcher._init_yolo, toonic.server.watchers.stream_watcher.StreamWatcher._capture_loop, toonic.server.watchers.stream_watcher.StreamWatcher._capture_opencv, toonic.server.watchers.stream_watcher.StreamWatcher._run_detection, toonic.server.watchers.stream_watcher.StreamWatcher._detect_sync, toonic.server.watchers.stream_watcher.StreamWatcher._check_event_and_emit, toonic.server.watchers.stream_watcher.StreamWatcher._select_event_frames
-- **Inherits**: BaseWatcher
-
 ### toonic.server.client.ToonicClient
 > REST + WebSocket client for Toonic Server.
 - **Methods**: 13
@@ -319,6 +316,11 @@ Key options (pass via ``**options`` or
 - **Methods**: 13
 - **Key Methods**: toonic.server.watchers.network_watcher.NetworkWatcher.__init__, toonic.server.watchers.network_watcher.NetworkWatcher.start, toonic.server.watchers.network_watcher.NetworkWatcher.stop, toonic.server.watchers.network_watcher.NetworkWatcher._poll_loop, toonic.server.watchers.network_watcher.NetworkWatcher._check, toonic.server.watchers.network_watcher.NetworkWatcher._check_target, toonic.server.watchers.network_watcher.NetworkWatcher._resolve_dns, toonic.server.watchers.network_watcher.NetworkWatcher._ping, toonic.server.watchers.network_watcher.NetworkWatcher._tcp_ping, toonic.server.watchers.network_watcher.NetworkWatcher._check_ports
 - **Inherits**: BaseWatcher
+
+### toonic.server.triggers.nlp2yaml.NLP2YAML
+> Converts natural language to YAML trigger configuration via LLM.
+- **Methods**: 13
+- **Key Methods**: toonic.server.triggers.nlp2yaml.NLP2YAML.__init__, toonic.server.triggers.nlp2yaml.NLP2YAML.generate, toonic.server.triggers.nlp2yaml.NLP2YAML.generate_yaml, toonic.server.triggers.nlp2yaml.NLP2YAML._try_local_parse, toonic.server.triggers.nlp2yaml.NLP2YAML._parse_object_condition, toonic.server.triggers.nlp2yaml.NLP2YAML._parse_motion_condition, toonic.server.triggers.nlp2yaml.NLP2YAML._parse_scene_change_condition, toonic.server.triggers.nlp2yaml.NLP2YAML._parse_pattern_condition, toonic.server.triggers.nlp2yaml.NLP2YAML._parse_audio_conditions, toonic.server.triggers.nlp2yaml.NLP2YAML._build_trigger_rule
 
 ### toonic.server.core.history.ConversationHistory
 > SQLite-backed conversation history for all LLM exchanges.
@@ -375,12 +377,6 @@ Key options (pass via ``**options`` or
 - **Methods**: 9
 - **Key Methods**: toonic.formats.evidence.EvidenceGraphBuilder.__init__, toonic.formats.evidence.EvidenceGraphBuilder.add_code_evidence, toonic.formats.evidence.EvidenceGraphBuilder.add_document_evidence, toonic.formats.evidence.EvidenceGraphBuilder.add_video_evidence, toonic.formats.evidence.EvidenceGraphBuilder.add_audio_evidence, toonic.formats.evidence.EvidenceGraphBuilder.add_database_evidence, toonic.formats.evidence.EvidenceGraphBuilder.add_test_evidence, toonic.formats.evidence.EvidenceGraphBuilder.build, toonic.formats.evidence.EvidenceGraphBuilder._auto_link_relations
 
-### toonic.server.watchers.http_watcher.HttpWatcher
-> Watches HTTP/HTTPS endpoints for availability, content changes, and performance.
-- **Methods**: 9
-- **Key Methods**: toonic.server.watchers.http_watcher.HttpWatcher.__init__, toonic.server.watchers.http_watcher.HttpWatcher.start, toonic.server.watchers.http_watcher.HttpWatcher.stop, toonic.server.watchers.http_watcher.HttpWatcher._poll_loop, toonic.server.watchers.http_watcher.HttpWatcher._check_endpoint, toonic.server.watchers.http_watcher.HttpWatcher._fetch, toonic.server.watchers.http_watcher.HttpWatcher._check_ssl_cert, toonic.server.watchers.http_watcher.HttpWatcher._to_toon, toonic.server.watchers.http_watcher.HttpWatcher.supports
-- **Inherits**: BaseWatcher
-
 ### toonic.server.triggers.scheduler.TriggerScheduler
 > Manages all trigger rules and evaluates incoming data against them.
 - **Methods**: 9
@@ -426,9 +422,6 @@ Key functions that process and transform data:
 > Lista dostępnych formatów i ich status.
 - **Output to**: toonic.pipeline.Pipeline._ensure_initialized, toonic.core.registry.FormatRegistry.list_categories, toonic.core.registry.FormatRegistry.available, len
 
-### toonic.formats.audio.AudioFileHandler.parse
-- **Output to**: AudioLogic, AudioLogic, np.frombuffer, samples.tobytes, SpeechDetector
-
 ### toonic.formats.document.MarkdownHandler.parse
 > Parsuje Markdown → DocumentLogic.
 - **Output to**: path.read_text, self._compute_hash, content.startswith, self._extract_sections, frontmatter.get
@@ -438,6 +431,9 @@ Key functions that process and transform data:
 
 ### toonic.formats.document.RstHandler.parse
 - **Output to**: path.read_text, content.split, enumerate, DocumentLogic, all
+
+### toonic.formats.audio.AudioFileHandler.parse
+- **Output to**: AudioLogic, AudioLogic, np.frombuffer, samples.tobytes, SpeechDetector
 
 ### toonic.formats.config.DockerfileHandler.parse
 - **Output to**: path.read_text, self._compute_hash, content.split, ConfigLogic, line.strip
@@ -483,9 +479,9 @@ Key functions that process and transform data:
 > Execute convert command. Returns True if executed.
 - **Output to**: client.convert, len, print, print, print
 
-### toonic.server.__main__.stop_process_using_port
-> Stop process using the specified port.
-- **Output to**: subprocess.run, result.stdout.strip, None.split, print, print
+### toonic.autopilot.loop.AutopilotLoop._format_previous_actions
+> Format recent actions for context.
+- **Output to**: None.join, lines.append, a.get, a.get, lines.append
 
 ## Behavioral Patterns
 
@@ -519,14 +515,15 @@ Key functions that process and transform data:
 Functions exposed as public API (no underscore prefix):
 
 - `toonic.server.transport.broxeen_bridge.register_broxeen_routes` - 105 calls
-- `toonic.server.__main__.run_server` - 65 calls
 - `toonic.autopilot.loop.AutopilotLoop.run` - 47 calls
+- `toonic.server.watchers.stream.events.check_event_and_emit` - 39 calls
 - `examples.security-audit.quick_audit.demo` - 37 calls
 - `examples.programmatic-api.demo_accumulator.main` - 36 calls
 - `toonic.formats.audio.AudioFileHandler.parse` - 34 calls
 - `examples.programmatic-api.demo_quick.demo_config_builder` - 34 calls
 - `unified_toon.create_unified_toon` - 31 calls
 - `examples.run_all.main` - 31 calls
+- `toonic.server.watchers.stream.capture.capture_opencv` - 31 calls
 - `examples.security-audit.enterprise_features.EnterpriseSecurityMonitor.run_enterprise_analysis` - 30 calls
 - `toonic.autopilot.scaffold.ProjectScaffold.generate` - 29 calls
 - `toonic.server.llm.parser.ResponseParser.parse` - 28 calls
@@ -557,7 +554,6 @@ Functions exposed as public API (no underscore prefix):
 - `toonic.server.triggers.dsl.TriggerRule.from_dict` - 17 calls
 - `toonic.server.transport.routes.websocket.register` - 17 calls
 - `toonic.formats.document.RstHandler.parse` - 16 calls
-- `toonic.formats.config.EnvHandler.parse` - 16 calls
 
 ## System Interactions
 
@@ -567,9 +563,6 @@ How components interact:
 graph TD
     _check_changes --> set
     _check_changes --> list
-    _try_local_parse --> strip
-    _try_local_parse --> _extract_time
-    _try_local_parse --> search
     run --> info
     run --> LLMCaller
     run --> ResponseParser
@@ -578,16 +571,6 @@ graph TD
     __init__ --> __init__
     __init__ --> float
     __init__ --> _bool
-    _capture_opencv --> VideoCapture
-    _capture_opencv --> max
-    _capture_opencv --> _init_yolo
-    _capture_opencv --> info
-    _capture_opencv --> release
-    _check_event_and_emi --> time
-    _check_event_and_emi --> _select_event_frames
-    _check_event_and_emi --> _extract_roi_crops
-    _check_event_and_emi --> join
-    _check_event_and_emi --> info
     _check_sqlite --> Path
     _check_sqlite --> get_event_loop
     _check_sqlite --> update
@@ -595,6 +578,19 @@ graph TD
     _check_sqlite --> stat
     demo --> print
     demo --> audit_code
+    main --> print
+    main --> ContextAccumulator
+    parse --> AudioLogic
+    parse --> frombuffer
+    parse --> tobytes
+    parse --> SpeechDetector
+    _find_processes --> isdir
+    _find_processes --> listdir
+    _find_processes --> create_subprocess_ex
+    _find_processes --> communicate
+    _find_processes --> splitlines
+    _execute_code_change --> get
+    _execute_code_change --> ExecutionResult
 ```
 
 ## Reverse Engineering Guidelines

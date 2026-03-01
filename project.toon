@@ -1,11 +1,6 @@
-# toonic | 124f 21921L | python:124
+# toonic | 125f 21573L | python:125
 # Keys: M=modules, D=details, i=imports, c=classes, f=functions, m=methods
-M[124]:
-  toonic/server/watchers/stream/__init__.py,9
-  toonic/server/watchers/stream/capture.py,159
-  toonic/server/watchers/stream/detection.py,70
-  toonic/server/watchers/stream/events.py,164
-  toonic/server/watchers/stream/models.py,22
+M[125]:
   examples/_helpers.py,19
   examples/archive-monitoring/run.py,22
   examples/code-analysis/run.py,13
@@ -77,7 +72,7 @@ M[124]:
   toonic/formats/video.py,253
   toonic/pipeline.py,184
   toonic/server/__init__.py,31
-  toonic/server/__main__.py,254
+  toonic/server/__main__.py,269
   toonic/server/client.py,336
   toonic/server/config.py,137
   toonic/server/core/__init__.py,1
@@ -111,7 +106,7 @@ M[124]:
   toonic/server/triggers/__init__.py,15
   toonic/server/triggers/detectors.py,245
   toonic/server/triggers/dsl.py,189
-  toonic/server/triggers/nlp2yaml.py,225
+  toonic/server/triggers/nlp2yaml.py,266
   toonic/server/triggers/scheduler.py,187
   toonic/server/watchers/__init__.py,17
   toonic/server/watchers/base.py,100
@@ -119,37 +114,19 @@ M[124]:
   toonic/server/watchers/directory_watcher.py,274
   toonic/server/watchers/docker_watcher.py,242
   toonic/server/watchers/file_watcher.py,150
-  toonic/server/watchers/http_watcher.py,265
+  toonic/server/watchers/http_watcher.py,296
   toonic/server/watchers/log_watcher.py,153
   toonic/server/watchers/network_watcher.py,300
   toonic/server/watchers/process_watcher.py,322
-  toonic/server/watchers/stream_watcher.py,472
+  toonic/server/watchers/stream/__init__.py,9
+  toonic/server/watchers/stream/capture.py,159
+  toonic/server/watchers/stream/detection.py,70
+  toonic/server/watchers/stream/events.py,164
+  toonic/server/watchers/stream/models.py,22
+  toonic/server/watchers/stream/watcher.py,113
+  toonic/server/watchers/stream_watcher.py,16
   unified_toon.py,82
 D:
-  toonic/server/watchers/stream/capture.py:
-    i: asyncio,base64,logging,time,pathlib.Path,typing.TYPE_CHECKING
-    e: capture_opencv,capture_mock
-    capture_opencv(watcher:StreamWatcher)->None
-    _handle_basic_mode(watcher:StreamWatcher;cv2;small;gray;now:float;is_keyframe:bool;...+1)->None
-    capture_mock(watcher:StreamWatcher)->None
-  toonic/server/watchers/stream/detection.py:
-    i: asyncio,logging,models.Detection,typing.{List,TYPE_CHECKING}
-    e: init_yolo,run_detection
-    init_yolo(watcher:StreamWatcher)->bool
-    run_detection(watcher:StreamWatcher;frame)->List[Detection]
-    _detect_sync(watcher:StreamWatcher;frame)->List[Detection]
-  toonic/server/watchers/stream/events.py:
-    i: base64,logging,time,models.FrameRecord,toonic.server.models.{ContentType,ContextChunk,SourceCategory},typing.{List,TYPE_CHECKING}
-    e: check_event_and_emit,emit_heartbeat
-    check_event_and_emit(watcher:StreamWatcher;cv2;np)->None
-    _select_event_frames(watcher:StreamWatcher;frames:List[FrameRecord])->List[FrameRecord]
-    _extract_roi_crops(watcher:StreamWatcher;cv2;frames:List[FrameRecord])->List[bytes]
-    emit_heartbeat(watcher:StreamWatcher;cv2;small;scene_score:float)->None
-  toonic/server/watchers/stream/models.py:
-    i: dataclasses.{dataclass,field},typing.{Any,List,Tuple}
-    e: Detection,FrameRecord
-    Detection:   # Single object detection from YOLO or...
-    FrameRecord:   # Buffered frame with optional detections.
   examples/_helpers.py:
     i: toonic.server.config.ServerConfig,typing.List
     e: print_config_summary,print_to_run_hint
@@ -487,8 +464,9 @@ D:
     ensure_port_available(host:str;port:int)->None
     parse_args()
     parse_source_string(source_str:str)
-    run_server(args)
-    main()
+    _build_server_config(args)->"ServerConfig"
+    _build_trigger_config(args)->"TriggerConfig | None"
+    _run_no_web_mode(server:ToonicServer;config:ServerConfig)->None
   toonic/server/client.py:
     i: argparse,asyncio,json,sys,threading,datetime,typing.{Callable,Dict,List,Optional}
     e: ToonicClient,SHELL_COMMANDS,run_shell,main
@@ -665,7 +643,7 @@ D:
   toonic/server/triggers/nlp2yaml.py:
     i: json,logging,os,re,toonic.server.triggers.dsl.{EventCondition,TriggerConfig,TriggerRule},typing.{Any,Dict,Optional}
     e: YAML_SCHEMA_PROMPT,NLP2YAML
-    NLP2YAML: __init__(2),generate(3),generate_yaml(3),_try_local_parse(3),_generate_via_llm(3)  # Converts natural language to YAML tri...
+    NLP2YAML: __init__(2),generate(3),generate_yaml(3),_try_local_parse(3),_parse_object_condition(2)  # Converts natural language to YAML tri...
   toonic/server/triggers/scheduler.py:
     i: asyncio,logging,time,dataclasses.{dataclass,field},typing.{Any,Callable,Coroutine,Dict,List}
     e: TriggerEvent,RuleState,TriggerScheduler
@@ -710,12 +688,34 @@ D:
     i: asyncio,logging,os,re,socket,time,typing.{Any,Dict,List,Optional}
     e: ProcessWatcher
     ProcessWatcher: __init__(2),_parse_target(1),start(0),stop(0),_poll_loop(0)  # Watches system processes, ports, and...
-  toonic/server/watchers/stream_watcher.py:
-    i: asyncio,base64,logging,time,collections.deque,dataclasses.{dataclass,field},pathlib.Path,typing.{Any,Dict}
-    e: Detection,FrameRecord,StreamWatcher
+  toonic/server/watchers/stream/capture.py:
+    i: asyncio,base64,logging,time,pathlib.Path,typing.TYPE_CHECKING
+    e: capture_opencv,capture_mock
+    capture_opencv(watcher:StreamWatcher)->None
+    _handle_basic_mode(watcher:StreamWatcher;cv2;small;gray;now:float;is_keyframe:bool;...+1)->None
+    capture_mock(watcher:StreamWatcher)->None
+  toonic/server/watchers/stream/detection.py:
+    i: asyncio,logging,models.Detection,typing.{List,TYPE_CHECKING}
+    e: init_yolo,run_detection
+    init_yolo(watcher:StreamWatcher)->bool
+    run_detection(watcher:StreamWatcher;frame)->List[Detection]
+    _detect_sync(watcher:StreamWatcher;frame)->List[Detection]
+  toonic/server/watchers/stream/events.py:
+    i: base64,logging,time,models.FrameRecord,toonic.server.models.{ContentType,ContextChunk,SourceCategory},typing.{List,TYPE_CHECKING}
+    e: check_event_and_emit,emit_heartbeat
+    check_event_and_emit(watcher:StreamWatcher;cv2;np)->None
+    _select_event_frames(watcher:StreamWatcher;frames:List[FrameRecord])->List[FrameRecord]
+    _extract_roi_crops(watcher:StreamWatcher;cv2;frames:List[FrameRecord])->List[bytes]
+    emit_heartbeat(watcher:StreamWatcher;cv2;small;scene_score:float)->None
+  toonic/server/watchers/stream/models.py:
+    i: dataclasses.{dataclass,field},typing.{Any,List,Tuple}
+    e: Detection,FrameRecord
     Detection:   # Single object detection from YOLO or...
     FrameRecord:   # Buffered frame with optional detections.
-    StreamWatcher: __init__(2),start(0),stop(0),_init_yolo(0),_capture_loop(0)  # Watches RTSP/HTTP streams with option...
+  toonic/server/watchers/stream/watcher.py:
+    i: asyncio,logging,collections.deque,toonic.server.models.SourceCategory,toonic.server.watchers.base.{BaseWatcher,WatcherRegistry},toonic.server.watchers.stream.capture.{capture_mock,capture_opencv},toonic.server.watchers.stream.models.{Detection,FrameRecord}
+    e: StreamWatcher
+    StreamWatcher: __init__(2),start(0),stop(0),_capture_loop(0),supports(1)  # Watches RTSP/HTTP streams with option...
     _bool(v)->bool
   unified_toon.py:
     i: sys,argparse,pathlib.Path,toonic.core.detector.SpecDetector,toonic.pipeline.Pipeline,typing.{Any,Dict,List}

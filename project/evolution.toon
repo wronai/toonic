@@ -1,58 +1,58 @@
-# code2llm/evolution | 627 func | 72f | 2026-03-01
+# code2llm/evolution | 646 func | 75f | 2026-03-01
 
 NEXT[10] (ranked by impact):
-  [1] !! SPLIT           toonic/server/watchers/stream_watcher.py
-      WHY: 600L, 3 classes, max CC=25
-      EFFORT: ~4h  IMPACT: 15000
+  [1] !! SPLIT           toonic/autopilot/scaffold.py
+      WHY: 581L, 2 classes, max CC=23
+      EFFORT: ~4h  IMPACT: 13363
 
   [2] !! SPLIT           examples/security-audit/enterprise_features.py
       WHY: 717L, 7 classes, max CC=11
       EFFORT: ~4h  IMPACT: 7887
 
-  [3] !! SPLIT-FUNC      StreamWatcher._capture_opencv  CC=25  fan=35
-      WHY: CC=25 exceeds 15
-      EFFORT: ~1h  IMPACT: 875
-
-  [4] !! SPLIT-FUNC      NLP2YAML._try_local_parse  CC=37  fan=21
-      WHY: CC=37 exceeds 15
-      EFFORT: ~1h  IMPACT: 777
-
-  [5] !  SPLIT-FUNC      run_server  CC=23  fan=30
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 690
-
-  [6] !! SPLIT-FUNC      HttpWatcher._check_endpoint  CC=25  fan=21
-      WHY: CC=25 exceeds 15
-      EFFORT: ~1h  IMPACT: 525
-
-  [7] !  SPLIT-FUNC      StreamWatcher._check_event_and_emit  CC=19  fan=27
+  [3] !  SPLIT-FUNC      check_event_and_emit  CC=19  fan=27
       WHY: CC=19 exceeds 15
       EFFORT: ~1h  IMPACT: 513
 
-  [8] !  SPLIT-FUNC      AutopilotLoop.run  CC=18  fan=26
+  [4] !  SPLIT-FUNC      AutopilotLoop.run  CC=18  fan=26
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 468
 
-  [9] !  SPLIT-FUNC      ProjectScaffold.generate  CC=20  fan=21
+  [5] !  SPLIT-FUNC      capture_opencv  CC=16  fan=28
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 448
+
+  [6] !  SPLIT-FUNC      ProjectScaffold.generate  CC=20  fan=21
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 420
 
-  [10] !  SPLIT-FUNC      get_events_file  CC=19  fan=19
+  [7] !  SPLIT-FUNC      get_events_file  CC=19  fan=19
       WHY: CC=19 exceeds 15
       EFFORT: ~1h  IMPACT: 361
+
+  [8] !  SPLIT-FUNC      DirectoryWatcher._check_changes  CC=18  fan=20
+      WHY: CC=18 exceeds 15
+      EFFORT: ~1h  IMPACT: 360
+
+  [9] !  SPLIT-FUNC      CsvHandler.parse  CC=16  fan=19
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 304
+
+  [10] !  SPLIT-FUNC      ProjectScaffold.detect_spec  CC=23  fan=13
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 299
 
 
 RISKS[3]:
   ⚠ Splitting examples/security-audit/enterprise_features.py may break 22 import paths
   ⚠ Splitting tests/test_watchers.py may break 0 import paths
-  ⚠ Splitting toonic/server/watchers/stream_watcher.py may break 15 import paths
+  ⚠ Splitting toonic/autopilot/scaffold.py may break 5 import paths
 
 METRICS-TARGET:
-  CC̄:          4.4 → ≤3.1
+  CC̄:          4.3 → ≤3.0
   max-CC:      38 → ≤19
-  god-modules: 7 → 0
-  high-CC(≥15): 22 → ≤11
+  god-modules: 6 → 0
+  high-CC(≥15): 19 → ≤9
   hub-types:   0 → ≤0
 
 HISTORY:
-  prev CC̄=4.5 → now CC̄=4.4
+  prev CC̄=4.4 → now CC̄=4.3

@@ -1,30 +1,29 @@
-# code2llm | 72f 13940L | py:72 | 2026-03-01
-# CC̄=4.5 | critical:54/627 | dups:0 | cycles:0
+# code2llm | 78f 14121L | py:78 | 2026-03-01
+# CC̄=4.4 | critical:53/646 | dups:0 | cycles:0
 
-HEALTH[20]:
+HEALTH[19]:
   🟡 CC    execute_all CC=17 (limit:15)
   🟡 CC    detect CC=23 (limit:15)
   🟡 CC    _extract_columns CC=15 (limit:15)
   🟡 CC    parse CC=16 (limit:15)
   🟡 CC    build CC=15 (limit:15)
-  🟡 CC    run_server CC=23 (limit:15)
   🟡 CC    run CC=18 (limit:15)
   🟡 CC    _execute_code_change CC=27 (limit:15)
   🟡 CC    _try_local_parse CC=38 (limit:15)
-  🟡 CC    _check_endpoint CC=25 (limit:15)
   🟡 CC    _detect_changes CC=15 (limit:15)
-  🟡 CC    _check_changes CC=18 (limit:15)
-  🟡 CC    _capture_opencv CC=25 (limit:15)
-  🟡 CC    _check_event_and_emit CC=19 (limit:15)
-  🟡 CC    _detect_changes CC=18 (limit:15)
   🟡 CC    detect_spec CC=23 (limit:15)
   🟡 CC    generate CC=20 (limit:15)
+  🟡 CC    _check_changes CC=18 (limit:15)
+  🟡 CC    _detect_changes CC=18 (limit:15)
   🟡 CC    evaluate CC=21 (limit:15)
-  🟡 CC    _try_local_parse CC=37 (limit:15)
   🟡 CC    parse_raw_to_dict CC=18 (limit:15)
+  🟡 CC    check_event_and_emit CC=19 (limit:15)
+  🟡 CC    capture_opencv CC=16 (limit:15)
+  🟡 CC    get_events_file CC=19 (limit:15)
+  🟡 CC    get_exchanges CC=15 (limit:15)
 
 REFACTOR[1]:
-  1. split 20 high-CC methods  (CC>15)
+  1. split 19 high-CC methods  (CC>15)
 
 COUPLING:
                               toonic       toonic.core    toonic.formats     toonic.server  toonic.autopilot      unified_toon
@@ -36,14 +35,13 @@ COUPLING:
       unified_toon                 1                                                                                        ──
   CYCLES: none
   HUB: toonic/ (fan-in=5)
-  HUB: toonic.formats/ (fan-in=9)
   HUB: toonic.core/ (fan-in=19)
+  HUB: toonic.formats/ (fan-in=9)
   SMELL: toonic/ fan-out=20 → split needed
   SMELL: toonic.formats/ fan-out=9 → split needed
 
 LAYERS:
-  toonic/                         CC̄=4.5    ←in:5  →out:20  !! split
-  │ !! stream_watcher             600L  3C   15m  CC=25     ←0
+  toonic/                         CC̄=4.4    ←in:5  →out:20  !! split
   │ !! scaffold                   581L  2C    5m  CC=23     ←1
   │ !  client                     423L  1C   30m  CC=11     ←0
   │ document                   404L  5C   22m  CC=9      ←1
@@ -51,20 +49,20 @@ LAYERS:
   │ !! database_watcher           388L  1C   11m  CC=18     ←0
   │ !  process_watcher            387L  1C   16m  CC=14     ←0
   │ !! network_watcher            386L  1C   13m  CC=15     ←0
+  │ !  http_watcher               358L  1C   17m  CC=11     ←0
   │ !! loop                       356L  2C   10m  CC=18     ←0
   │ history                    346L  2C   14m  CC=8      ←0
+  │ __main__                   345L  0C   11m  CC=9      ←0
   │ !! data                       343L  5C   18m  CC=16     ←1
   │ !! directory_watcher          337L  1C   12m  CC=18     ←0
+  │ !  nlp2yaml                   336L  1C   13m  CC=13     ←0
   │ !  audio                      335L  6C   14m  CC=11     ←1
-  │ !! http_watcher               335L  1C    9m  CC=25     ←0
   │ !  detectors                  333L  9C   17m  CC=14     ←1
   │ video                      329L  6C   17m  CC=8      ←1
-  │ !! __main__                   326L  0C    7m  CC=23     ←0
   │ broxeen_bridge             322L  0C    1m  CC=1      ←1
   │ !  docker_watcher             297L  1C   12m  CC=14     ←0
   │ cli                        295L  0C   15m  CC=9      ←1
   │ !  evidence                   292L  4C   17m  CC=14     ←1
-  │ !! nlp2yaml                   291L  1C    7m  CC=37     ←0
   │ !! executor                   281L  2C   10m  CC=27     ←0
   │ !! database                   258L  4C   10m  CC=15     ←1
   │ !  pipeline                   244L  2C    6m  CC=10     ←4
@@ -74,7 +72,9 @@ LAYERS:
   │ !! query                      230L  1C    6m  CC=38     ←0
   │ !! scheduler                  230L  3C   14m  CC=21     ←1
   │ !  dsl                        228L  4C   11m  CC=13     ←3
+  │ !! events                     206L  0C    4m  CC=19     ←1
   │ !  accumulator                201L  2C    8m  CC=11     ←0
+  │ !! capture                    198L  0C    3m  CC=16     ←1
   │ !  log_watcher                188L  1C    9m  CC=12     ←0
   │ presets                    180L  0C    8m  CC=3      ←1
   │ file_watcher               177L  1C   10m  CC=9      ←0
@@ -85,6 +85,7 @@ LAYERS:
   │ api                        167L  3C    7m  CC=9      ←1
   │ !  caller                     167L  1C    5m  CC=12     ←0
   │ !! prompts                    163L  3C    3m  CC=15     ←0
+  │ watcher                    142L  1C    6m  CC=6      ←0
   │ archive                    133L  0C    8m  CC=7      ←1
   │ !! parser                     128L  1C    2m  CC=18     ←0
   │ models                     127L  5C    5m  CC=4      ←0
@@ -93,6 +94,7 @@ LAYERS:
   │ __init__                   113L  0C    1m  CC=3      ←1
   │ registry                   102L  1C    7m  CC=7      ←11
   │ app                         91L  0C    2m  CC=2      ←2
+  │ detection                   85L  0C    3m  CC=8      ←1
   │ protocols                   66L  2C    6m  CC=1      ←0
   │ pipeline                    63L  1C    1m  CC=5      ←0
   │ history                     60L  0C    6m  CC=2      ←1
@@ -104,10 +106,13 @@ LAYERS:
   │ __init__                    41L  0C    0m  CC=0.0    ←0
   │ models                      40L  1C    2m  CC=1      ←0
   │ base                        38L  1C    3m  CC=3      ←0
+  │ models                      27L  2C    0m  CC=0.0    ←0
   │ __init__                    27L  0C    0m  CC=0.0    ←0
   │ __init__                    26L  0C    0m  CC=0.0    ←0
+  │ stream_watcher              22L  0C    0m  CC=0.0    ←0
   │ __init__                    19L  0C    0m  CC=0.0    ←0
   │ __init__                    18L  0C    0m  CC=0.0    ←0
+  │ __init__                    14L  0C    0m  CC=0.0    ←0
   │ __init__                    13L  0C    0m  CC=0.0    ←0
   │ rest_api                    10L  0C    0m  CC=0.0    ←0
   │ __main__                     5L  0C    0m  CC=0.0    ←0
@@ -121,24 +126,21 @@ LAYERS:
 
 DUPLICATES[0]: none
 
-FUNCTIONS (CC≥10, 54 of 537):
+FUNCTIONS (CC≥10, 53 of 556):
    38.0  QueryAdapter._try_local_parse              39n   5exit  loops+cond+ret  !! split
-   37.0  NLP2YAML._try_local_parse                  44n   3exit  cond+ret  !! split
    27.0  ActionExecutor._execute_code_change        26n   3exit  loops+cond+ret  !! split
-   25.0  HttpWatcher._check_endpoint                 6n   1exit  cond  !! split
-   25.0  StreamWatcher._capture_opencv              25n   2exit  loops+cond+ret  !! split
    23.0  SpecDetector.detect                        33n  12exit  cond+ret  !! split
-   23.0  run_server                                 23n   1exit  loops+cond  !! split
    23.0  ProjectScaffold.detect_spec                28n   2exit  loops+cond+ret  !! split
    21.0  RuleState.evaluate                         34n  11exit  cond+ret  !! split
    20.0  ProjectScaffold.generate                   14n   2exit  loops+cond+ret  !! split
-   19.0  StreamWatcher._check_event_and_emit        18n   4exit  loops+cond+ret  !! split
+   19.0  check_event_and_emit                       18n   4exit  loops+cond+ret  !! split
    19.0  get_events_file                            16n   3exit  cond+ret  !! split
    18.0  AutopilotLoop.run                           6n   2exit  loops+cond+ret  !! split
    18.0  DirectoryWatcher._check_changes            19n   1exit  loops+cond  !! split
    18.0  DatabaseWatcher._detect_changes            23n   2exit  loops+cond+ret  !! split
    18.0  ResponseParser.parse_raw_to_dict           28n   4exit  loops+cond+ret  !! split
    16.0  CsvHandler.parse                            7n   3exit  loops+cond+ret  !! split
+   16.0  capture_opencv                             21n   2exit  loops+cond+ret  !! split
    15.0  SqlHandler._extract_columns                27n   2exit  loops+cond+ret  !! split
    15.0  AutopilotPrompt.build                      19n   2exit  loops+cond+ret  !! split
    15.0  NetworkWatcher._detect_changes             17n   2exit  loops+cond+ret  !! split
@@ -150,6 +152,7 @@ FUNCTIONS (CC≥10, 54 of 537):
    14.0  DockerWatcher._check                       13n   2exit  cond+ret
    14.0  DatabaseWatcher._to_toon                   18n   2exit  loops+cond+ret
    14.0  PatternDetector.evaluate                   17n   3exit  loops+cond+ret
+   13.0  NLP2YAML._try_local_parse                  20n   3exit  cond+ret
    13.0  EventCondition.to_dict                     27n   2exit  cond+ret
    12.0  CsvHandler._infer_dtype                    18n   7exit  cond+ret
    12.0  CsvHandler.sniff                            9n   2exit  cond+ret
@@ -161,40 +164,43 @@ FUNCTIONS (CC≥10, 54 of 537):
    11.0  SpeechDetector.detect_speech_segments      19n   2exit  loops+cond+ret
    11.0  EvidenceGraphBuilder._auto_link_relations   10n   1exit  loops+cond
    11.0  _execute_command                           22n   5exit  cond+ret
-   11.0  ToonicServer._run_analysis                  9n   2exit  cond+ret
    11.0  _load_dotenv                                6n   1exit  loops+cond
    11.0  ServerConfig.from_dict                     10n   2exit  loops+cond+ret
+   11.0  ToonicServer._run_analysis                  9n   2exit  cond+ret
    11.0  ActionExecutor.execute                      2n   1exit  
    11.0  ContextAccumulator.get_chunks               3n   2exit  ret
    11.0  HttpWatcher._to_toon                       19n   2exit  cond+ret
    11.0  NetworkWatcher._check                       8n   1exit  loops+cond
    11.0  ProcessWatcher._detect_changes             15n   2exit  cond+ret
-   11.0  TriggerRule.to_dict                        21n   2exit  cond+ret
    11.0  CodeAnalysisPrompt.build                    9n   2exit  loops+cond+ret
+   11.0  TriggerRule.to_dict                        21n   2exit  cond+ret
    10.0  Pipeline.batch                             14n   2exit  loops+cond+ret
+   10.0  CsvHandler._to_toon                        11n   2exit  loops+cond+ret
+   10.0  WatcherRegistry.create                     19n   6exit  cond+ret
 
   summary:
-    critical(≥10): 54 | high(5-10): 120 | medium(2-5): 241 | low(<2): 122
-    10% CC≥10  32% CC≥5
+    critical(≥10): 53 | high(5-10): 130 | medium(2-5): 249 | low(<2): 124
+    10% CC≥10  33% CC≥5
 
 HOTSPOTS:
   #1  register_broxeen_routes              fan=44   "calls 44 functions"
-  #2  StreamWatcher._capture_opencv        fan=35   "StreamWatcher method, fan-out=35"
-  #3  run_server                           fan=30   "calls 30 functions"
-  #4  StreamWatcher._check_event_and_emit  fan=27   "StreamWatcher method, fan-out=27"
-  #5  AutopilotLoop.run                    fan=26   "AutopilotLoop method, fan-out=26"
-  #6  DatabaseWatcher._check_sqlite        fan=24   "DatabaseWatcher method, fan-out=24"
-  #7  AudioFileHandler.parse               fan=23   "AudioFileHandler method, fan-out=23"
-  #8  HttpWatcher._check_endpoint          fan=21   "HttpWatcher method, fan-out=21"
-  #9  ProcessWatcher._find_processes       fan=21   "analysis pipeline, 21 stages"
-  #10 ProjectScaffold.generate             fan=21   "ProjectScaffold method, fan-out=21"
+  #2  capture_opencv                       fan=28   "calls 28 functions"
+  #3  check_event_and_emit                 fan=27   "calls 27 functions"
+  #4  AutopilotLoop.run                    fan=26   "AutopilotLoop method, fan-out=26"
+  #5  DatabaseWatcher._check_sqlite        fan=24   "DatabaseWatcher method, fan-out=24"
+  #6  AudioFileHandler.parse               fan=23   "AudioFileHandler method, fan-out=23"
+  #7  ProcessWatcher._find_processes       fan=21   "analysis pipeline, 21 stages"
+  #8  ProjectScaffold.generate             fan=21   "ProjectScaffold method, fan-out=21"
+  #9  FileWatcher._full_scan               fan=20   "FileWatcher method, fan-out=20"
+  #10 DirectoryWatcher._check_changes      fan=20   "DirectoryWatcher method, fan-out=20"
 
 CLASSES:
   ToonicServer                   ████████████████████████  21m  CC̄=3.7   max=11  
+  HttpWatcher                    ███████████████████       17m  CC̄=3.9   max=11  
   ProcessWatcher                 ██████████████████        16m  CC̄=5.2   max=14  
-  StreamWatcher                  ████████████████          14m  CC̄=6.1   max=25    !!
   ToonicClient                   ██████████████            13m  CC̄=1.4   max=4   
   NetworkWatcher                 ██████████████            13m  CC̄=6.3   max=15    !!
+  NLP2YAML                       ██████████████            13m  CC̄=6.0   max=13  
   ConversationHistory            █████████████             12m  CC̄=3.2   max=8   
   DockerWatcher                  █████████████             12m  CC̄=5.3   max=14  
   DirectoryWatcher               █████████████             12m  CC̄=5.2   max=18    !!
@@ -204,14 +210,12 @@ CLASSES:
   ActionExecutor                 ███████████               10m  CC̄=7.1   max=27    !!
   FileWatcher                    ███████████               10m  CC̄=4.5   max=9   
   EvidenceGraphBuilder           ██████████                 9m  CC̄=3.3   max=11  
-  HttpWatcher                    ██████████                 9m  CC̄=6.6   max=25    !!
   TriggerScheduler               ██████████                 9m  CC̄=2.4   max=5   
   ContextAccumulator             █████████                  8m  CC̄=6.0   max=11  
   LogWatcher                     █████████                  8m  CC̄=4.2   max=12  
   FormatRegistry                 ████████                   7m  CC̄=2.9   max=7   
   SqlHandler                     ████████                   7m  CC̄=6.4   max=15    !!
   CsvHandler                     ████████                   7m  CC̄=8.7   max=16    !!
-  NLP2YAML                       ████████                   7m  CC̄=9.6   max=37    !!
   Pipeline                       ██████                     6m  CC̄=4.2   max=10  
   EnvHandler                     ██████                     6m  CC̄=5.8   max=9   
   LowQRTSPExtractor              ██████                     6m  CC̄=2.7   max=4   
@@ -221,6 +225,7 @@ CLASSES:
   AudioFileHandler               █████                      5m  CC̄=3.4   max=7   
   EvidenceGraphHandler           █████                      5m  CC̄=4.4   max=14  
   VideoFileHandler               █████                      5m  CC̄=4.2   max=8   
+  StreamWatcher                  █████                      5m  CC̄=2.8   max=6   
   LLMRouter                      █████                      5m  CC̄=3.2   max=8   
   LLMCaller                      █████                      5m  CC̄=5.6   max=12  
   FileHandler                    ████                       4m  CC̄=1.0   max=1   
@@ -241,10 +246,10 @@ CLASSES:
   TriggerConfig                  ███                        3m  CC̄=3.7   max=5   
   SpecDetector                   ██                         2m  CC̄=14.0  max=23    !!
   FileLogic                      ██                         2m  CC̄=1.0   max=1   
+  DocumentLogic                  ██                         2m  CC̄=1.5   max=2   
   CodeLogicBase                  ██                         2m  CC̄=1.0   max=1   
   AudioLogic                     ██                         2m  CC̄=1.0   max=1   
   MuLawCodec                     ██                         2m  CC̄=1.0   max=1   
-  DocumentLogic                  ██                         2m  CC̄=1.5   max=2   
   ConfigLogic                    ██                         2m  CC̄=1.5   max=2   
   ApiLogic                       ██                         2m  CC̄=1.5   max=2   
   EvidenceGraph                  ██                         2m  CC̄=3.5   max=6   
@@ -260,10 +265,10 @@ CLASSES:
   DetectionResult                ██                         2m  CC̄=2.5   max=3   
   PatternDetector                ██                         2m  CC̄=8.0   max=14  
   AnomalyDetector                ██                         2m  CC̄=3.5   max=6   
+  ResponseParser                 ██                         2m  CC̄=12.5  max=18    !!
   EventCondition                 ██                         2m  CC̄=8.5   max=13  
   FallbackConfig                 ██                         2m  CC̄=3.5   max=4   
   TriggerRule                    ██                         2m  CC̄=8.0   max=11  
-  ResponseParser                 ██                         2m  CC̄=12.5  max=18    !!
   TelephonyFilter                █                          1m  CC̄=1.0   max=1   
   AutopilotPrompt                █                          1m  CC̄=15.0  max=15    !!
   ScaffoldPrompt                 █                          1m  CC̄=1.0   max=1   
@@ -281,8 +286,8 @@ CLASSES:
   LLMRequest                     █                          1m  CC̄=3.0   max=3   
   LLMPipeline                    █                          1m  CC̄=5.0   max=5   
   ReproductionResult                                        0m  CC̄=0.0   max=0.0 
-  SpeechSegment                                             0m  CC̄=0.0   max=0.0 
   DocumentSection                                           0m  CC̄=0.0   max=0.0 
+  SpeechSegment                                             0m  CC̄=0.0   max=0.0 
   ConfigEntry                                               0m  CC̄=0.0   max=0.0 
   EndpointSpec                                              0m  CC̄=0.0   max=0.0 
   EvidenceNode                                              0m  CC̄=0.0   max=0.0 
@@ -295,57 +300,30 @@ CLASSES:
   ModelConfig                                               0m  CC̄=0.0   max=0.0 
   SourceConfig                                              0m  CC̄=0.0   max=0.0 
   AutopilotConfig                                           0m  CC̄=0.0   max=0.0 
-  ExecutionResult                                           0m  CC̄=0.0   max=0.0 
   SourceCategory                                            0m  CC̄=0.0   max=0.0 
   ContentType                                               0m  CC̄=0.0   max=0.0 
+  ExecutionResult                                           0m  CC̄=0.0   max=0.0 
   BudgetConfig                                              0m  CC̄=0.0   max=0.0 
+  ProjectSpec                                               0m  CC̄=0.0   max=0.0 
   Detection                                                 0m  CC̄=0.0   max=0.0 
   FrameRecord                                               0m  CC̄=0.0   max=0.0 
-  ProjectSpec                                               0m  CC̄=0.0   max=0.0 
 
 D:
   toonic/server/core/query.py:
     e: QueryAdapter
     QueryAdapter  # Translates NLP queries to SQL and executes against history D...
       __init__(1)  CC=1.0
-  toonic/server/triggers/nlp2yaml.py:
-    e: NLP2YAML
-    NLP2YAML  # Converts natural language to YAML trigger configuration via ...
-      __init__(2)  CC=3.0
   toonic/autopilot/executor.py:
     e: ExecutionResult,ActionExecutor
     ExecutionResult  # Result of executing an action....
     ActionExecutor  # Executes LLM-generated actions on the project filesystem....
       __init__(4)  CC=1.0
-  toonic/server/watchers/http_watcher.py:
-    e: HttpWatcher
-    HttpWatcher  # Watches HTTP/HTTPS endpoints for availability, content chang...
-      __init__(2)  CC=1.0
-        → __init__(2)  CC=1.0
-  toonic/server/watchers/stream_watcher.py:
-    e: Detection,FrameRecord,StreamWatcher,_bool
-    Detection  # Single object detection from YOLO or similar....
-    FrameRecord  # Buffered frame with optional detections....
-    StreamWatcher  # Watches RTSP/HTTP streams with optional YOLO pre-detection.
-...
-      __init__(2)  CC=1.0
-        → __init__(2)  CC=1.0
-    _bool(v)
   toonic/core/detector.py:
     e: SpecDetector
     SpecDetector  # Wykrywa typ logiki z nagłówka pliku spec (YAML/TOON/JSON).
 
 ...
       detect(0)  CC=23.0  !
-  toonic/server/__main__.py:
-    e: check_port_occupied,stop_process_using_port,ensure_port_available,parse_args,parse_source_string,run_server,main
-    check_port_occupied(host,port)
-    stop_process_using_port(host,port)
-    ensure_port_available(host,port)
-    parse_args()
-    parse_source_string(source_str)
-    run_server(args)
-    main()
   toonic/autopilot/scaffold.py:
     e: ProjectSpec,ProjectScaffold,_python_project,_node_project
     ProjectSpec  # Parsed project specification....
@@ -361,6 +339,12 @@ D:
       __init__(1)  CC=1.0
     TriggerScheduler  # Manages all trigger rules and evaluates incoming data agains...
       __init__(1)  CC=3.0
+  toonic/server/watchers/stream/events.py:
+    e: check_event_and_emit,_select_event_frames,_extract_roi_crops,emit_heartbeat
+    check_event_and_emit(watcher,cv2,np)
+    _select_event_frames(watcher,frames)
+    _extract_roi_crops(watcher,cv2,frames)
+    emit_heartbeat(watcher,cv2,small,scene_score)
   toonic/server/transport/routes/api.py:
     e: set_server,_get_server,get_status,get_actions,analyze_now,get_events,get_triggers,get_data_dir,list_formats,convert_file,get_events_file,get_exchanges
     set_server(server)
@@ -425,6 +409,11 @@ D:
         → _compute_depth(2)  CC=7.0
         → _count_keys(1)  CC=5.0
     register_data_handlers()
+  toonic/server/watchers/stream/capture.py:
+    e: capture_opencv,_handle_basic_mode,capture_mock
+    capture_opencv(watcher)
+    _handle_basic_mode(watcher,cv2,small,gray,now,is_keyframe,scene_score,send_h)
+    capture_mock(watcher)
   toonic/formats/database.py:
     e: ColumnDef,TableDef,SqlSchemaLogic,SqlHandler,register_database_handlers
     ColumnDef  # Definicja kolumny tabeli SQL....
@@ -498,6 +487,10 @@ Uses L...
         → __init__(1)  CC=1.0
     create_detector(condition)
     create_detectors(conditions)
+  toonic/server/triggers/nlp2yaml.py:
+    e: NLP2YAML
+    NLP2YAML  # Converts natural language to YAML trigger configuration via ...
+      __init__(2)  CC=3.0
   toonic/server/triggers/dsl.py:
     e: EventCondition,FallbackConfig,TriggerRule,TriggerConfig,load_triggers,dump_triggers
     EventCondition  # Single event detection condition....
@@ -563,10 +556,6 @@ Uses L...
     _execute_command(cmd,parts,line,client,current_model)
     run_shell(base_url)
     main()
-  toonic/server/main.py:
-    e: ToonicServer
-    ToonicServer  # Main server — connects watchers → accumulator → LLM router →...
-      __init__(2)  CC=6.0
   toonic/server/config.py:
     e: ModelConfig,SourceConfig,ServerConfig,_load_dotenv
     ModelConfig  # LLM model configuration....
@@ -574,11 +563,20 @@ Uses L...
     ServerConfig  # Main server configuration....
       from_dict(1)  CC=11.0
     _load_dotenv()
+  toonic/server/main.py:
+    e: ToonicServer
+    ToonicServer  # Main server — connects watchers → accumulator → LLM router →...
+      __init__(2)  CC=6.0
   toonic/server/core/accumulator.py:
     e: BudgetConfig,ContextAccumulator
     BudgetConfig  # Token budget configuration per category....
     ContextAccumulator  # Manages context window for LLM — allocates token budget per ...
       __init__(3)  CC=3.0
+  toonic/server/watchers/http_watcher.py:
+    e: HttpWatcher
+    HttpWatcher  # Watches HTTP/HTTPS endpoints for availability, content chang...
+      __init__(2)  CC=1.0
+        → __init__(2)  CC=1.0
   toonic/server/llm/prompts.py:
     e: PromptBuilder,GenericPrompt,CodeAnalysisPrompt,CCTVEventPrompt,select_prompt_builder
     PromptBuilder  # Builds prompt from context. Different implementations per us...
@@ -685,6 +683,19 @@ Trzy kierunk...
     GithubActionsHandler  # Handler dla GitHub Actions workflow....
       parse(1)  CC=8.0
     register_infra_handlers()
+  toonic/server/__main__.py:
+    e: check_port_occupied,stop_process_using_port,ensure_port_available,parse_args,parse_source_string,_build_server_config,_build_trigger_config,_run_no_web_mode,_run_web_mode,run_server,main
+    check_port_occupied(host,port)
+    stop_process_using_port(host,port)
+    ensure_port_available(host,port)
+    parse_args()
+    parse_source_string(source_str)
+    _build_server_config(args)
+    _build_trigger_config(args)
+    _run_no_web_mode(server,config)
+    _run_web_mode(server,config,args)
+    run_server(args)
+    main()
   toonic/server/watchers/file_watcher.py:
     e: FileWatcher
     FileWatcher  # Watches a directory for file changes, converts to TOON specs...
@@ -717,6 +728,11 @@ Trzy kierunk...
     _parse_protocol_url(source_str)
     _parse_prefixed_source(source_str)
     parse_source(source)
+  toonic/server/watchers/stream/detection.py:
+    e: init_yolo,run_detection,_detect_sync
+    init_yolo(watcher)
+    run_detection(watcher,frame)
+    _detect_sync(watcher,frame)
   toonic/server/core/router.py:
     e: LLMRequest,LLMRouter
     LLMRequest  # Request to send to an LLM....
@@ -752,6 +768,13 @@ R...
     run_error_spike(out,count,delay)
     run_mixed(out,duration,delay)
     main()
+  toonic/server/watchers/stream/watcher.py:
+    e: StreamWatcher,_bool
+    StreamWatcher  # Watches RTSP/HTTP streams with optional YOLO pre-detection.
+...
+      __init__(2)  CC=1.0
+        → __init__(2)  CC=1.0
+    _bool(v)
   examples/programmatic-api/demo_accumulator.py:
     e: main
     main()
@@ -881,8 +904,14 @@ Zastępuje potrze...
   toonic/server/transport/__init__.py:
   toonic/server/core/__init__.py:
   toonic/server/watchers/__init__.py:
+  toonic/server/watchers/stream_watcher.py:
   toonic/server/triggers/__init__.py:
   toonic/server/llm/__init__.py:
+  toonic/server/watchers/stream/__init__.py:
+  toonic/server/watchers/stream/models.py:
+    e: Detection,FrameRecord
+    Detection  # Single object detection from YOLO or similar....
+    FrameRecord  # Buffered frame with optional detections....
   toonic/server/transport/routes/__init__.py:
   examples/code-analysis/run.py:
   examples/infra-triage/run.py:
